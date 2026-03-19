@@ -1,0 +1,78 @@
+block
+
+현재 파일은 디보 익스텐션으로 사용될 콘텐츠야
+다음과 같은 내용을 참고해서 순차적으로 코드를 추가 및 수정 해줘
+
+##다음##
+1. axios와 token값은 이미 헤더에 저장되어있어
+- 별도로 추가안해도 돼
+
+2. 지금 코드 콘텐츠 구성은
+- 데이터를 변수에 담아 로컬에서 데이터를 제공중이야
+- api에서 데이터를 패치하지 않으면 로컬 데이터를 사용, api 패치되면 api 데이터를 사용해줘
+
+3. 현재 코드 콘텐츠의 제목, 설명, 키워드를 추천해줘
+- 사용자의 언어(코드를 모르는 사용자)로 알기 쉽게해줘
+- 사용해보고 싶게 해줘
+- 구글 검색노출에 용이하게 해줘
+- 코드말고 채팅창에 추천해줘
+
+3. 연동할 api는 다음과 같아
+<script>
+    /**
+     * 이미지 블록 API 연동 가이드
+     *
+     * 본 API는 이미지 블록 데이터의 조회(Read)를 지원합니다.
+     * 모든 요청은 발급받은 `access-token`을 헤더에 포함하여 호출해야 합니다.
+     * 
+     * - config_id: 코드 복사 시 자동으로 발급되는 고유 설정값입니다.
+     * - 응답 데이터는 JSON 배열 형식으로 반환되며, 각 객체는 이미지 블록의 단일 항목을 의미합니다.
+     * 
+     * 주요 필드 설명:
+     * - id: 이미지 블록 고유 식별자
+     * - client_id: 클라이언트 구분을 위한 식별자
+     * - config_id: 블록 설정값 (자동 발급)
+     * - main_img_url: 대표 이미지 URL
+     * - sub_img_url: 보조 이미지 URL
+     * - title: 이미지 블록 제목
+     * - content: 이미지 블록 설명 텍스트
+     * - link: 연결될 외부 또는 내부 링크
+     * - created_at: 데이터 생성 시각 (ISO 8601 형식)
+     * - updated_at: 데이터 최종 수정 시각 (ISO 8601 형식)
+     *
+     * 활용 예시:
+     * - 갤러리, 배너, 슬라이드 등 다양한 UI 컴포넌트와 연동
+     * - title/content를 이용한 캡션 처리
+     * - link를 통한 CTA(콜 투 액션) 연결
+     */
+    async function fetchData() {
+        try {
+            const response = await axios.get('https://api.di-bo.me/block?config_id=copy_config_id', {
+                headers: {
+                    'access-token': diboToken
+                }
+            });
+
+            const instData = response.data;
+
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    }
+
+    // 이미지 블록 API JSON 데이터 형식
+    // [
+    //     {
+    //         "id": "string",
+    //         "client_id": "string",
+    //         "config_id": "string",
+    //         "main_img_url": "string",
+    //         "sub_img_url": "string",
+    //         "title": "string",
+    //         "content": "string",
+    //         "link": "string",
+    //         "created_at": "2025-08-26T06:31:39.067Z",
+    //         "updated_at": "2025-08-26T06:31:39.067Z"
+    //     }
+    // ]
+</script>

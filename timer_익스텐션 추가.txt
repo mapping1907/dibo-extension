@@ -1,0 +1,75 @@
+timer
+
+현재 파일은 디보 익스텐션으로 사용될 콘텐츠야
+다음과 같은 내용을 참고해서 순차적으로 코드를 추가 및 수정 해줘
+
+##다음##
+1. axios와 token값은 이미 헤더에 저장되어있어
+- 별도로 추가안해도 돼
+
+2. 지금 코드 콘텐츠 구성은
+- 데이터를 변수에 담아 로컬에서 데이터를 제공중이야
+- api에서 데이터를 패치하지 않으면 로컬 데이터를 사용, api 패치되면 api 데이터를 사용해줘
+
+3. 현재 코드 콘텐츠의 제목, 설명, 키워드를 추천해줘
+- 사용자의 언어(코드를 모르는 사용자)로 알기 쉽게해줘
+- 사용해보고 싶게 해줘
+- 구글 검색노출에 용이하게 해줘
+- 코드 말고 채팅창에 추천해줘
+
+3. 연동할 api는 다음과 같아
+<script>
+    /**
+     * 타이머 API 연동 가이드
+     *
+     * 본 API는 생성해둔 타이머 데이터를 조회(Read)할 수 있는 기능을 제공합니다.
+     * 모든 요청은 발급받은 `access-token`을 헤더에 포함하여 호출해야 합니다.
+     *
+     * - config_id: 코드 복사 시 자동으로 설정되는 고유 식별값입니다.
+     * - 반환 데이터는 JSON 배열 형식이며, 여러 개의 타이머를 동시에 포함할 수 있습니다.
+     * - 특정 타이머를 선택할 경우 배열 인덱스를 지정하여 데이터를 활용하면 됩니다.
+     *
+     * 주요 필드 설명:
+     * - id: 타이머 고유 식별자
+     * - client_id: 클라이언트 구분용 식별자
+     * - config_id: 타이머 설정값 (자동 발급)
+     * - started_at: 타이머 시작 시각 (ISO 8601 형식)
+     * - start_title: 타이머 시작 시 표시할 제목
+     * - ended_at: 타이머 종료 시각 (ISO 8601 형식)
+     * - end_title: 타이머 종료 시 표시할 제목
+     * - created_at: 데이터 생성 시각
+     * - updated_at: 데이터 최종 수정 시각
+     *
+     * 활용 예시:
+     * - 이벤트 시작/종료 카운트다운 UI 구성
+     * - 특정 기간 동안 표시되는 프로모션 배너
+     * - 서비스 오픈/마감 안내 알림
+     */
+    
+    const fetchData = async () => {
+        try {
+            const res = await axios.get(`https://api.di-bo.me/timer?config_id=copy_config_id`, {
+                headers: { 'access-token': diboToken }
+            })
+            let instData = res.data[0]; // [0] 번째 타이머 데이터 선택 예시
+
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    // 타이머 API JSON 데이터
+    // [
+    //     {
+    //         "id": "string",
+    //         "client_id": "string",
+    //         "config_id": "string",
+    //         "started_at": "2025-08-26T06:49:55.455Z",
+    //         "start_title": "string",
+    //         "ended_at": "2025-08-26T06:49:55.455Z",
+    //         "end_title": "string",
+    //         "created_at": "2025-08-26T06:49:55.455Z",
+    //         "updated_at": "2025-08-26T06:49:55.455Z"
+    //     }
+    // ]
+</script>
