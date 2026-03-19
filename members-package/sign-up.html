@@ -1,0 +1,1358 @@
+<!--
+=======================================================
+  회원가입 페이지 - 사용 가이드
+=======================================================
+
+【사용 전 필수 설정】
+  1. copy_group_id  → 가입 시 지정할 회원 그룹 ID로 교체
+  2. copy_site_id   → 사이트 ID로 교체
+  3. diboToken      : 익스텐션 전역 변수로 자동 주입 (별도 선언 불필요)
+
+【동작 방식】
+  - 페이지 로드 시 /member-group/{group_id} API로 그룹 설정을 조회합니다.
+  - 조회된 설정(general_fields, business_fields, custom_fields)을 기반으로
+    use: true 인 항목만 동적으로 렌더링합니다.
+  - API 조회 실패 시 기본 필드(이름, 연락처)를 표시합니다.
+
+=======================================================
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>회원가입</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      padding: 40px 20px;
+      color: #111;
+    }
+
+    .dibo-su-wrap {
+      width: 100%;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    .dibo-su-logo {
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: #000;
+    }
+
+    /* Progress Steps */
+    .dibo-su-steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      gap: 0;
+    }
+
+    .dibo-su-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      max-width: 120px;
+      position: relative;
+    }
+
+    .dibo-su-step::after {
+      content: '';
+      position: absolute;
+      top: 16px;
+      left: calc(50% + 20px);
+      right: calc(-50% + 20px);
+      height: 2px;
+      background: #e0e0e0;
+    }
+
+    .dibo-su-step:last-child::after { display: none; }
+
+    .dibo-su-step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid #ddd;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #bbb;
+      position: relative;
+      z-index: 1;
+      transition: all 0.3s;
+    }
+
+    .dibo-su-step.active .dibo-su-step-num {
+      border-color: #000;
+      background: #000;
+      color: #fff;
+    }
+
+    .dibo-su-step.done .dibo-su-step-num {
+      border-color: #000;
+      background: #000;
+      color: #fff;
+    }
+
+    .dibo-su-step.done::after { background: #000; }
+
+    .dibo-su-step-label {
+      font-size: 12px;
+      color: #bbb;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+
+    .dibo-su-step.active .dibo-su-step-label,
+    .dibo-su-step.done .dibo-su-step-label { color: #000; }
+
+    /* Card */
+    .dibo-su-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.08);
+    }
+
+    .dibo-su-card-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #000;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .dibo-su-card-desc {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 28px;
+      letter-spacing: -0.01em;
+    }
+
+    /* Type cards (step 1) */
+    .dibo-su-type-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .dibo-su-type-card {
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .dibo-su-type-card:hover {
+      border-color: #999;
+    }
+
+    .dibo-su-type-card.selected {
+      border-color: #000;
+      background: #000;
+      color: #fff;
+    }
+
+    .dibo-su-type-icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .dibo-su-type-name {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+    }
+
+    .dibo-su-type-desc {
+      font-size: 12px;
+      color: #999;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-su-type-card.selected .dibo-su-type-desc { color: #ccc; }
+
+    /* Form fields */
+    .dibo-su-form-group {
+      margin-bottom: 18px;
+    }
+
+    .dibo-su-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 7px;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-su-input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-family: 'Noto Sans KR', sans-serif;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.2s;
+      color: #111;
+      letter-spacing: -0.01em;
+      background: #fff;
+    }
+
+    .dibo-su-input:focus { border-color: #000; }
+    .dibo-su-input::placeholder { color: #bbb; font-weight: 400; }
+    .dibo-su-input.error { border-color: #e53935; }
+
+    .dibo-su-select {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-family: 'Noto Sans KR', sans-serif;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.2s;
+      color: #111;
+      letter-spacing: -0.01em;
+      background: #fff;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+
+    .dibo-su-select:focus { border-color: #000; }
+
+    /* Input row (two columns) */
+    .dibo-su-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* File upload */
+    .dibo-su-file-wrap {
+      border: 2px dashed #e0e0e0;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      position: relative;
+    }
+
+    .dibo-su-file-wrap:hover { border-color: #999; }
+
+    .dibo-su-file-wrap input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .dibo-su-file-icon { font-size: 24px; margin-bottom: 6px; }
+
+    .dibo-su-file-text {
+      font-size: 13px;
+      color: #888;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-su-file-name {
+      font-size: 13px;
+      color: #000;
+      font-weight: 500;
+      margin-top: 4px;
+      display: none;
+    }
+
+    /* Profile image picker */
+    .dibo-su-profile-picker {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0 4px;
+    }
+
+    .dibo-su-avatar-wrap {
+      position: relative;
+      width: 96px;
+      height: 96px;
+      cursor: pointer;
+    }
+
+    .dibo-su-avatar-circle {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #e0e0e0;
+      transition: border-color 0.2s;
+    }
+
+    .dibo-su-avatar-wrap:hover .dibo-su-avatar-circle {
+      border-color: #999;
+    }
+
+    .dibo-su-avatar-circle img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .dibo-su-avatar-cam {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 28px;
+      height: 28px;
+      background: #000;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #fff;
+    }
+
+    .dibo-su-avatar-hint {
+      font-size: 12px;
+      color: #aaa;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-su-avatar-filename {
+      font-size: 12px;
+      color: #555;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      display: none;
+      max-width: 200px;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Password hint */
+    .dibo-su-pw-hint {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    /* Terms */
+    .dibo-su-terms-box {
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+
+    .dibo-su-terms-all {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px;
+      background: #f9f9f9;
+      border-bottom: 1px solid #e0e0e0;
+      cursor: pointer;
+    }
+
+    .dibo-su-terms-all span {
+      font-size: 14px;
+      font-weight: 700;
+      color: #111;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-su-terms-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .dibo-su-terms-item:last-child { border-bottom: none; }
+
+    .dibo-su-terms-label {
+      flex: 1;
+      font-size: 14px;
+      color: #333;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+    }
+
+    .dibo-su-terms-view {
+      font-size: 12px;
+      color: #888;
+      text-decoration: underline;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .dibo-su-terms-item input[type="checkbox"],
+    .dibo-su-terms-all input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #000;
+      flex-shrink: 0;
+    }
+
+    /* Terms modal */
+    .dibo-terms-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .dibo-terms-modal.open { display: flex; }
+
+    .dibo-terms-modal-box {
+      background: #fff;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .dibo-terms-modal-head {
+      padding: 20px 24px;
+      border-bottom: 1px solid #ebebeb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dibo-terms-modal-head h3 {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-terms-modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 20px;
+      color: #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dibo-terms-modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+      font-size: 14px;
+      color: #555;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      letter-spacing: -0.01em;
+    }
+
+    /* Alert */
+    .dibo-su-alert {
+      padding: 13px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 18px;
+      display: none;
+      letter-spacing: -0.01em;
+      line-height: 1.5;
+    }
+
+    .dibo-su-alert.error {
+      background: #fff5f5;
+      border: 1px solid #ffcdd2;
+      color: #c62828;
+    }
+
+    .dibo-su-alert.error.show,
+    .dibo-su-alert.show { display: block; }
+
+    /* Section divider */
+    .dibo-su-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #999;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin: 24px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    /* Buttons */
+    .dibo-su-btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .dibo-su-btn {
+      flex: 1;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: 'Noto Sans KR', sans-serif;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-su-btn.primary {
+      background: #000;
+      color: #fff;
+      border: none;
+    }
+
+    .dibo-su-btn.primary:hover { opacity: 0.82; }
+    .dibo-su-btn.primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .dibo-su-btn.outline {
+      background: #fff;
+      color: #333;
+      border: 1.5px solid #ddd;
+    }
+
+    .dibo-su-btn.outline:hover { border-color: #000; color: #000; }
+
+    /* Complete screen */
+    .dibo-su-complete {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .dibo-su-complete-icon {
+      width: 72px;
+      height: 72px;
+      background: #000;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+    }
+
+    .dibo-su-complete-icon svg { color: #fff; }
+
+    .dibo-su-complete h2 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+
+    .dibo-su-complete p {
+      font-size: 15px;
+      color: #777;
+      line-height: 1.6;
+      letter-spacing: -0.01em;
+      margin-bottom: 32px;
+    }
+
+    /* Loading */
+    .dibo-su-loading {
+      text-align: center;
+      padding: 60px 0;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    /* Back link */
+    .dibo-su-back {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .dibo-su-back a {
+      font-size: 14px;
+      color: #888;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-su-back a:hover { color: #000; }
+
+    @media (max-width: 540px) {
+      body { padding: 24px 16px; }
+      .dibo-su-card { padding: 28px 20px; }
+      .dibo-su-type-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .dibo-su-row { grid-template-columns: 1fr; gap: 0; }
+      .dibo-su-type-card { padding: 22px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 약관 모달 -->
+  <div class="dibo-terms-modal" id="termsModal">
+    <div class="dibo-terms-modal-box">
+      <div class="dibo-terms-modal-head">
+        <h3 id="termsModalTitle">약관</h3>
+        <button class="dibo-terms-modal-close" onclick="closeTermsModal()">✕</button>
+      </div>
+      <div class="dibo-terms-modal-body" id="termsModalBody"></div>
+    </div>
+  </div>
+
+  <div class="dibo-su-wrap">
+    <div class="dibo-su-logo">DIBO</div>
+
+    <!-- 진행 단계 -->
+    <div class="dibo-su-steps" id="stepIndicator">
+      <div class="dibo-su-step active" id="step1Indicator">
+        <div class="dibo-su-step-num">1</div>
+        <div class="dibo-su-step-label">유형 선택</div>
+      </div>
+      <div class="dibo-su-step" id="step2Indicator">
+        <div class="dibo-su-step-num">2</div>
+        <div class="dibo-su-step-label">정보 입력</div>
+      </div>
+      <div class="dibo-su-step" id="step3Indicator">
+        <div class="dibo-su-step-num">3</div>
+        <div class="dibo-su-step-label">가입 완료</div>
+      </div>
+    </div>
+
+    <div class="dibo-su-card" id="mainCard">
+      <!-- Step 1: 유형 선택 -->
+      <div id="step1">
+        <h2 class="dibo-su-card-title">회원 유형 선택</h2>
+        <p class="dibo-su-card-desc">가입하실 회원 유형을 선택해주세요.</p>
+
+        <div class="dibo-su-type-grid">
+          <div class="dibo-su-type-card" id="typeGeneral" onclick="selectType('general')">
+            <span class="dibo-su-type-icon">👤</span>
+            <div class="dibo-su-type-name">일반 회원</div>
+            <div class="dibo-su-type-desc">개인으로 가입합니다</div>
+          </div>
+          <div class="dibo-su-type-card" id="typeBusiness" onclick="selectType('business')">
+            <span class="dibo-su-type-icon">🏢</span>
+            <div class="dibo-su-type-name">사업자 회원</div>
+            <div class="dibo-su-type-desc">사업자로 가입합니다</div>
+          </div>
+        </div>
+
+        <button class="dibo-su-btn primary" style="width:100%" onclick="goToStep2()" id="nextBtn1" disabled>다음</button>
+
+        <div class="dibo-su-back" style="margin-top:16px">
+          <a href="log-in.html">이미 계정이 있으신가요? 로그인</a>
+        </div>
+      </div>
+
+      <!-- Step 2: 정보 입력 -->
+      <div id="step2" style="display:none">
+        <h2 class="dibo-su-card-title">정보 입력</h2>
+        <p class="dibo-su-card-desc" id="step2Desc">회원 정보를 입력해주세요.</p>
+
+        <div class="dibo-su-alert error" id="signupError"></div>
+
+        <div id="loadingFields" class="dibo-su-loading">정보를 불러오는 중...</div>
+        <form id="signupForm" style="display:none" onsubmit="handleSignup(event)">
+          <!-- 동적으로 렌더링됩니다 -->
+        </form>
+
+        <div class="dibo-su-btn-row">
+          <button class="dibo-su-btn outline" onclick="goToStep1()">이전</button>
+          <button class="dibo-su-btn primary" id="submitBtn" onclick="document.getElementById('signupForm').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true}))">가입하기</button>
+        </div>
+      </div>
+
+      <!-- Step 3: 완료 -->
+      <div id="step3" style="display:none">
+        <div class="dibo-su-complete">
+          <div class="dibo-su-complete-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <h2 id="completeTitle">회원가입 완료!</h2>
+          <p id="completeMsg">가입이 완료되었습니다.<br>로그인하여 서비스를 이용해보세요.</p>
+          <button class="dibo-su-btn primary" style="width:100%; max-width:280px" onclick="location.href='log-in.html'">로그인하러 가기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ★ [필수 설정] 가입 대상 그룹 ID / 사이트 ID
+    const SIGNUP_GROUP_ID = 'copy_group_id';
+    const SIGNUP_SITE_ID  = 'copy_site_id';
+
+    // ★ [수정 가능] 약관 항목별 노출 설정 (API 미연결 시 또는 항목 직접 제어 시)
+    // use: false 로 변경하면 해당 약관 항목을 숨깁니다.
+    const DEFAULT_TERMS_USE = {
+      service:   true,   // 이용약관 (필수)
+      privacy:   true,   // 개인정보 처리방침 (필수)
+      marketing: true,   // 마케팅 수신 동의 (선택)
+    };
+
+    // ★ [수정 가능] 프로필 이미지 노출 설정
+    const DEFAULT_PROFILE_USE = true;
+
+    // ★ [수정 가능] 일반회원 정보 항목별 노출 설정 (API 미연결 시 적용)
+    // use: false 로 변경하면 해당 항목을 숨깁니다.
+    const DEFAULT_GENERAL_FIELDS = {
+      gender:    { use: true,  required: false, label: '성별' },
+      phone:     { use: true,  required: false, label: '연락처' },
+      address:   { use: true,  required: false, label: '주소' },
+      birthdate: { use: true,  required: false, label: '생년월일' },
+      referrer:  { use: true,  required: false, label: '추천인' },
+    };
+
+    // ★ [수정 가능] 사업자 정보 항목별 노출 설정 (API 미연결 시 적용)
+    // use: false 로 변경하면 해당 항목을 숨깁니다.
+    // business_name, business_number 는 필수 항목으로 항상 표시됩니다.
+    const DEFAULT_BUSINESS_FIELDS = {
+      ceo:      { use: true,  required: false, label: '대표자명' },
+      phone:    { use: true,  required: false, label: '연락처' },
+      category: { use: true,  required: false, label: '종목' },
+      business: { use: true,  required: false, label: '업태' },
+      address:  { use: true,  required: false, label: '사업장 주소' },
+      manager:  { use: true,  required: false, label: '담당자명' },
+      referrer: { use: true,  required: false, label: '추천인' },
+      file:     { use: true,  required: false, label: '사업자등록증' },
+    };
+
+    // ★ [수정 가능] 사용자 정의 항목 기본 설정 (API 미연결 시 적용)
+    // use: false 로 설정하면 해당 항목을 숨깁니다.
+    // type 목록: single_line, multi_line, single_selection, checkbox, list_selection, phone, email, date, file
+    const DEFAULT_CUSTOM_FIELDS = [
+      { use: true,  type: 'single_line',      name: '사용자 정의 01', options: [],                        required: false },
+      { use: true,  type: 'single_selection', name: '사용자 정의 02', options: ['옵션1','옵션2','옵션3'], required: false },
+      { use: true,  type: 'checkbox',         name: '사용자 정의 03', options: ['항목1','항목2','항목3'], required: false },
+      { use: true,  type: 'date',             name: '사용자 정의 04', options: [],                        required: false },
+      { use: true,  type: 'file',             name: '사용자 정의 05', options: [],                        required: false },
+    ];
+
+    let selectedType = null;
+    let groupConfig  = null;
+
+    // ── Step 1: 유형 선택 ─────────────────────────────
+    function selectType(type) {
+      selectedType = type;
+      document.getElementById('typeGeneral').classList.toggle('selected', type === 'general');
+      document.getElementById('typeBusiness').classList.toggle('selected', type === 'business');
+      document.getElementById('nextBtn1').disabled = false;
+    }
+
+    function goToStep1() {
+      setStep(1);
+    }
+
+    async function goToStep2() {
+      if (!selectedType) return;
+      setStep(2);
+      document.getElementById('step2Desc').textContent =
+        selectedType === 'general' ? '일반 회원 정보를 입력해주세요.' : '사업자 회원 정보를 입력해주세요.';
+      await loadAndRenderForm();
+    }
+
+    // ── Step indicator ────────────────────────────────
+    function setStep(n) {
+      ['step1','step2','step3'].forEach((id, i) => {
+        document.getElementById(id).style.display = (i+1 === n) ? '' : 'none';
+      });
+      ['step1Indicator','step2Indicator','step3Indicator'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        el.classList.toggle('done',   i+1 < n);
+        el.classList.toggle('active', i+1 === n);
+      });
+    }
+
+    // ── 그룹 설정 조회 및 폼 렌더링 ──────────────────
+    async function loadAndRenderForm() {
+      document.getElementById('loadingFields').style.display = '';
+      document.getElementById('signupForm').style.display = 'none';
+
+      try {
+        // ※ 이 엔드포인트는 관리자 access-token이 필요합니다.
+        //   diboToken이 관리자 토큰인 경우 정상 동작하며,
+        //   subscribe-token인 경우 403 응답 → 아래 catch에서 기본값으로 폴백합니다.
+        const res = await axios.get(
+          `https://api.di-bo.me/member-group/${SIGNUP_GROUP_ID}?site_id=${SIGNUP_SITE_ID}`,
+          { headers: { 'access-token': diboToken } }
+        );
+        groupConfig = res.data;
+      } catch (e) {
+        groupConfig = null; // API 접근 불가 시 기본 필드로 폴백
+      }
+
+      renderForm(groupConfig);
+      document.getElementById('loadingFields').style.display = 'none';
+      document.getElementById('signupForm').style.display = '';
+    }
+
+    // ── 폼 렌더링 ─────────────────────────────────────
+    // 구성 순서
+    // [그룹 공통] 프로필 이미지 → 이메일/아이디 → 비밀번호/확인
+    // [일반]      일반회원 정보 (이름, 성별, 연락처, 주소, 생년월일, 추천인)
+    // [사업자]    사업자 정보 (상호, 사업자번호, 대표자명, 연락처, 종목, 업태, 사업장주소, 담당자명, 추천인)
+    // [공통]      사용자 정의 항목 (custom_fields 1~5)
+    // [그룹 공통] 약관 (이용약관, 개인정보, 마케팅)
+    function renderForm(config) {
+      const loginType    = config?.login_type   || 'email';
+      const pwMinLen     = config?.pw_min_length || 8;
+      const pwPolicy     = config?.pw_policy     || { upper: true, number: true, special: false };
+      const profileField = config?.profile_field ?? { use: DEFAULT_PROFILE_USE };
+      const termsEnabled = config?.terms_enabled ?? true;
+      const termsContent = config?.terms_content || getDefaultTermsContent();
+      // API에서 항목별 use 값이 오면 그것을 사용, 없으면 상단 DEFAULT_TERMS_USE 적용
+      const termsUse = config?.terms_use || DEFAULT_TERMS_USE;
+
+      // custom_fields: API 성공 시 API 값, 실패 시 기본 5개(all true) 사용
+      // 원본 인덱스(1~5) 유지 → DB 컬럼 custom_1~5와 정확히 매핑
+      const rawCustom   = config ? (config.custom_fields || []) : getDefaultCustomFields();
+      const customFields = rawCustom
+        .map((f, i) => ({ ...f, originalIdx: i + 1 }))
+        .filter(f => f.use && f.type !== 'default');
+
+      const fields = selectedType === 'general'
+        ? (config?.general_fields  || getDefaultGeneralFields())
+        : (config?.business_fields || getDefaultBusinessFields());
+
+      let html = '';
+
+      // ── [그룹 공통] 프로필 이미지 ──
+      if (profileField.use) {
+        html += `
+          <div class="dibo-su-form-group">
+            <div class="dibo-su-profile-picker">
+              <div class="dibo-su-avatar-wrap" onclick="document.getElementById('profileImageInput').click()">
+                <div class="dibo-su-avatar-circle" id="profileAvatarCircle">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </div>
+                <div class="dibo-su-avatar-cam">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </div>
+                <input type="file" id="profileImageInput" name="profile_image" accept="image/*"
+                  style="display:none" onchange="previewProfileImage(this)">
+              </div>
+              <div class="dibo-su-avatar-hint">클릭하여 프로필 사진 추가 (선택)</div>
+              <div class="dibo-su-avatar-filename" id="profileAvatarFilename"></div>
+            </div>
+          </div>`;
+      }
+
+      // ── [그룹 공통] 이메일/아이디 + 비밀번호 ──
+      html += `<div class="dibo-su-section-title">계정 정보</div>`;
+      if (loginType === 'email') {
+        html += field('email', 'email', '이메일', '이메일 주소를 입력하세요', true);
+      } else {
+        html += field('user_id', 'text', '아이디', '아이디를 입력하세요 (영문, 숫자)', true);
+      }
+      // 사업자의 경우 이름은 계정 정보 섹션에 위치 (사업자 정보와 분리)
+      if (selectedType === 'business') {
+        html += field('name', 'text', '이름', '이름을 입력하세요', true);
+      }
+      const pwHint = buildPwHint(pwMinLen, pwPolicy);
+      html += `
+        <div class="dibo-su-form-group">
+          <label class="dibo-su-label">비밀번호</label>
+          <input type="password" class="dibo-su-input" name="pwd" placeholder="비밀번호를 입력하세요" autocomplete="new-password">
+          <div class="dibo-su-pw-hint">${pwHint}</div>
+        </div>
+        <div class="dibo-su-form-group">
+          <label class="dibo-su-label">비밀번호 확인</label>
+          <input type="password" class="dibo-su-input" name="pwd_confirm" placeholder="비밀번호를 한 번 더 입력하세요" autocomplete="new-password">
+        </div>`;
+
+      // ── [일반] 일반회원 정보 ──
+      if (selectedType === 'general') {
+        html += `<div class="dibo-su-section-title">일반회원 정보</div>`;
+        html += field('name', 'text', '이름', '이름을 입력하세요', true);
+        html += buildExtraFields(fields); // 성별, 연락처, 주소, 생년월일, 추천인
+      }
+
+      // ── [사업자] 사업자 정보 (섹션 타이틀은 buildBusinessFields 내부에서 출력) ──
+      if (selectedType === 'business') {
+        html += buildBusinessFields(fields);
+      }
+
+      // ── [공통] 사용자 정의 항목 (custom_fields) ──
+      if (customFields.length > 0) {
+        html += `<div class="dibo-su-section-title">사용자 정의 항목</div>`;
+        customFields.forEach(cf => {
+          html += buildCustomField(cf, cf.originalIdx);
+        });
+      }
+
+      // ── [그룹 공통] 약관 ──
+      if (termsEnabled) {
+        html += buildTerms(termsContent, termsUse);
+      }
+
+      // hidden fields
+      html += `<input type="hidden" name="member_type" value="${selectedType}">`;
+      html += `<input type="hidden" name="login_type_val" value="${loginType}">`;
+      html += `<input type="hidden" name="pw_min_len" value="${pwMinLen}">`;
+      html += `<input type="hidden" name="pw_upper" value="${pwPolicy.upper}">`;
+      html += `<input type="hidden" name="pw_number" value="${pwPolicy.number}">`;
+      html += `<input type="hidden" name="pw_special" value="${pwPolicy.special}">`;
+      html += `<input type="hidden" name="terms_enabled" value="${termsEnabled}">`;
+
+      document.getElementById('signupForm').innerHTML = html;
+      initFileInputs();
+    }
+
+    function field(name, type, label, placeholder, required) {
+      return `
+        <div class="dibo-su-form-group">
+          <label class="dibo-su-label">${label}</label>
+          <input type="${type}" class="dibo-su-input" name="${name}" placeholder="${placeholder}"${required ? ' required' : ''}>
+        </div>`;
+    }
+
+    function buildPwHint(minLen, policy) {
+      const rules = [`${minLen}자 이상`];
+      if (policy.upper)   rules.push('영문 대문자 포함');
+      if (policy.number)  rules.push('숫자 포함');
+      if (policy.special) rules.push('특수문자 포함');
+      return rules.join(', ');
+    }
+
+    function buildExtraFields(fields) {
+      let html = '';
+      const map = {
+        phone:     { label: '연락처',   type: 'tel',  placeholder: '010-0000-0000' },
+        address:   { label: '주소',     type: 'text', placeholder: '주소를 입력하세요' },
+        birthdate: { label: '생년월일', type: 'date', placeholder: '' },
+        referrer:  { label: '추천인',   type: 'text', placeholder: '추천인을 입력하세요' },
+        gender:    { label: '성별',     type: 'select', options: ['선택','남성','여성'] },
+      };
+      ['gender','phone','address','birthdate','referrer'].forEach(key => {
+        const f = fields[key];
+        if (!f || !f.use) return;
+        const m = map[key];
+        if (m.type === 'select') {
+          html += `
+            <div class="dibo-su-form-group">
+              <label class="dibo-su-label">${f.label || m.label}</label>
+              <select class="dibo-su-select" name="${key}">
+                ${m.options.map(o => `<option value="${o === '선택' ? '' : o}">${o}</option>`).join('')}
+              </select>
+            </div>`;
+        } else {
+          html += field(key, m.type, f.label || m.label, m.placeholder, false);
+        }
+      });
+      return html;
+    }
+
+    function buildBusinessFields(fields) {
+      let html = '';
+      const map = {
+        business_name:   { label: '사업자명', placeholder: '상호명을 입력하세요', name: 'business_name' },
+        business_number: { label: '사업자등록번호', placeholder: '000-00-00000', name: 'business_number' },
+        ceo:             { label: '대표자명', placeholder: '대표자 이름을 입력하세요', name: 'representative' },
+        phone:           { label: '사업장 연락처', placeholder: '연락처를 입력하세요', name: 'business_phone' },
+        address:         { label: '사업장 주소', placeholder: '사업장 주소를 입력하세요', name: 'business_address' },
+        category:        { label: '업태', placeholder: '업태를 입력하세요', name: 'business_category' },
+        business:        { label: '종목', placeholder: '종목을 입력하세요', name: 'business_type' },
+        manager:         { label: '담당자명', placeholder: '담당자 이름을 입력하세요', name: 'business_manager' },
+        referrer:        { label: '추천인', placeholder: '추천인을 입력하세요', name: 'referrer' },
+      };
+
+      const required = ['business_name','business_number'];
+      let sectionAdded = false;
+
+      // 사업자명, 등록번호는 항상 표시
+      html += `<div class="dibo-su-section-title">사업자 정보</div>`;
+      html += field('business_name', 'text', '사업자명', '상호명을 입력하세요', true);
+      html += field('business_number', 'text', '사업자등록번호', '000-00-00000', true);
+      sectionAdded = true;
+
+      ['ceo','phone','address','category','business','manager','referrer'].forEach(key => {
+        const f = fields[key];
+        if (!f || !f.use) return;
+        const m = map[key];
+        if (!m) return;
+        html += field(m.name, 'text', f.label || m.label, m.placeholder, false);
+      });
+
+      // 사업자등록증 파일
+      if (fields.file?.use) {
+        html += `
+          <div class="dibo-su-form-group">
+            <label class="dibo-su-label">사업자등록증</label>
+            <div class="dibo-su-file-wrap" onclick="this.querySelector('input').click()">
+              <input type="file" name="business_file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="showFileName(this,'bizFileName')">
+              <div class="dibo-su-file-icon">📄</div>
+              <div class="dibo-su-file-text">사업자등록증을 첨부하세요 (PDF, JPG, PNG)</div>
+              <div class="dibo-su-file-name" id="bizFileName"></div>
+            </div>
+          </div>`;
+      }
+
+      return html;
+    }
+
+    function buildCustomField(cf, idx) {
+      const nameAttr = `custom_file_${idx}`;
+      switch (cf.type) {
+        case 'phone':
+        case 'email':
+        case 'single_line':
+          return field(`custom_${idx}`, cf.type === 'email' ? 'email' : cf.type === 'phone' ? 'tel' : 'text', cf.name, `${cf.name}을(를) 입력하세요`, false);
+        case 'multi_line':
+          return `
+            <div class="dibo-su-form-group">
+              <label class="dibo-su-label">${cf.name}</label>
+              <textarea class="dibo-su-input" name="custom_${idx}" rows="3" placeholder="${cf.name}을(를) 입력하세요" style="resize:vertical; min-height:80px"></textarea>
+            </div>`;
+        case 'date':
+          return field(`custom_${idx}`, 'date', cf.name, '', false);
+        case 'single_selection':
+        case 'list_selection':
+          return `
+            <div class="dibo-su-form-group">
+              <label class="dibo-su-label">${cf.name}</label>
+              <select class="dibo-su-select" name="custom_${idx}">
+                <option value="">선택하세요</option>
+                ${(cf.options||[]).map(o => `<option value="${o}">${o}</option>`).join('')}
+              </select>
+            </div>`;
+        case 'checkbox':
+          return `
+            <div class="dibo-su-form-group">
+              <label class="dibo-su-label">${cf.name}</label>
+              <div style="display:flex;flex-wrap:wrap;gap:10px;padding:4px 0">
+                ${(cf.options||[]).map(o => `
+                  <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer">
+                    <input type="checkbox" name="custom_${idx}_cb" value="${o}" style="accent-color:#000;width:16px;height:16px"> ${o}
+                  </label>`).join('')}
+              </div>
+            </div>`;
+        case 'file':
+          return `
+            <div class="dibo-su-form-group">
+              <label class="dibo-su-label">${cf.name}</label>
+              <div class="dibo-su-file-wrap" onclick="this.querySelector('input').click()">
+                <input type="file" name="${nameAttr}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="showFileName(this,'cf${idx}FileName')">
+                <div class="dibo-su-file-icon">📎</div>
+                <div class="dibo-su-file-text">${cf.name} 파일을 첨부하세요</div>
+                <div class="dibo-su-file-name" id="cf${idx}FileName"></div>
+              </div>
+            </div>`;
+        default:
+          return '';
+      }
+    }
+
+    function buildTerms(termsContent, termsUse) {
+      let html = `<div class="dibo-su-section-title">약관 동의</div><div class="dibo-su-terms-box">`;
+      const items = [];
+      if (termsUse.service   && termsContent.service)   items.push({ key:'service',   label:'이용약관', content: termsContent.service, required: true });
+      if (termsUse.privacy   && termsContent.privacy)   items.push({ key:'privacy',   label:'개인정보 처리방침', content: termsContent.privacy, required: true });
+      if (termsUse.marketing && termsContent.marketing) items.push({ key:'marketing', label:'마케팅 수신 동의 (선택)', content: termsContent.marketing, required: false });
+
+      if (items.length === 0) return '';
+
+      html += `
+        <div class="dibo-su-terms-all">
+          <input type="checkbox" id="termsAll" onchange="toggleAllTerms(this)">
+          <span>전체 동의</span>
+        </div>`;
+
+      items.forEach(item => {
+        html += `
+          <div class="dibo-su-terms-item">
+            <input type="checkbox" id="term_${item.key}" name="term_${item.key}" class="term-check" onchange="updateTermsAll()">
+            <label class="dibo-su-terms-label" for="term_${item.key}">${item.label}</label>
+            <span class="dibo-su-terms-view" onclick='openTermsModal("${item.label}", ${JSON.stringify(item.content)})'>보기</span>
+          </div>`;
+      });
+
+      html += `</div>`;
+      return html;
+    }
+
+    // ── API 패치 실패 시 폴백: 모든 항목 use:true ──
+
+    // 일반회원 정보 필드 폴백: 상단 DEFAULT_GENERAL_FIELDS 설정값 사용
+    function getDefaultGeneralFields() {
+      return DEFAULT_GENERAL_FIELDS;
+    }
+
+    // 사업자 정보 필드 폴백: 상단 DEFAULT_BUSINESS_FIELDS 설정값 사용
+    function getDefaultBusinessFields() {
+      return DEFAULT_BUSINESS_FIELDS;
+    }
+
+    // 사용자 정의 항목 폴백: 상단 DEFAULT_CUSTOM_FIELDS 설정값 사용
+    function getDefaultCustomFields() {
+      return DEFAULT_CUSTOM_FIELDS;
+    }
+
+    // 약관 폴백 기본 텍스트
+    function getDefaultTermsContent() {
+      return {
+        service:   '이용약관 내용을 여기에 입력하세요.',
+        privacy:   '개인정보 수집 및 이용 내용을 여기에 입력하세요.',
+        marketing: '마케팅 메일 수신 동의 내용을 여기에 입력하세요.',
+      };
+    }
+
+    function initFileInputs() {
+      document.querySelectorAll('.dibo-su-file-wrap').forEach(wrap => {
+        const input = wrap.querySelector('input[type="file"]');
+        if (input) {
+          wrap.addEventListener('click', e => {
+            if (e.target !== input) input.click();
+          });
+        }
+      });
+    }
+
+    // 프로필 이미지 원형 미리보기
+    function previewProfileImage(input) {
+      if (!input.files[0]) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const circle = document.getElementById('profileAvatarCircle');
+        if (circle) circle.innerHTML = `<img src="${e.target.result}" alt="프로필 미리보기">`;
+        const nameEl = document.getElementById('profileAvatarFilename');
+        if (nameEl) {
+          nameEl.textContent = input.files[0].name;
+          nameEl.style.display = 'block';
+        }
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+
+    function showFileName(input, targetId) {
+      const nameEl = targetId
+        ? document.getElementById(targetId)
+        : input.closest('.dibo-su-file-wrap').querySelector('.dibo-su-file-name');
+      if (nameEl && input.files[0]) {
+        nameEl.textContent = input.files[0].name;
+        nameEl.style.display = 'block';
+      }
+    }
+
+    // ── 약관 ─────────────────────────────────────────
+    function toggleAllTerms(allCb) {
+      document.querySelectorAll('.term-check').forEach(cb => { cb.checked = allCb.checked; });
+    }
+
+    function updateTermsAll() {
+      const all  = document.querySelectorAll('.term-check');
+      const done = document.querySelectorAll('.term-check:checked');
+      const allCb = document.getElementById('termsAll');
+      if (allCb) allCb.checked = (all.length === done.length);
+    }
+
+    function openTermsModal(title, content) {
+      document.getElementById('termsModalTitle').textContent = title;
+      document.getElementById('termsModalBody').textContent  = content;
+      document.getElementById('termsModal').classList.add('open');
+    }
+
+    function closeTermsModal() {
+      document.getElementById('termsModal').classList.remove('open');
+    }
+
+    // ── 비밀번호 유효성 ───────────────────────────────
+    function validatePassword(pwd, minLen, policy) {
+      if (pwd.length < minLen) return `비밀번호는 최소 ${minLen}자 이상이어야 합니다.`;
+      if (policy.upper   && !/[A-Z]/.test(pwd)) return '영문 대문자를 포함해야 합니다.';
+      if (policy.number  && !/[0-9]/.test(pwd)) return '숫자를 포함해야 합니다.';
+      if (policy.special && !/[!@#$%^&*()\-_=+\[\]{};:'",.<>?/\\|`~]/.test(pwd)) return '특수문자를 포함해야 합니다.';
+      return null;
+    }
+
+    // ── 회원가입 제출 ─────────────────────────────────
+    async function handleSignup(e) {
+      e.preventDefault();
+      hideSignupError();
+
+      const form = e.target;
+      const data = new FormData(form);
+      const memberType  = data.get('member_type');
+      const loginType   = data.get('login_type_val');
+      const pwMinLen    = parseInt(data.get('pw_min_len'))  || 8;
+      const pwUpper     = data.get('pw_upper')   === 'true';
+      const pwNumber    = data.get('pw_number')  === 'true';
+      const pwSpecial   = data.get('pw_special') === 'true';
+      const termsEnabled = data.get('terms_enabled') === 'true';
+
+      // 유효성 검사
+      const name = data.get('name')?.trim();
+      if (!name) { showSignupError('이름을 입력해주세요.'); return; }
+
+      const loginId = loginType === 'email' ? data.get('email')?.trim() : data.get('user_id')?.trim();
+      if (!loginId) {
+        showSignupError(loginType === 'email' ? '이메일을 입력해주세요.' : '아이디를 입력해주세요.');
+        return;
+      }
+
+      const pwd = data.get('pwd');
+      if (!pwd) { showSignupError('비밀번호를 입력해주세요.'); return; }
+      const pwErr = validatePassword(pwd, pwMinLen, { upper: pwUpper, number: pwNumber, special: pwSpecial });
+      if (pwErr) { showSignupError(pwErr); return; }
+
+      const pwConfirm = data.get('pwd_confirm');
+      if (pwd !== pwConfirm) { showSignupError('비밀번호가 일치하지 않습니다.'); return; }
+
+      // 약관 검사
+      if (termsEnabled) {
+        const serviceChk = document.getElementById('term_service');
+        const privacyChk = document.getElementById('term_privacy');
+        if (serviceChk && !serviceChk.checked) { showSignupError('이용약관에 동의해주세요.'); return; }
+        if (privacyChk && !privacyChk.checked) { showSignupError('개인정보 처리방침에 동의해주세요.'); return; }
+      }
+
+      // req_body 구성
+      const reqBody = {
+        member_type: memberType,
+        group_ids:   [SIGNUP_GROUP_ID],
+        name,
+        pwd,
+      };
+
+      if (loginType === 'email') reqBody.email = loginId;
+      else reqBody.user_id = loginId;
+
+      // 약관
+      if (document.getElementById('term_service'))   reqBody.term_service   = document.getElementById('term_service').checked;
+      if (document.getElementById('term_privacy'))   reqBody.term_privacy   = document.getElementById('term_privacy').checked;
+      if (document.getElementById('term_marketing')) reqBody.term_marketing = document.getElementById('term_marketing').checked;
+
+      // 일반 필드
+      ['gender','phone','address','birth_date','referrer'].forEach(k => {
+        const v = data.get(k === 'birthdate' ? 'birthdate' : k);
+        if (v) reqBody[k === 'birthdate' ? 'birth_date' : k] = v;
+      });
+
+      // 사업자 필드
+      if (memberType === 'business') {
+        ['business_name','business_number','representative','business_phone',
+         'business_address','business_category','business_type','business_manager'].forEach(k => {
+          const v = data.get(k);
+          if (v) reqBody[k] = v;
+        });
+      }
+
+      // 커스텀 필드 (체크박스 처리)
+      for (let i = 1; i <= 5; i++) {
+        const cbVals = [...document.querySelectorAll(`[name="custom_${i}_cb"]:checked`)].map(cb => cb.value);
+        if (cbVals.length > 0) {
+          reqBody[`custom_${i}`] = cbVals.join(',');
+        } else {
+          const v = data.get(`custom_${i}`);
+          if (v) reqBody[`custom_${i}`] = v;
+        }
+      }
+
+      // FormData 구성
+      const formData = new FormData();
+      formData.append('req_body', JSON.stringify(reqBody));
+
+      const fileFields = ['profile_image','business_file','custom_file_1','custom_file_2','custom_file_3','custom_file_4','custom_file_5'];
+      fileFields.forEach(fn => {
+        const file = data.get(fn);
+        if (file && file.size > 0) formData.append(fn, file);
+      });
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = '처리 중...';
+
+      try {
+        const res = await axios.post(
+          'https://api.di-bo.me/member/signup',
+          formData,
+          { headers: { 'access-token': diboToken, 'origin': window.location.origin } }
+        );
+
+        const status = res.data?.status;
+        if (status === 'disapproved') {
+          document.getElementById('completeTitle').textContent = '가입 신청 완료!';
+          document.getElementById('completeMsg').innerHTML = '회원가입 신청이 완료되었습니다.<br>관리자 승인 후 로그인하실 수 있습니다.';
+        }
+        setStep(3);
+
+      } catch (err) {
+        const status  = err.response?.status;
+        const detail  = err.response?.data?.detail || '';
+        if (status === 409) {
+          showSignupError('이미 가입된 이메일입니다.');
+        } else {
+          showSignupError(detail || '회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '가입하기';
+      }
+    }
+
+    function showSignupError(msg) {
+      const el = document.getElementById('signupError');
+      el.textContent = msg;
+      el.classList.add('show');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function hideSignupError() {
+      document.getElementById('signupError').classList.remove('show');
+    }
+
+    // 이미 로그인 상태라면 마이페이지로
+    if (localStorage.getItem('dibo_member_token')) {
+      window.location.href = 'my-page.html';
+    }
+  </script>
+</body>
+</html>

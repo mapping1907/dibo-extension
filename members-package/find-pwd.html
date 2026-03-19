@@ -1,0 +1,678 @@
+<!--
+=======================================================
+  비밀번호 찾기 / 재설정 페이지 - 사용 가이드
+=======================================================
+
+【동작 방식】
+  Step 1. 이메일 입력 → 인증 코드 발송
+  Step 2. 6자리 인증 코드 확인
+  Step 3. 새 비밀번호 입력 → 비밀번호 재설정
+
+【사용 전 필수 설정】
+  - diboToken : 익스텐션 전역 변수로 자동 주입 (별도 선언 불필요)
+
+=======================================================
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>비밀번호 찾기</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .dibo-fp-wrap {
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .dibo-fp-logo {
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: #000;
+    }
+
+    .dibo-fp-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.08);
+    }
+
+    /* Header */
+    .dibo-fp-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #888;
+      text-decoration: none;
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+      transition: color 0.2s;
+    }
+
+    .dibo-fp-back:hover { color: #000; }
+
+    .dibo-fp-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #000;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .dibo-fp-desc {
+      font-size: 14px;
+      color: #888;
+      line-height: 1.6;
+      letter-spacing: -0.01em;
+      margin-bottom: 28px;
+    }
+
+    /* Steps */
+    .dibo-fp-steps {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 28px;
+    }
+
+    .dibo-fp-step-bar {
+      flex: 1;
+      height: 3px;
+      border-radius: 2px;
+      background: #eee;
+      transition: background 0.3s;
+    }
+
+    .dibo-fp-step-bar.active { background: #000; }
+
+    /* Step label */
+    .dibo-fp-step-label {
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-fp-step-label strong {
+      color: #000;
+      font-weight: 700;
+    }
+
+    /* Form group */
+    .dibo-fp-form-group {
+      margin-bottom: 16px;
+    }
+
+    .dibo-fp-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 7px;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-fp-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dibo-fp-input {
+      flex: 1;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-family: 'Noto Sans KR', sans-serif;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.2s;
+      color: #111;
+      letter-spacing: -0.01em;
+      background: #fff;
+      width: 100%;
+    }
+
+    .dibo-fp-input:focus { border-color: #000; }
+    .dibo-fp-input::placeholder { color: #bbb; font-weight: 400; }
+    .dibo-fp-input:disabled { background: #f9f9f9; color: #aaa; }
+
+    .dibo-fp-input-full {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-family: 'Noto Sans KR', sans-serif;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.2s;
+      color: #111;
+      letter-spacing: -0.01em;
+      background: #fff;
+    }
+
+    .dibo-fp-input-full:focus { border-color: #000; }
+    .dibo-fp-input-full::placeholder { color: #bbb; font-weight: 400; }
+
+    .dibo-fp-inline-btn {
+      padding: 0 18px;
+      background: #000;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Noto Sans KR', sans-serif;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+      letter-spacing: -0.01em;
+      flex-shrink: 0;
+    }
+
+    .dibo-fp-inline-btn:hover { opacity: 0.82; }
+    .dibo-fp-inline-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Timer */
+    .dibo-fp-timer {
+      font-size: 12px;
+      color: #e53935;
+      margin-top: 6px;
+      letter-spacing: -0.01em;
+      display: none;
+    }
+
+    .dibo-fp-timer.show { display: block; }
+
+    /* Password strength */
+    .dibo-fp-pw-strength {
+      margin-top: 8px;
+      display: none;
+    }
+
+    .dibo-fp-pw-strength.show { display: block; }
+
+    .dibo-fp-strength-bars {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+
+    .dibo-fp-strength-bar {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: #eee;
+      transition: background 0.3s;
+    }
+
+    .dibo-fp-strength-text {
+      font-size: 12px;
+      color: #aaa;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-fp-pw-hint {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    /* Alert */
+    .dibo-fp-alert {
+      padding: 13px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: none;
+      letter-spacing: -0.01em;
+      line-height: 1.5;
+    }
+
+    .dibo-fp-alert.error {
+      background: #fff5f5;
+      border: 1px solid #ffcdd2;
+      color: #c62828;
+    }
+
+    .dibo-fp-alert.success {
+      background: #f1f8e9;
+      border: 1px solid #c5e1a5;
+      color: #2e7d32;
+    }
+
+    .dibo-fp-alert.show { display: block; }
+
+    /* Button */
+    .dibo-fp-btn {
+      width: 100%;
+      padding: 16px;
+      background: #000;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: 'Noto Sans KR', sans-serif;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      letter-spacing: -0.01em;
+      margin-top: 8px;
+    }
+
+    .dibo-fp-btn:hover { opacity: 0.82; }
+    .dibo-fp-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Complete */
+    .dibo-fp-complete {
+      display: none;
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .dibo-fp-complete.show { display: block; }
+
+    .dibo-fp-complete-icon {
+      width: 72px;
+      height: 72px;
+      background: #000;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+    }
+
+    .dibo-fp-complete h3 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .dibo-fp-complete p {
+      font-size: 14px;
+      color: #888;
+      line-height: 1.6;
+      letter-spacing: -0.01em;
+      margin-bottom: 28px;
+    }
+
+    /* Bottom links */
+    .dibo-fp-links {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 24px;
+    }
+
+    .dibo-fp-link {
+      font-size: 13px;
+      color: #888;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+      padding: 2px 4px;
+      transition: color 0.2s;
+    }
+
+    .dibo-fp-link:hover { color: #000; }
+    .dibo-fp-link-sep { font-size: 12px; color: #ddd; }
+
+    @media (max-width: 480px) {
+      .dibo-fp-card { padding: 32px 20px; }
+      .dibo-fp-title { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dibo-fp-wrap">
+    <div class="dibo-fp-logo">DIBO</div>
+
+    <div class="dibo-fp-card">
+      <a href="log-in.html" class="dibo-fp-back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        로그인으로 돌아가기
+      </a>
+
+      <h1 class="dibo-fp-title" id="pageTitle">비밀번호 찾기</h1>
+      <p class="dibo-fp-desc" id="pageDesc">가입 시 등록한 이메일로 인증 후<br>비밀번호를 재설정할 수 있습니다.</p>
+
+      <!-- 진행 바 -->
+      <div class="dibo-fp-steps">
+        <div class="dibo-fp-step-bar active" id="bar1"></div>
+        <div class="dibo-fp-step-bar" id="bar2"></div>
+        <div class="dibo-fp-step-bar" id="bar3"></div>
+      </div>
+
+      <!-- 알림 -->
+      <div class="dibo-fp-alert error"   id="alertError"></div>
+      <div class="dibo-fp-alert success" id="alertSuccess"></div>
+
+      <!-- Step 1: 이메일 입력 -->
+      <div id="stepEmail">
+        <div class="dibo-fp-step-label"><strong>1단계</strong> / 이메일 인증</div>
+        <div class="dibo-fp-form-group">
+          <label class="dibo-fp-label">이메일</label>
+          <div class="dibo-fp-input-row">
+            <input type="email" class="dibo-fp-input" id="inputEmail" placeholder="가입 시 등록한 이메일">
+            <button class="dibo-fp-inline-btn" id="sendBtn" onclick="sendCode()">인증코드 발송</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: 인증 코드 확인 -->
+      <div id="stepCode" style="display:none">
+        <div class="dibo-fp-step-label"><strong>2단계</strong> / 인증 코드 확인</div>
+        <div class="dibo-fp-form-group">
+          <label class="dibo-fp-label">이메일</label>
+          <input type="email" class="dibo-fp-input-full" id="confirmedEmail" disabled>
+        </div>
+        <div class="dibo-fp-form-group">
+          <label class="dibo-fp-label">인증 코드</label>
+          <div class="dibo-fp-input-row">
+            <input type="text" class="dibo-fp-input" id="inputCode" placeholder="6자리 코드 입력" maxlength="6" inputmode="numeric">
+            <button class="dibo-fp-inline-btn" id="resendBtn" onclick="resendCode()">재발송</button>
+          </div>
+          <div class="dibo-fp-timer" id="timerDisplay"></div>
+        </div>
+        <button class="dibo-fp-btn" id="verifyBtn" onclick="verifyCode()">다음</button>
+      </div>
+
+      <!-- Step 3: 새 비밀번호 입력 -->
+      <div id="stepNewPwd" style="display:none">
+        <div class="dibo-fp-step-label"><strong>3단계</strong> / 새 비밀번호 설정</div>
+        <div class="dibo-fp-form-group">
+          <label class="dibo-fp-label">새 비밀번호</label>
+          <input type="password" class="dibo-fp-input-full" id="inputNewPwd"
+            placeholder="새 비밀번호를 입력하세요"
+            oninput="checkPwStrength(this.value)"
+            autocomplete="new-password">
+          <div class="dibo-fp-pw-hint" id="pwHintText">8자 이상, 영문 대문자, 숫자 포함</div>
+          <div class="dibo-fp-pw-strength" id="pwStrength">
+            <div class="dibo-fp-strength-bars">
+              <div class="dibo-fp-strength-bar" id="sbar1"></div>
+              <div class="dibo-fp-strength-bar" id="sbar2"></div>
+              <div class="dibo-fp-strength-bar" id="sbar3"></div>
+              <div class="dibo-fp-strength-bar" id="sbar4"></div>
+            </div>
+            <div class="dibo-fp-strength-text" id="strengthText"></div>
+          </div>
+        </div>
+        <div class="dibo-fp-form-group">
+          <label class="dibo-fp-label">새 비밀번호 확인</label>
+          <input type="password" class="dibo-fp-input-full" id="inputConfirmPwd"
+            placeholder="비밀번호를 한 번 더 입력하세요"
+            autocomplete="new-password">
+        </div>
+        <button class="dibo-fp-btn" id="resetBtn" onclick="resetPassword()">비밀번호 재설정</button>
+      </div>
+
+      <!-- 완료 -->
+      <div class="dibo-fp-complete" id="stepComplete">
+        <div class="dibo-fp-complete-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <h3>비밀번호 재설정 완료!</h3>
+        <p>비밀번호가 성공적으로 변경되었습니다.<br>새 비밀번호로 로그인해주세요.</p>
+        <a href="log-in.html" class="dibo-fp-btn" style="display:block;text-decoration:none;text-align:center">로그인하러 가기</a>
+      </div>
+
+      <!-- 하단 링크 -->
+      <div class="dibo-fp-links" id="bottomLinks">
+        <a href="log-in.html" class="dibo-fp-link">로그인</a>
+        <span class="dibo-fp-link-sep">|</span>
+        <a href="sign-up.html" class="dibo-fp-link">회원가입</a>
+        <span class="dibo-fp-link-sep">|</span>
+        <a href="find-id.html" class="dibo-fp-link">아이디 찾기</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let timerInterval = null;
+    let currentEmail  = '';
+    let verifiedToken = '';
+
+    // ── Step 1: 인증코드 발송 ─────────────────────────
+    async function sendCode() {
+      const email = document.getElementById('inputEmail').value.trim();
+      if (!email) { showError('이메일을 입력해주세요.'); return; }
+      if (!isValidEmail(email)) { showError('올바른 이메일 형식을 입력해주세요.'); return; }
+
+      const btn = document.getElementById('sendBtn');
+      btn.disabled = true;
+      btn.textContent = '발송 중...';
+      clearAlert();
+
+      try {
+        await axios.post(
+          'https://api.di-bo.me/member/email-send',
+          { email },
+          { headers: { 'access-token': diboToken } }
+        );
+
+        currentEmail = email;
+        document.getElementById('confirmedEmail').value = email;
+
+        // Step 2로 이동
+        document.getElementById('stepEmail').style.display = 'none';
+        document.getElementById('stepCode').style.display  = '';
+        document.getElementById('bar2').classList.add('active');
+
+        updateTitle('비밀번호 찾기', '이메일로 발송된 6자리 인증 코드를<br>입력해주세요.');
+        showSuccess('인증 코드가 발송되었습니다. 이메일을 확인해주세요.');
+        startTimer(180);
+
+      } catch (err) {
+        if (err.response?.status === 404) {
+          showError('등록되지 않은 이메일입니다.');
+        } else {
+          showError('인증 코드 발송에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        }
+        btn.disabled = false;
+        btn.textContent = '인증코드 발송';
+      }
+    }
+
+    // ── 재발송 ────────────────────────────────────────
+    async function resendCode() {
+      const btn = document.getElementById('resendBtn');
+      btn.disabled = true;
+      clearAlert();
+
+      try {
+        await axios.post(
+          'https://api.di-bo.me/member/email-send',
+          { email: currentEmail },
+          { headers: { 'access-token': diboToken } }
+        );
+        showSuccess('인증 코드를 재발송했습니다.');
+        startTimer(180);
+      } catch (err) {
+        showError('재발송에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // ── Step 2: 인증코드 확인 ─────────────────────────
+    async function verifyCode() {
+      const code = document.getElementById('inputCode').value.trim();
+      if (!code) { showError('인증 코드를 입력해주세요.'); return; }
+      if (code.length !== 6) { showError('6자리 코드를 입력해주세요.'); return; }
+
+      const btn = document.getElementById('verifyBtn');
+      btn.disabled = true;
+      btn.textContent = '확인 중...';
+      clearAlert();
+
+      try {
+        await axios.post(
+          'https://api.di-bo.me/member/email-verify',
+          { email: currentEmail, token: code },
+          { headers: { 'access-token': diboToken } }
+        );
+
+        verifiedToken = code; // 비밀번호 재설정 시 사용
+        if (timerInterval) clearInterval(timerInterval);
+        document.getElementById('timerDisplay').classList.remove('show');
+
+        // Step 3으로 이동
+        document.getElementById('stepCode').style.display    = 'none';
+        document.getElementById('stepNewPwd').style.display  = '';
+        document.getElementById('bar3').classList.add('active');
+        document.getElementById('pwStrength').classList.add('show');
+
+        updateTitle('새 비밀번호 설정', '새로운 비밀번호를 입력해주세요.');
+        clearAlert();
+
+      } catch (err) {
+        showError('인증 코드가 올바르지 않습니다. 다시 확인해주세요.');
+        btn.disabled = false;
+        btn.textContent = '다음';
+      }
+    }
+
+    // ── Step 3: 비밀번호 재설정 ───────────────────────
+    async function resetPassword() {
+      const newPwd     = document.getElementById('inputNewPwd').value;
+      const confirmPwd = document.getElementById('inputConfirmPwd').value;
+
+      if (!newPwd) { showError('새 비밀번호를 입력해주세요.'); return; }
+      if (newPwd.length < 8) { showError('비밀번호는 8자 이상이어야 합니다.'); return; }
+      if (newPwd !== confirmPwd) { showError('비밀번호가 일치하지 않습니다.'); return; }
+
+      const btn = document.getElementById('resetBtn');
+      btn.disabled = true;
+      btn.textContent = '변경 중...';
+      clearAlert();
+
+      try {
+        await axios.put(
+          'https://api.di-bo.me/member/update-password',
+          {
+            login_id: currentEmail,
+            pwd: newPwd,
+            token: verifiedToken
+          },
+          { headers: { 'access-token': diboToken } }
+        );
+
+        // 완료 화면
+        document.getElementById('stepNewPwd').style.display = 'none';
+        document.getElementById('stepComplete').classList.add('show');
+        document.getElementById('bottomLinks').style.display = 'none';
+        updateTitle('완료!', '');
+
+      } catch (err) {
+        const detail = err.response?.data?.detail || '';
+        showError(detail || '비밀번호 변경에 실패했습니다. 다시 시도해주세요.');
+        btn.disabled = false;
+        btn.textContent = '비밀번호 재설정';
+      }
+    }
+
+    // ── 비밀번호 강도 체크 ────────────────────────────
+    function checkPwStrength(pwd) {
+      let score = 0;
+      if (pwd.length >= 8)  score++;
+      if (pwd.length >= 12) score++;
+      if (/[A-Z]/.test(pwd) && /[0-9]/.test(pwd)) score++;
+      if (/[!@#$%^&*]/.test(pwd)) score++;
+
+      const colors  = ['#e53935','#fb8c00','#43a047','#1565c0'];
+      const labels  = ['매우 약함','약함','보통','강함'];
+      const barEls  = [1,2,3,4].map(i => document.getElementById(`sbar${i}`));
+
+      barEls.forEach((bar, i) => {
+        bar.style.background = i < score ? colors[score - 1] : '#eee';
+      });
+
+      document.getElementById('strengthText').textContent = score > 0 ? labels[score - 1] : '';
+      document.getElementById('strengthText').style.color = colors[score - 1] || '#aaa';
+    }
+
+    // ── 타이머 ────────────────────────────────────────
+    function startTimer(seconds) {
+      if (timerInterval) clearInterval(timerInterval);
+      const display = document.getElementById('timerDisplay');
+      display.classList.add('show');
+      let remain = seconds;
+
+      function tick() {
+        const m = String(Math.floor(remain / 60)).padStart(2,'0');
+        const s = String(remain % 60).padStart(2,'0');
+        display.textContent = `인증 코드 유효 시간: ${m}:${s}`;
+        if (remain <= 0) {
+          clearInterval(timerInterval);
+          display.textContent = '인증 코드가 만료되었습니다. 재발송해주세요.';
+        }
+        remain--;
+      }
+
+      tick();
+      timerInterval = setInterval(tick, 1000);
+    }
+
+    // ── 유틸 ──────────────────────────────────────────
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function updateTitle(title, desc) {
+      document.getElementById('pageTitle').textContent   = title;
+      document.getElementById('pageDesc').innerHTML      = desc;
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('alertError');
+      el.textContent = msg;
+      el.classList.add('show');
+      document.getElementById('alertSuccess').classList.remove('show');
+    }
+
+    function showSuccess(msg) {
+      const el = document.getElementById('alertSuccess');
+      el.textContent = msg;
+      el.classList.add('show');
+      document.getElementById('alertError').classList.remove('show');
+    }
+
+    function clearAlert() {
+      document.getElementById('alertError').classList.remove('show');
+      document.getElementById('alertSuccess').classList.remove('show');
+    }
+
+    // Enter 키 지원
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      if (document.getElementById('stepEmail').style.display !== 'none') sendCode();
+      else if (document.getElementById('stepCode').style.display !== 'none') verifyCode();
+      else if (document.getElementById('stepNewPwd').style.display !== 'none') resetPassword();
+    });
+  </script>
+</body>
+</html>

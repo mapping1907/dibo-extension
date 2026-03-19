@@ -1,0 +1,535 @@
+<!--
+=======================================================
+  요금제 카드 페이지 - 사용 가이드
+=======================================================
+
+【페이지 개요】
+  최대 3개의 요금제 플랜을 카드 형태로 보여주는 페이지입니다.
+  각 카드에는 플랜명, 가격, 설명, 기능 목록, 신청 버튼이 포함됩니다.
+  API 연동 전에는 plansData 배열의 로컬 데이터가 표시됩니다.
+
+【사용 전 필수 설정】
+  아래 항목들을 수정하여 서비스에 맞게 커스터마이징하세요.
+
+  1. 페이지 제목 / 설명 수정
+     → <body> 내 h1, p 태그 텍스트 직접 수정
+
+  2. 요금제 기본 데이터 수정 (API 연동 전 임시 데이터)
+     → plansData 배열 내 각 플랜 항목 수정
+     → 각 항목 필드 설명:
+        id              : 플랜 고유 ID (영문, 예: 'starter')
+        badge           : 카드 상단 작은 레이블 (예: '개인용', '가장 인기있는')
+        name            : 플랜 이름 (예: '스타터 플랜')
+        price           : 월 가격 (숫자, 단위: 원)
+        description     : 플랜 설명 문구
+        url             : "시작하기" 버튼 클릭 시 이동할 URL
+        popular         : true 설정 시 가운데 카드를 검정 배경(강조)으로 표시
+        features        : 포함된 기능 목록 (배열)
+        disabledFeatures: 미포함 기능 목록 (배열, 흐리게 표시)
+
+  3. API 연동 설정 (JavaScript 영역)
+     → config_id   : 디보(dibo) 설정 ID로 교체
+     → diboToken   : 익스텐션 전역 변수로 자동 주입 (별도 선언 불필요)
+
+  4. 데이터셋 컬럼 구성 (디보 대시보드 기준)
+     → column_1: id (플랜 고유 ID)
+     → column_2: badge (레이블)
+     → column_3: name (플랜명)
+     → column_4: price (가격, 숫자)
+     → column_5: description (설명)
+     → column_6: url (버튼 링크)
+     → column_7: features (기능 목록, 쉼표로 구분)
+     → column_8: disabledFeatures (미포함 기능, 쉼표로 구분)
+     → column_9: popular ('true' 입력 시 강조 카드 적용)
+
+=======================================================
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- [수정 가능] 브라우저 탭에 표시되는 페이지 제목 -->
+    <title>요금제 - DIBO</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&family=Roboto:wght@600;700;800;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #ffffff;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+
+        .dibo-plan-container {
+            max-width: 1200px;
+            margin: 80PX auto;
+        }
+
+        /* Header */
+        .dibo-plan-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .dibo-plan-header h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: #000;
+            letter-spacing: -0.02em;
+        }
+
+        .dibo-plan-header p {
+            font-size: 18px;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+            font-weight: 400;
+            letter-spacing: -0.01em;
+        }
+
+        /* Pricing Grid */
+        .dibo-plan-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .dibo-plan-card {
+            border: 1px solid #e0e0e0;
+            padding: 48px 40px;
+            position: relative;
+            transition: transform 0.3s, box-shadow 0.3s;
+            background: #fff;
+            color: #000;
+        }
+
+        .dibo-plan-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            z-index: 1;
+        }
+
+        /* Middle card (Popular) */
+        .dibo-plan-card.popular {
+            background: #000;
+            color: #fff;
+            border-color: #000;
+            z-index: 2;
+        }
+
+        .dibo-plan-card.popular:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+        }
+
+        .dibo-plan-badge {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+            color: #999;
+        }
+
+        .dibo-plan-card.popular .dibo-plan-badge {
+            color: #fff;
+        }
+
+        .dibo-plan-name {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -0.01em;
+        }
+
+        .dibo-plan-price {
+            font-family: 'Roboto', sans-serif;
+            font-size: 56px;
+            font-weight: 900;
+            margin-bottom: 8px;
+            line-height: 1;
+        }
+
+        .dibo-plan-price-currency {
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .dibo-plan-price-period {
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 18px;
+            color: #999;
+            font-weight: 500;
+        }
+
+        .dibo-plan-card.popular .dibo-plan-price-period {
+            color: #888;
+        }
+
+        .dibo-plan-description {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 32px;
+            min-height: 42px;
+            letter-spacing: -0.01em;
+            font-weight: 400;
+        }
+
+        .dibo-plan-card.popular .dibo-plan-description {
+            color: #aaa;
+        }
+
+        /* Button */
+        .dibo-plan-button {
+            width: 100%;
+            padding: 16px;
+            font-size: 15px;
+            font-weight: 700;
+            border: 2px solid #000;
+            background: #fff;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: -0.01em;
+        }
+
+        .dibo-plan-button:hover {
+            background: #000;
+            color: #fff;
+        }
+
+        .dibo-plan-card.popular .dibo-plan-button {
+            background: #fff;
+            border-color: #fff;
+            color: #000;
+        }
+
+        .dibo-plan-card.popular .dibo-plan-button:hover {
+            background: transparent;
+            color: #fff;
+        }
+
+        /* Features */
+        .dibo-plan-features-list {
+            list-style: none;
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .dibo-plan-card.popular .dibo-plan-features-list {
+            border-top-color: #333;
+        }
+
+        .dibo-plan-feature-item {
+            padding: 12px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 14px;
+            letter-spacing: -0.01em;
+        }
+
+        .dibo-plan-check-mark {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #fff;
+            margin-top: 2px;
+        }
+
+        .dibo-plan-card.popular .dibo-plan-check-mark {
+            background: #fff;
+            color: #000;
+        }
+
+        .dibo-plan-feature-item.disabled {
+            opacity: 0.3;
+        }
+
+        .dibo-plan-feature-item.disabled .dibo-plan-check-mark {
+            background: #e0e0e0;
+        }
+
+        .dibo-plan-card.popular .dibo-plan-feature-item.disabled .dibo-plan-check-mark {
+            background: #333;
+        }
+
+        /* API Comment */
+        .dibo-plan-api-comment {
+            margin-top: 60px;
+            padding: 24px;
+            background: #f8f8f8;
+            border-left: 4px solid #000;
+            font-size: 13px;
+            color: #666;
+            font-family: 'Courier New', monospace;
+            letter-spacing: -0.01em;
+        }
+
+        .dibo-plan-api-comment strong {
+            color: #000;
+            display: block;
+            margin-bottom: 8px;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        @media (max-width: 968px) {
+            .dibo-plan-grid {
+                grid-template-columns: 1fr;
+                padding: 0 20px;
+            }
+
+            .dibo-plan-card.popular {
+                border: 2px solid #000;
+            }
+
+            .dibo-plan-header h1 {
+                font-size: 36px;
+            }
+
+            .dibo-plan-header p {
+                font-size: 16px;
+            }
+
+            .dibo-plan-card {
+                padding: 40px 32px;
+            }
+
+            .dibo-plan-price {
+                font-size: 48px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dibo-plan-header h1 {
+                font-size: 26px;
+            }
+
+            .dibo-plan-header p {
+                font-size: 12px;
+            }
+
+            .dibo-plan-card {
+                padding: 32px 24px;
+            }
+
+            .dibo-plan-name {
+                font-size: 24px;
+            }
+
+            .dibo-plan-price {
+                font-size: 40px;
+            }
+
+            .dibo-plan-price-currency {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dibo-plan-container">
+        <div class="dibo-plan-header">
+            <!-- [수정 가능] 섹션 메인 제목 -->
+            <h1>모든 예산에 맞는 합리적인 요금제</h1>
+            <!-- [수정 가능] 섹션 설명 문구 -->
+            <p>귀하의 고유한 요구사항을 충족하는 탁월한 가치와 유연성을 제공하는<br/>
+            다양한 가격 옵션을 살펴보세요.</p>
+        </div>
+
+        <div class="dibo-plan-grid" id="pricingGrid">
+            <!-- Plans will be rendered here -->
+        </div>
+    </div>
+
+    <script>
+        // ★ [수정 가능] 요금제 기본 데이터 (API 연동 전 화면에 표시될 임시 데이터)
+        // API 연동이 완료되면 아래 데이터는 자동으로 디보 데이터셋 내용으로 대체됩니다.
+        // popular: true → 해당 카드가 검정 배경 강조 스타일로 표시됩니다 (중앙 추천 플랜용)
+        let plansData = [
+            {
+                id: 'starter',          // 플랜 고유 ID (영문)
+                badge: '개인용',         // 카드 상단 레이블
+                name: '스타터 플랜',     // 플랜 이름
+                price: 50000,           // 월 가격 (원, 숫자만 입력)
+                description: '소규모 팀, 스타트업 및 성장하는 비즈니스에 적합', // 플랜 설명
+                url: 'https://di-bo.me', // "시작하기" 버튼 이동 URL
+                features: [             // 포함된 기능 목록
+                    '기본 재무 분석 도구',
+                    '최대 3명의 사용자 계정',
+                    '실시간 환율 모니터링',
+                    '월간 재무 보고서',
+                    '이메일 지원'
+                ],
+                disabledFeatures: [     // 미포함 기능 목록 (흐리게 표시)
+                    '우선 지원',
+                    'API 접근'
+                ]
+            },
+            {
+                id: 'professional',
+                badge: '가장 인기있는',
+                name: '프로페셔널',
+                price: 80000,
+                description: '소규모 팀, 스타트업 및 성장하는 비즈니스에 적합',
+                url: 'https://di-bo.me',
+                popular: true,          // true: 검정 배경 강조 카드로 표시
+                features: [
+                    '고급 재무 분석 도구',
+                    '최대 10명의 사용자 계정',
+                    '실시간 환율 모니터링',
+                    '주간 재무 보고서',
+                    '우선 지원',
+                    'API 접근'
+                ],
+                disabledFeatures: [
+                    '맞춤형 통합'
+                ]
+            },
+            {
+                id: 'enterprise',
+                badge: '대규모 팀용',
+                name: '엔터프라이즈',
+                price: 180000,
+                description: '소규모 팀, 스타트업 및 성장하는 비즈니스에 적합',
+                url: 'https://di-bo.me',
+                features: [
+                    '전체 재무 분석 제품군',
+                    '무제한 사용자 계정',
+                    '실시간 환율 모니터링',
+                    '일일 재무 보고서',
+                    '24/7 전담 지원',
+                    '전체 API 접근',
+                    '맞춤형 통합'
+                ],
+                disabledFeatures: []
+            }
+        ];
+
+        // 가격 카드 렌더링
+        function renderPricingPlans() {
+            const grid = document.getElementById('pricingGrid');
+            
+            grid.innerHTML = plansData.map(plan => `
+                <div class="dibo-plan-card ${plan.popular ? 'popular' : ''}">
+                    <div class="dibo-plan-badge">${plan.badge}</div>
+                    <div class="dibo-plan-name">${plan.name}</div>
+                    <div class="dibo-plan-price">
+                        <span class="dibo-plan-price-currency">₩</span>${plan.price.toLocaleString()}
+                        <span class="dibo-plan-price-period">/월</span>
+                    </div>
+                    <div class="dibo-plan-description">${plan.description}</div>
+                    <button class="dibo-plan-button" onclick="window.location.href='${plan.url}'">시작하기</button>
+                    <ul class="dibo-plan-features-list">
+                        ${plan.features.map(feature => `
+                            <li class="dibo-plan-feature-item">
+                                <div class="dibo-plan-check-mark">✓</div>
+                                <span>${feature}</span>
+                            </li>
+                        `).join('')}
+                        ${plan.disabledFeatures.map(feature => `
+                            <li class="dibo-plan-feature-item disabled">
+                                <div class="dibo-plan-check-mark">✓</div>
+                                <span>${feature}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `).join('');
+        }
+
+        // 1단계: config_id로 데이터셋 ID 조회
+        const fetchIdData = async () => {
+            try {
+            const res = await axios.get(
+                `https://api.di-bo.me/edit-set?config_id=copy_config_id`,
+                { headers: { 'access-token': diboToken } }
+            );
+
+            if (res.data && res.data.length > 0) {
+                globalplansId = res.data[0].id;
+                await fetchPlanData();
+            }
+            } catch (error) {
+            console.error('ID 로드 실패:', error);
+            }
+        };
+
+
+        // 2단계: 요금제 데이터 조회 및 화면 렌더링
+        // 컬럼 매핑 (디보 데이터셋 컬럼 순서와 일치해야 합니다):
+        //   column_1 → id (플랜 고유 ID)
+        //   column_2 → badge (카드 상단 레이블)
+        //   column_3 → name (플랜명)
+        //   column_4 → price (가격, 숫자)
+        //   column_5 → description (설명)
+        //   column_6 → url (버튼 이동 URL)
+        //   column_7 → features (포함 기능, 쉼표로 구분하여 입력)
+        //   column_8 → disabledFeatures (미포함 기능, 쉼표로 구분하여 입력)
+        //   column_9 → popular ('true' 문자 포함 시 강조 카드 적용)
+        const fetchPlanData = async () => {
+		if (!globalplansId) return;
+
+		try {
+		  const res = await axios.get(
+			`https://api.di-bo.me/edit-set/${globalplansId}/rows?config_id=copy_config_id`,
+			{ headers: { 'access-token': diboToken } }
+		  );
+
+		  const instData = res.data || [];
+
+		  // comparisonData 초기화
+		  plansData = [];
+
+		  // 순서대로 데이터 추가
+		  for (let i = 0; i < instData.length; i++) {
+			plansData.push({
+			    id: instData[i].column_1 || '',
+                badge: instData[i].column_2 || '',
+                name: instData[i].column_3 || '',
+                price: Number(instData[i].column_4) || 0,
+                description: instData[i].column_5 || '',
+                url: instData[i].column_6 || 'https://di-bo.me',
+                popular: String(instData[i].column_9).toLowerCase().includes('true'),
+                features: instData[i].column_7
+                ? instData[i].column_7.split(',').map(v => v.trim())
+                : [],
+                disabledFeatures: instData[i].column_8
+                ? instData[i].column_8.split(',').map(v => v.trim())
+                : []
+			});
+		  }
+          renderPricingPlans();
+
+		} catch (error) {
+		  console.error('데이터 로드 실패:', error);
+		}
+	  };
+
+
+      // 초기 로딩 표시
+	  renderPricingPlans();
+
+	  // 최초 실행
+	  fetchIdData();
+    </script>
+</body>
+</html>

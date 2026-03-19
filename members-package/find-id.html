@@ -1,0 +1,577 @@
+<!--
+=======================================================
+  아이디 찾기 페이지 - 사용 가이드
+=======================================================
+
+【동작 방식】
+  1. 가입 시 등록한 이메일을 입력합니다.
+  2. 해당 이메일로 인증 코드를 발송합니다.
+  3. 인증 코드 확인 후 등록된 아이디(이메일)를 표시합니다.
+  ※ ID 로그인 타입인 경우 별도 백엔드 API 연동이 필요할 수 있습니다.
+
+【사용 전 필수 설정】
+  - diboToken : 익스텐션 전역 변수로 자동 주입 (별도 선언 불필요)
+
+=======================================================
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>아이디 찾기</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .dibo-fi-wrap {
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .dibo-fi-logo {
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: #000;
+    }
+
+    .dibo-fi-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.08);
+    }
+
+    /* Header */
+    .dibo-fi-header {
+      margin-bottom: 32px;
+    }
+
+    .dibo-fi-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #888;
+      text-decoration: none;
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+      transition: color 0.2s;
+    }
+
+    .dibo-fi-back:hover { color: #000; }
+
+    .dibo-fi-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #000;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .dibo-fi-desc {
+      font-size: 14px;
+      color: #888;
+      line-height: 1.6;
+      letter-spacing: -0.01em;
+    }
+
+    /* Steps progress */
+    .dibo-fi-steps {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 28px;
+    }
+
+    .dibo-fi-step-bar {
+      flex: 1;
+      height: 3px;
+      border-radius: 2px;
+      background: #eee;
+      transition: background 0.3s;
+    }
+
+    .dibo-fi-step-bar.active { background: #000; }
+
+    /* Form group */
+    .dibo-fi-form-group {
+      margin-bottom: 16px;
+    }
+
+    .dibo-fi-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 7px;
+      letter-spacing: -0.01em;
+    }
+
+    /* Input with button */
+    .dibo-fi-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dibo-fi-input {
+      flex: 1;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-family: 'Noto Sans KR', sans-serif;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.2s;
+      color: #111;
+      letter-spacing: -0.01em;
+      background: #fff;
+    }
+
+    .dibo-fi-input:focus { border-color: #000; }
+    .dibo-fi-input::placeholder { color: #bbb; font-weight: 400; }
+    .dibo-fi-input:disabled { background: #f9f9f9; color: #aaa; }
+
+    .dibo-fi-inline-btn {
+      padding: 0 18px;
+      background: #000;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Noto Sans KR', sans-serif;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-fi-inline-btn:hover { opacity: 0.82; }
+    .dibo-fi-inline-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Timer */
+    .dibo-fi-timer {
+      font-size: 12px;
+      color: #e53935;
+      margin-top: 6px;
+      letter-spacing: -0.01em;
+      display: none;
+    }
+
+    .dibo-fi-timer.show { display: block; }
+
+    /* Alert */
+    .dibo-fi-alert {
+      padding: 13px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: none;
+      letter-spacing: -0.01em;
+      line-height: 1.5;
+    }
+
+    .dibo-fi-alert.error {
+      background: #fff5f5;
+      border: 1px solid #ffcdd2;
+      color: #c62828;
+    }
+
+    .dibo-fi-alert.success {
+      background: #f1f8e9;
+      border: 1px solid #c5e1a5;
+      color: #2e7d32;
+    }
+
+    .dibo-fi-alert.show { display: block; }
+
+    /* Primary button */
+    .dibo-fi-btn {
+      width: 100%;
+      padding: 16px;
+      background: #000;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: 'Noto Sans KR', sans-serif;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      letter-spacing: -0.01em;
+      margin-top: 8px;
+    }
+
+    .dibo-fi-btn:hover { opacity: 0.82; }
+    .dibo-fi-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Result box */
+    .dibo-fi-result {
+      display: none;
+      text-align: center;
+      padding: 12px 0;
+    }
+
+    .dibo-fi-result.show { display: block; }
+
+    .dibo-fi-result-icon {
+      width: 64px;
+      height: 64px;
+      background: #f5f5f5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .dibo-fi-result h3 {
+      font-size: 15px;
+      color: #888;
+      font-weight: 500;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-fi-result-id {
+      font-size: 20px;
+      font-weight: 700;
+      color: #000;
+      letter-spacing: -0.01em;
+      background: #f5f5f5;
+      padding: 14px 20px;
+      border-radius: 10px;
+      margin-bottom: 28px;
+      word-break: break-all;
+    }
+
+    .dibo-fi-result-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .dibo-fi-result-btn {
+      flex: 1;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Noto Sans KR', sans-serif;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: -0.01em;
+      text-decoration: none;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dibo-fi-result-btn.primary {
+      background: #000;
+      color: #fff;
+      border: none;
+    }
+
+    .dibo-fi-result-btn.primary:hover { opacity: 0.82; }
+
+    .dibo-fi-result-btn.outline {
+      background: #fff;
+      color: #333;
+      border: 1.5px solid #ddd;
+    }
+
+    .dibo-fi-result-btn.outline:hover { border-color: #000; color: #000; }
+
+    /* Bottom links */
+    .dibo-fi-links {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 24px;
+    }
+
+    .dibo-fi-link {
+      font-size: 13px;
+      color: #888;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+      padding: 2px 4px;
+      transition: color 0.2s;
+    }
+
+    .dibo-fi-link:hover { color: #000; }
+    .dibo-fi-link-sep { font-size: 12px; color: #ddd; }
+
+    @media (max-width: 480px) {
+      .dibo-fi-card { padding: 32px 20px; }
+      .dibo-fi-title { font-size: 20px; }
+      .dibo-fi-result-btns { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dibo-fi-wrap">
+    <div class="dibo-fi-logo">DIBO</div>
+
+    <div class="dibo-fi-card">
+      <div class="dibo-fi-header">
+        <a href="log-in.html" class="dibo-fi-back">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          로그인으로 돌아가기
+        </a>
+        <h1 class="dibo-fi-title">아이디 찾기</h1>
+        <p class="dibo-fi-desc">가입 시 등록한 이메일로 인증 후<br>아이디를 확인할 수 있습니다.</p>
+      </div>
+
+      <!-- 진행 바 -->
+      <div class="dibo-fi-steps">
+        <div class="dibo-fi-step-bar active" id="bar1"></div>
+        <div class="dibo-fi-step-bar" id="bar2"></div>
+      </div>
+
+      <!-- 알림 -->
+      <div class="dibo-fi-alert error"   id="alertError"></div>
+      <div class="dibo-fi-alert success" id="alertSuccess"></div>
+
+      <!-- Step 1: 이메일 입력 + 코드 발송 -->
+      <div id="step1">
+        <div class="dibo-fi-form-group">
+          <label class="dibo-fi-label">이메일</label>
+          <div class="dibo-fi-input-row">
+            <input type="email" class="dibo-fi-input" id="inputEmail" placeholder="가입 시 등록한 이메일">
+            <button class="dibo-fi-inline-btn" id="sendBtn" onclick="sendCode()">인증코드 발송</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: 인증 코드 입력 -->
+      <div id="step2" style="display:none">
+        <div class="dibo-fi-form-group">
+          <label class="dibo-fi-label">이메일</label>
+          <input type="email" class="dibo-fi-input" id="confirmedEmail" disabled>
+        </div>
+
+        <div class="dibo-fi-form-group">
+          <label class="dibo-fi-label">인증 코드</label>
+          <div class="dibo-fi-input-row">
+            <input type="text" class="dibo-fi-input" id="inputCode" placeholder="6자리 코드 입력" maxlength="6" inputmode="numeric">
+            <button class="dibo-fi-inline-btn" id="resendBtn" onclick="resendCode()">재발송</button>
+          </div>
+          <div class="dibo-fi-timer" id="timerDisplay"></div>
+        </div>
+
+        <button class="dibo-fi-btn" id="verifyBtn" onclick="verifyCode()">확인</button>
+      </div>
+
+      <!-- 결과 화면 -->
+      <div class="dibo-fi-result" id="resultArea">
+        <div class="dibo-fi-result-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <h3>회원님의 아이디</h3>
+        <div class="dibo-fi-result-id" id="foundId"></div>
+        <div class="dibo-fi-result-btns">
+          <a href="log-in.html" class="dibo-fi-result-btn primary">로그인</a>
+          <a href="find-pwd.html" class="dibo-fi-result-btn outline">비밀번호 찾기</a>
+        </div>
+      </div>
+
+      <!-- 하단 링크 -->
+      <div class="dibo-fi-links">
+        <a href="log-in.html" class="dibo-fi-link">로그인</a>
+        <span class="dibo-fi-link-sep">|</span>
+        <a href="sign-up.html" class="dibo-fi-link">회원가입</a>
+        <span class="dibo-fi-link-sep">|</span>
+        <a href="find-pwd.html" class="dibo-fi-link">비밀번호 찾기</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let timerInterval = null;
+    let currentEmail  = '';
+
+    // ── 인증코드 발송 ─────────────────────────────────
+    async function sendCode() {
+      const email = document.getElementById('inputEmail').value.trim();
+      if (!email) { showError('이메일을 입력해주세요.'); return; }
+      if (!isValidEmail(email)) { showError('올바른 이메일 형식을 입력해주세요.'); return; }
+
+      const btn = document.getElementById('sendBtn');
+      btn.disabled = true;
+      btn.textContent = '발송 중...';
+      clearAlert();
+
+      try {
+        await axios.post(
+          'https://api.di-bo.me/member/email-send',
+          { email },
+          { headers: { 'access-token': diboToken } }
+        );
+
+        currentEmail = email;
+        document.getElementById('confirmedEmail').value = email;
+
+        // Step 2로 전환
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('step2').style.display = '';
+        document.getElementById('bar2').classList.add('active');
+
+        showSuccess('인증 코드가 발송되었습니다. 이메일을 확인해주세요.');
+        startTimer(180);
+
+      } catch (err) {
+        const detail = err.response?.data?.detail || '';
+        if (err.response?.status === 404) {
+          showError('등록되지 않은 이메일입니다.');
+        } else {
+          showError(detail || '인증 코드 발송에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        }
+        btn.disabled = false;
+        btn.textContent = '인증코드 발송';
+      }
+    }
+
+    // ── 재발송 ────────────────────────────────────────
+    async function resendCode() {
+      const btn = document.getElementById('resendBtn');
+      btn.disabled = true;
+      clearAlert();
+
+      try {
+        await axios.post(
+          'https://api.di-bo.me/member/email-send',
+          { email: currentEmail },
+          { headers: { 'access-token': diboToken } }
+        );
+
+        showSuccess('인증 코드를 재발송했습니다.');
+        startTimer(180);
+
+      } catch (err) {
+        showError('재발송에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // ── 인증코드 확인 ─────────────────────────────────
+    async function verifyCode() {
+      const code = document.getElementById('inputCode').value.trim();
+      if (!code) { showError('인증 코드를 입력해주세요.'); return; }
+      if (code.length !== 6) { showError('6자리 코드를 입력해주세요.'); return; }
+
+      const btn = document.getElementById('verifyBtn');
+      btn.disabled = true;
+      btn.textContent = '확인 중...';
+      clearAlert();
+
+      try {
+        await axios.post(
+          'https://api.di-bo.me/member/email-verify',
+          { email: currentEmail, token: code },
+          { headers: { 'access-token': diboToken } }
+        );
+
+        // 타이머 중지
+        if (timerInterval) clearInterval(timerInterval);
+        document.getElementById('timerDisplay').classList.remove('show');
+
+        // 결과 표시
+        document.getElementById('step2').style.display     = 'none';
+        document.getElementById('bar1').classList.add('active');
+        document.getElementById('bar2').classList.add('active');
+
+        document.getElementById('foundId').textContent = currentEmail;
+        document.getElementById('resultArea').classList.add('show');
+        clearAlert();
+
+      } catch (err) {
+        const detail = err.response?.data?.detail || '';
+        if (err.response?.status === 400) {
+          showError('인증 코드가 올바르지 않습니다. 다시 확인해주세요.');
+        } else {
+          showError(detail || '인증에 실패했습니다.');
+        }
+        btn.disabled = false;
+        btn.textContent = '확인';
+      }
+    }
+
+    // ── 타이머 ────────────────────────────────────────
+    function startTimer(seconds) {
+      if (timerInterval) clearInterval(timerInterval);
+      const display = document.getElementById('timerDisplay');
+      display.classList.add('show');
+      let remain = seconds;
+
+      function tick() {
+        const m = String(Math.floor(remain / 60)).padStart(2,'0');
+        const s = String(remain % 60).padStart(2,'0');
+        display.textContent = `인증 코드 유효 시간: ${m}:${s}`;
+        if (remain <= 0) {
+          clearInterval(timerInterval);
+          display.textContent = '인증 코드가 만료되었습니다. 재발송해주세요.';
+        }
+        remain--;
+      }
+
+      tick();
+      timerInterval = setInterval(tick, 1000);
+    }
+
+    // ── 유틸 ──────────────────────────────────────────
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('alertError');
+      el.textContent = msg;
+      el.classList.add('show');
+      document.getElementById('alertSuccess').classList.remove('show');
+    }
+
+    function showSuccess(msg) {
+      const el = document.getElementById('alertSuccess');
+      el.textContent = msg;
+      el.classList.add('show');
+      document.getElementById('alertError').classList.remove('show');
+    }
+
+    function clearAlert() {
+      document.getElementById('alertError').classList.remove('show');
+      document.getElementById('alertSuccess').classList.remove('show');
+    }
+
+    // Enter 키 지원
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        if (document.getElementById('step1').style.display !== 'none') sendCode();
+        else if (document.getElementById('step2').style.display !== 'none') verifyCode();
+      }
+    });
+  </script>
+</body>
+</html>

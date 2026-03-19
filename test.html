@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DIBO - 움직이는 스크롤 아이콘</title>
+  <meta name="description" content="DIBO 움직이는 스크롤 아이콘 - 아임웹 코드위젯에 바로 붙여쓰는 형식" />
+  <style>
+    /* Reset */
+    html,body{height:100%;margin:0;padding:0;}
+
+    /* --- 위젯 기본 스타일 (필요 시 클래스/ID 조정) --- */
+    .dibobuttonposition {
+      position: absolute;           /* 섹션 내부에 배치하려면 absolute 유지 */
+      text-align: center;
+      z-index: 99;
+      /* 아래 애니메이션 키프레임을 사용하여 위/아래로 움직이는 표시 효과를 줍니다. */
+      animation-name: scrlDwnIndc;
+      animation-duration: 1s;
+      animation-iteration-count: infinite;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @keyframes scrlDwnIndc {
+      0%    {bottom: 40px;}
+      20%   {bottom: 44px;}
+      40%   {bottom: 48px;}
+      60%   {bottom: 52px;}
+      80%   {bottom: 54px;}
+      100%  {bottom: 44px;}
+    }
+
+    /* 데모용 섹션 스타일 (실제 적용시 삭제 또는 변경) */
+    #test-section {
+      width: 100%;
+      height: 100vh;
+      background-color: black;
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-position: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!--
+    - demo 섹션: 실제 배포시 제거하거나, 아래 설정의 `diboscrollId` 값을 적용할 섹션 ID로 변경하세요.
+    - 재사용하기 쉽게 demo 섹션은 포함해두었습니다.
+  -->
+  <section id="test-section" aria-hidden="true"></section>
+
+  <script>
+  /**
+   * DIBO Scroll Icon CTA Widget
+   *
+   * 사용법 (간단):
+   * 1) 아래 설정 섹션의 변수를 필요에 맞게 수정합니다.
+   *    - diboscrollId: 아이콘을 붙일 대상 섹션의 ID (문자열)
+   *    - diboscrollicon: 표시할 아이콘 이미지 URL (문자열)
+   *    - diboscrolliconWidth / diboscrolliconHeight: 아이콘의 기본 너비/높이 (숫자(px))
+   *    - diboscrollUrl: 버튼 클릭 시 이동할 URL (문자열)
+   *    - openInNewTab: true이면 새 탭으로 열기 (window.open), false이면 현재 창에서 이동 (location.href)
+   *
+   * 2) 해당 스크립트를 아임웹 코드 위젯에 붙여넣으면 동작합니다.
+   *
+   * 주의사항:
+   * - 페이지 상위 요소에 transform(scale 등)이 적용되어 있으면 위치가 어긋날 수 있습니다.
+   *   (그럴 경우 별도 보정 로직이 필요합니다.)
+   *
+   */
+
+  /* =======================
+     사용자 설정 영역 (여기만 수정)
+     ======================= */
+  const diboscrollId = "test-section"; // 아이콘을 배치할 섹션 ID (문자열)
+  const diboscrollicon = ""; // 아이콘 URL
+  const diboscrolliconWidth = 46;   // 아이콘 너비 (px)
+  const diboscrolliconHeight = 46;  // 아이콘 높이 (px)
+  const diboscrollUrl = "https://di-bo.me"; // 클릭 시 이동할 URL
+  const openInNewTab = false; // true면 새 탭으로 열기, false면 현재 창에서 열기
+  /* =======================
+     설정 영역 끝
+     ======================= */
+
+  /**
+   * createScrollIcon
+   *  - 대상 섹션을 찾아서 아이콘 wrapper를 생성하고 body에 추가합니다.
+   *  - wrapper는 기본적으로 섹션의 하단 중앙에 위치합니다.
+   */
+  function createScrollIcon() {
+    const targetSection = document.getElementById(diboscrollId);
+    if (!targetSection) {
+      console.error("DIBO Scroll Icon: 대상 섹션을 찾을 수 없습니다:", diboscrollId);
+      return;
+    }
+
+    // 이미 생성된 경우 중복 방지
+    if (document.getElementById('dibo-scroll-icon')) {
+      // 이미 존재하면 위치 정보만 업데이트
+      updateIconPosition();
+      return;
+    }
+
+    // wrapper(버튼 컨테이너)
+    const wrapper = document.createElement("div");
+    wrapper.id = "dibo-scroll-icon";
+    wrapper.className = "dibobuttonposition";
+    wrapper.setAttribute('role', 'link'); // 접근성 보조 (필요시 'button'으로 변경)
+    wrapper.setAttribute('aria-label', '지금 무료로 사용하러가기');
+
+    // 링크 요소 (접근성 향상을 위해 <a> 사용)
+    const link = document.createElement("a");
+    link.href = diboscrollUrl;
+
+    // 보안/탭 옵션
+    if (openInNewTab) {
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+    }
+
+    // 이미지
+    const img = document.createElement("img");
+    img.src = diboscrollicon;
+    img.width = diboscrolliconWidth;
+    img.height = diboscrolliconHeight;
+    img.alt = "DIBO CTA"; // 필요 시 더 설명적인 문구로 변경
+
+    // 조합 및 문서에 추가
+    link.appendChild(img);
+    wrapper.appendChild(link);
+
+    // 초기 스타일/포지셔닝 업데이트 후 body에 추가
+    document.body.appendChild(wrapper);
+  }
+
+  // DOMContentLoaded 시 초기화
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', createScrollIcon);
+  } else {
+    createScrollIcon();
+  }
+
+  </script>
+</body>
+</html>

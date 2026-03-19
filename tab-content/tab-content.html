@@ -1,0 +1,540 @@
+<!--
+=======================================================
+  탭 콘텐츠 전환 섹션 - 사용 가이드
+=======================================================
+
+【페이지 개요】
+  탭 클릭으로 콘텐츠를 전환하는 섹션입니다.
+  서비스 소개, 기능 안내, 시술 소개, 과정 안내 등 다양한 용도로 활용하세요.
+  API 코드 없이 tabsData 배열만 수정하면 즉시 반영됩니다.
+
+【사용 전 필수 설정】
+  1. 섹션 헤더 수정
+     → HTML의 .dibo-tab-section-badge, h2, p 텍스트 직접 수정
+
+  2. 탭 항목 수정 (JavaScript tabsData 배열)
+     → label       : 탭 버튼에 표시될 이름
+     → image       : 탭 이미지 URL (기본: picsum.photos 무료 이미지)
+     → imageAlt    : 이미지 alt 텍스트 (스크린 리더용)
+     → tag         : 콘텐츠 영역 상단 작은 레이블
+     → title       : 콘텐츠 제목 (\n으로 줄바꿈 가능)
+     → description : 본문 설명 텍스트
+     → listType    : 'bullet' (• 기호 목록) 또는 'number' (번호 목록)
+     → list        : 목록 항목 배열 (문자열 배열)
+     → buttonText  : 버튼 문구 (빈 문자열 '' 로 설정 시 버튼 미표시)
+     → buttonUrl   : 버튼 클릭 시 이동할 URL
+
+  3. 탭 추가 / 삭제
+     → tabsData 배열에 항목을 추가하거나 삭제하면 탭이 자동으로 반영됩니다.
+
+  4. 섹션 색상 변경
+     → CSS의 .dibo-tab-btn.active, .dibo-tab-list-bullet, .dibo-tab-list-number,
+       .dibo-tab-cta-btn 의 background 색상을 통일하여 브랜드 컬러로 변경 가능합니다.
+
+=======================================================
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- [수정 가능] 브라우저 탭에 표시되는 페이지 제목 -->
+  <title>탭 콘텐츠</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      line-height: 1.6;
+    }
+
+    /* ===== 섹션 전체 ===== */
+    .dibo-tab-section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 80px 40px;
+    }
+
+    /* ===== 섹션 헤더 ===== */
+    .dibo-tab-section-header {
+      text-align: center;
+      margin-bottom: 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .dibo-tab-section-badge {
+      display: inline-block;
+      background: #000;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 6px 18px;
+      border-radius: 100px;
+    }
+
+    .dibo-tab-section-title {
+      font-size: 42px;
+      font-weight: 800;
+      color: #000;
+      letter-spacing: -0.03em;
+      line-height: 1.25;
+    }
+
+    .dibo-tab-section-desc {
+      font-size: 18px;
+      color: #666;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+    }
+
+    /* ===== 탭 네비게이션 ===== */
+    .dibo-tab-nav-wrapper {
+      border-bottom: 1.5px solid #e0e0e0;
+      margin-bottom: 56px;
+    }
+
+    .dibo-tab-nav-inner {
+      display: flex;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .dibo-tab-nav-inner::-webkit-scrollbar {
+      display: none;
+    }
+
+    .dibo-tab-btn {
+      flex-shrink: 0;
+      padding: 14px 32px;
+      background: none;
+      border: none;
+      border-bottom: 2.5px solid transparent;
+      margin-bottom: -1.5px;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      color: #999;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+
+    .dibo-tab-btn:hover {
+      color: #333;
+    }
+
+    .dibo-tab-btn.active {
+      color: #000;
+      font-weight: 700;
+      border-bottom-color: #000;
+    }
+
+    /* ===== 탭 패널 ===== */
+    .dibo-tab-panel {
+      display: none;
+    }
+
+    .dibo-tab-panel.active {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 72px;
+      align-items: center;
+      animation: dibo-tab-fadein 0.35s ease;
+    }
+
+    @keyframes dibo-tab-fadein {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ===== 이미지 영역 ===== */
+    .dibo-tab-image-wrap {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #f0f0f0;
+    }
+
+    .dibo-tab-image-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* ===== 텍스트 영역 ===== */
+    .dibo-tab-text {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .dibo-tab-tag {
+      font-size: 13px;
+      font-weight: 600;
+      color: #999;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .dibo-tab-content-title {
+      font-size: 36px;
+      font-weight: 800;
+      color: #000;
+      letter-spacing: -0.03em;
+      line-height: 1.3;
+    }
+
+    .dibo-tab-content-desc {
+      font-size: 16px;
+      color: #555;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      line-height: 1.85;
+    }
+
+    /* ===== 목록 ===== */
+    .dibo-tab-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .dibo-tab-list-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 15px;
+      color: #333;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      line-height: 1.6;
+    }
+
+    /* bullet 타입 */
+    .dibo-tab-list-bullet {
+      width: 8px;
+      height: 8px;
+      background: #000;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 7px;
+    }
+
+    /* number 타입 */
+    .dibo-tab-list-number {
+      width: 26px;
+      height: 26px;
+      background: #000;
+      color: #fff;
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ===== CTA 버튼 ===== */
+    .dibo-tab-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #000;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 16px 28px;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+      align-self: flex-start;
+    }
+
+    .dibo-tab-cta-btn:hover {
+      background: #333;
+    }
+
+    .dibo-tab-cta-arrow {
+      font-size: 16px;
+    }
+
+    /* ===== 반응형: 태블릿 ===== */
+    @media (max-width: 900px) {
+      .dibo-tab-section {
+        padding: 60px 24px;
+      }
+
+      .dibo-tab-section-title {
+        font-size: 34px;
+      }
+
+      .dibo-tab-section-desc {
+        font-size: 16px;
+      }
+
+      .dibo-tab-panel.active {
+        grid-template-columns: 1fr;
+        gap: 36px;
+      }
+
+      .dibo-tab-btn {
+        padding: 12px 22px;
+        font-size: 15px;
+      }
+
+      .dibo-tab-content-title {
+        font-size: 28px;
+      }
+
+      .dibo-tab-section-header {
+        margin-bottom: 44px;
+      }
+
+      .dibo-tab-nav-wrapper {
+        margin-bottom: 44px;
+      }
+    }
+
+    /* ===== 반응형: 모바일 ===== */
+    @media (max-width: 480px) {
+      .dibo-tab-section {
+        padding: 48px 16px;
+      }
+
+      .dibo-tab-section-badge {
+        font-size: 12px;
+        padding: 5px 14px;
+      }
+
+      .dibo-tab-section-title {
+        font-size: 26px;
+      }
+
+      .dibo-tab-section-desc {
+        font-size: 15px;
+      }
+
+      .dibo-tab-btn {
+        padding: 12px 16px;
+        font-size: 14px;
+      }
+
+      .dibo-tab-content-title {
+        font-size: 22px;
+      }
+
+      .dibo-tab-content-desc {
+        font-size: 15px;
+      }
+
+      .dibo-tab-list-item {
+        font-size: 14px;
+      }
+
+      .dibo-tab-cta-btn {
+        padding: 14px 22px;
+        font-size: 15px;
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="dibo-tab-section">
+
+    <!-- 섹션 헤더 -->
+    <div class="dibo-tab-section-header">
+      <!-- [수정 가능] 섹션 상단 뱃지 레이블 -->
+      <span class="dibo-tab-section-badge">FEATURES</span>
+      <!-- [수정 가능] 섹션 메인 제목 -->
+      <h2 class="dibo-tab-section-title">서비스를 소개합니다</h2>
+      <!-- [수정 가능] 섹션 부제목 -->
+      <p class="dibo-tab-section-desc">탭을 선택하여 자세한 내용을 확인하세요</p>
+    </div>
+
+    <!-- 탭 네비게이션 (tabsData 기반으로 자동 생성) -->
+    <div class="dibo-tab-nav-wrapper">
+      <div class="dibo-tab-nav-inner" id="diboTabNav"></div>
+    </div>
+
+    <!-- 탭 콘텐츠 패널 (tabsData 기반으로 자동 생성) -->
+    <div id="diboTabPanels"></div>
+
+  </section>
+
+  <script>
+    // ★ [수정 가능] 탭 데이터
+    // 항목 추가/삭제 시 탭이 자동으로 반영됩니다.
+    //
+    // 각 항목 필드 설명:
+    //   label       : 탭 버튼에 표시될 이름
+    //   image       : 이미지 URL (아래 picsum.photos는 무료 랜덤 이미지 서비스)
+    //   imageAlt    : 이미지 설명 텍스트 (스크린 리더 및 SEO용)
+    //   tag         : 콘텐츠 영역 상단 작은 레이블 (예: About, Features, How to)
+    //   title       : 콘텐츠 제목 (\n 으로 줄바꿈 가능)
+    //   description : 본문 설명 텍스트
+    //   listType    : 'bullet' → • 기호 목록 / 'number' → 번호 목록
+    //   list        : 목록 항목 배열
+    //   buttonText  : CTA 버튼 문구 ('' 빈 문자열 입력 시 버튼 미표시)
+    //   buttonUrl   : 버튼 클릭 시 이동할 URL
+    const tabsData = [
+      {
+        label: '서비스 소개',
+        image: 'https://picsum.photos/seed/dibo-tab1/640/480',
+        imageAlt: '서비스 소개 이미지',
+        tag: 'About',
+        title: '당신의 비즈니스를\n한 단계 높여드립니다',
+        description: '복잡한 업무도 디보 하나로 간편하게. 직관적인 인터페이스와 강력한 기능으로 업무 효율을 극대화하세요.',
+        listType: 'bullet',
+        list: [
+          '직관적인 UI로 누구나 쉽게 사용',
+          '실시간 데이터 동기화 지원',
+          '다양한 디바이스 완벽 호환',
+          '전문 고객 지원팀 상시 운영'
+        ],
+        buttonText: '자세히 알아보기',
+        buttonUrl: '#'
+      },
+      {
+        label: '주요 기능',
+        image: 'https://picsum.photos/seed/dibo-tab2/640/480',
+        imageAlt: '주요 기능 이미지',
+        tag: 'Features',
+        title: '필요한 기능은\n모두 갖췄습니다',
+        description: '서비스 운영에 필요한 핵심 기능들을 하나의 플랫폼에서 경험하세요.',
+        listType: 'bullet',
+        list: [
+          '자동화된 데이터 수집 및 분석',
+          '커스텀 대시보드 구성',
+          '팀 협업 및 세분화된 권한 관리',
+          '외부 서비스 API 연동 지원'
+        ],
+        buttonText: '기능 둘러보기',
+        buttonUrl: '#'
+      },
+      {
+        label: '이용 방법',
+        image: 'https://picsum.photos/seed/dibo-tab3/640/480',
+        imageAlt: '이용 방법 이미지',
+        tag: 'How to use',
+        title: '3단계로\n바로 시작하세요',
+        description: '복잡한 설치 없이 간단한 절차만으로 서비스를 시작할 수 있습니다.',
+        listType: 'number',
+        list: [
+          '회원가입 후 무료 체험 시작',
+          '템플릿 선택 및 커스터마이징',
+          '사이트에 코드 한 줄 삽입'
+        ],
+        buttonText: '무료로 시작하기',
+        buttonUrl: '#'
+      },
+      {
+        label: '적용 사례',
+        image: 'https://picsum.photos/seed/dibo-tab4/640/480',
+        imageAlt: '적용 사례 이미지',
+        tag: 'Cases',
+        title: '다양한 분야에서\n활용되고 있습니다',
+        description: '이커머스부터 의료, 교육까지. 업종에 상관없이 더 나은 고객 경험을 만들어보세요.',
+        listType: 'bullet',
+        list: [
+          '쇼핑몰 · 이커머스',
+          '병원 · 클리닉 · 뷰티',
+          '교육 · 학원 · 스터디',
+          '스타트업 · 기업 홈페이지'
+        ],
+        buttonText: '사례 더 보기',
+        buttonUrl: '#'
+      }
+    ];
+
+    // ─── 렌더링 로직 (수정 불필요) ─────────────────────────
+
+    const tabNav    = document.getElementById('diboTabNav');
+    const tabPanels = document.getElementById('diboTabPanels');
+
+    function renderTabs() {
+      // 탭 버튼 생성
+      tabNav.innerHTML = tabsData.map((tab, i) => `
+        <button
+          class="dibo-tab-btn${i === 0 ? ' active' : ''}"
+          onclick="switchTab(${i})"
+        >${tab.label}</button>
+      `).join('');
+
+      // 탭 패널 생성
+      tabPanels.innerHTML = tabsData.map((tab, i) => `
+        <div class="dibo-tab-panel${i === 0 ? ' active' : ''}">
+          <div class="dibo-tab-image-wrap">
+            <img src="${tab.image}" alt="${tab.imageAlt}" loading="lazy" />
+          </div>
+          <div class="dibo-tab-text">
+            <span class="dibo-tab-tag">${tab.tag}</span>
+            <h3 class="dibo-tab-content-title">${tab.title.replace(/\n/g, '<br>')}</h3>
+            <p class="dibo-tab-content-desc">${tab.description}</p>
+            <ul class="dibo-tab-list">
+              ${tab.list.map((item, idx) => `
+                <li class="dibo-tab-list-item">
+                  ${tab.listType === 'number'
+                    ? `<span class="dibo-tab-list-number">${idx + 1}</span>`
+                    : `<span class="dibo-tab-list-bullet"></span>`
+                  }
+                  <span>${item}</span>
+                </li>
+              `).join('')}
+            </ul>
+            ${tab.buttonText
+              ? `<a href="${tab.buttonUrl}" class="dibo-tab-cta-btn">
+                  ${tab.buttonText}
+                  <span class="dibo-tab-cta-arrow">→</span>
+                </a>`
+              : ''
+            }
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function switchTab(index) {
+      document.querySelectorAll('.dibo-tab-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === index);
+      });
+      document.querySelectorAll('.dibo-tab-panel').forEach((panel, i) => {
+        panel.classList.toggle('active', i === index);
+      });
+    }
+
+    renderTabs();
+  </script>
+
+</body>
+</html>

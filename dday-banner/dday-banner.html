@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<!--
+  ================================================================
+  ✦ 디보(dibo) 익스텐션 | D-day 배너 / 고정 프로모션 바
+  ================================================================
+
+  【페이지 개요】
+  페이지 상단 또는 하단에 고정되는 띠 배너입니다.
+  이벤트 마감일, 프로모션, 신청 안내 등에 활용합니다.
+  API 연동 시 타이머 데이터를 자동으로 불러와 적용합니다.
+
+  【타이머 타입 3종】
+  'countdown' — 마감까지 남은 일·시간·분·초를 실시간으로 표시
+  'dday'      — D-7, D-3, D-0 형식으로 남은 날 수만 표시
+  'text'      — 타이머 없이 텍스트 + 버튼만 표시
+
+  【사용 전 필수 설정】
+  1. type : 타이머 타입 선택                     ★ [수정 필수]
+  2. targetDate : 마감 목표 날짜 'YYYY-MM-DD'   ★ [수정 필수]  (type='text' 이면 불필요)
+  3. button.url : 이동할 URL                    ★ [수정 필수]
+  4. 텍스트, 색상, 위치 등 커스터마이징         [수정 가능]
+
+  【API 자동 연동】
+  API 연동 성공 시 아래 값이 자동으로 덮어씌워집니다.
+  - targetDate ← API ended_at (마감 날짜)
+  - prefix     ← API start_title (시작 제목)
+  - expiredText← API end_title (종료 제목)
+  API 연동 실패 시 아래 bannerConfig 로컬 설정이 사용됩니다.
+
+  【색상 프리셋 예시】
+  인디고  : '#6366f1, #8b5cf6'
+  빨강/긴급: '#ef4444, #f97316'
+  초록    : '#10b981, #059669'
+  다크    : '#1e1b4b, #312e81'
+  ================================================================
+-->
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- [수정 가능] 브라우저 탭 및 검색결과에 표시되는 페이지 제목 -->
+  <title>D-day 카운트다운 배너 — 이벤트·프로모션 마감을 실시간으로 알려주는 고정 배너</title>
+
+  <!-- SEO: 검색엔진 설명 및 키워드 -->
+  <meta name="description" content="페이지 상단/하단에 고정되는 D-day 카운트다운 배너. 이벤트 마감, 프로모션, 신청 안내를 실시간 타이머로 보여주세요. 코드 복사 한 번으로 바로 적용됩니다.">
+  <meta name="keywords" content="D-day 배너, 카운트다운 배너, 이벤트 타이머, 프로모션 배너, 고정 띠배너, 마감 카운트다운, 디보 익스텐션">
+
+  <!-- SNS 공유 시 미리보기 (Open Graph) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="D-day 카운트다운 배너 — 이벤트·프로모션 마감을 실시간으로 알려주는 고정 배너">
+  <meta property="og:description" content="페이지 상단/하단에 고정되는 D-day 카운트다운 배너. 이벤트 마감, 프로모션, 신청 안내를 실시간 타이머로 보여주세요.">
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f0f2f5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 데모 배경 */
+    .demo-bg {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #9ca3af;
+      font-size: 15px;
+    }
+    .demo-bg-icon { font-size: 48px; }
+
+    /* ================================================================
+       배너 기본 구조
+       ================================================================ */
+    .dibo-banner {
+      position: fixed;
+      left: 0;
+      right: 0;
+      z-index: 9500;
+      width: 100%;
+    }
+
+    .dibo-banner.pos-top    { top: 0; }
+    .dibo-banner.pos-bottom { bottom: 0; }
+
+    /* 슬라이드 인 애니메이션 */
+    .dibo-banner.pos-top {
+      animation: bannerSlideDown 0.4s cubic-bezier(0.34, 1.36, 0.64, 1) both;
+    }
+    .dibo-banner.pos-bottom {
+      animation: bannerSlideUp 0.4s cubic-bezier(0.34, 1.36, 0.64, 1) both;
+    }
+
+    @keyframes bannerSlideDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to   { transform: translateY(0);     opacity: 1; }
+    }
+
+    @keyframes bannerSlideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    /* 닫힐 때 */
+    .dibo-banner.is-closing.pos-top {
+      animation: bannerSlideUp-out 0.3s ease forwards;
+    }
+    .dibo-banner.is-closing.pos-bottom {
+      animation: bannerSlideDown-out 0.3s ease forwards;
+    }
+
+    @keyframes bannerSlideUp-out   { to { transform: translateY(-100%); opacity: 0; } }
+    @keyframes bannerSlideDown-out { to { transform: translateY(100%);  opacity: 0; } }
+
+    /* ================================================================
+       배너 내부 레이아웃
+       ================================================================ */
+    .banner-inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 11px 56px 11px 20px;
+      min-height: 54px;
+      position: relative;
+      flex-wrap: wrap;
+    }
+
+    /* ── 콘텐츠 그룹 (텍스트 + 타이머) ── */
+    .banner-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .banner-prefix,
+    .banner-suffix {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.4;
+      opacity: 0.95;
+    }
+
+    /* ── 카운트다운 타이머 ── */
+    .banner-countdown {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .countdown-unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.22);
+      border-radius: 6px;
+      padding: 3px 9px 4px;
+      min-width: 38px;
+      line-height: 1;
+    }
+
+    .countdown-num {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .countdown-label {
+      font-size: 10px;
+      font-weight: 500;
+      opacity: 0.78;
+      margin-top: 2px;
+    }
+
+    .countdown-sep {
+      font-size: 16px;
+      font-weight: 700;
+      opacity: 0.5;
+      margin: 0 1px;
+      line-height: 1;
+      padding-bottom: 6px; /* label 높이 보정 */
+    }
+
+    /* ── D-day 표시 ── */
+    .banner-dday {
+      display: flex;
+      align-items: center;
+    }
+
+    .dday-badge {
+      background: rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+      padding: 4px 14px;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      line-height: 1.3;
+    }
+
+    .dday-badge.is-today {
+      background: rgba(255, 255, 255, 0.32);
+      animation: ddayPulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes ddayPulse {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.05); }
+    }
+
+    /* ── 만료 텍스트 ── */
+    .banner-expired {
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0.85;
+    }
+
+    /* ── CTA 버튼 ── */
+    .banner-cta {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 18px;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.22);
+      border: 1.5px solid rgba(255, 255, 255, 0.55);
+      border-radius: 20px;
+      text-decoration: none;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s, transform 0.15s;
+      flex-shrink: 0;
+    }
+
+    .banner-cta:hover {
+      background: rgba(255, 255, 255, 0.35);
+      transform: translateY(-1px);
+    }
+
+    /* ── 닫기 버튼 ── */
+    .banner-close {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .banner-close:hover { background: rgba(255, 255, 255, 0.3); }
+
+    .banner-close svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+    }
+
+    /* ── 오늘 하루 보지 않기 (하단 배너 전용, 선택) ── */
+    .banner-hide-row {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 0 20px 10px;
+    }
+
+    .banner-hide-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .banner-hide-label:hover { opacity: 1; }
+
+    .banner-hide-label input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      accent-color: currentColor;
+      margin: 0;
+    }
+
+    .banner-hide-label span {
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    /* ================================================================
+       반응형
+       ================================================================ */
+    @media (max-width: 700px) {
+      .banner-inner {
+        gap: 8px;
+        padding: 10px 44px 10px 12px;
+        min-height: 50px;
+      }
+
+      .banner-prefix,
+      .banner-suffix { font-size: 12px; }
+
+      .countdown-num   { font-size: 16px; }
+      .countdown-label { font-size: 9px; }
+      .countdown-unit  { min-width: 30px; padding: 3px 6px 4px; }
+      .dday-badge      { font-size: 18px; }
+
+      .banner-cta { font-size: 12px; padding: 6px 14px; }
+
+      /* 접미사(suffix)는 모바일에서 숨김 (공간 부족) */
+      .banner-suffix { display: none; }
+    }
+
+    @media (max-width: 400px) {
+      .banner-prefix { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 데모 배경 -->
+<div class="demo-bg" id="jsDemoBg">
+  <div class="demo-bg-icon">🖥️</div>
+  <p>페이지 콘텐츠 영역</p>
+  <p style="font-size:13px;">상단/하단에 고정 배너가 표시됩니다.</p>
+</div>
+
+<!-- ================================================================
+     배너 마크업 (JS가 동적으로 생성)
+     ================================================================ -->
+<div class="dibo-banner" id="jsBanner">
+  <div class="banner-inner" id="jsBannerInner">
+
+    <!-- 콘텐츠 (텍스트 + 타이머) -->
+    <div class="banner-content" id="jsBannerContent">
+      <span class="banner-prefix" id="jsPrefix"></span>
+
+      <!-- 카운트다운 (type='countdown') -->
+      <div class="banner-countdown" id="jsCountdown" style="display:none;">
+        <div class="countdown-unit">
+          <span class="countdown-num" id="cDays">00</span>
+          <span class="countdown-label">일</span>
+        </div>
+        <span class="countdown-sep">:</span>
+        <div class="countdown-unit">
+          <span class="countdown-num" id="cHours">00</span>
+          <span class="countdown-label">시간</span>
+        </div>
+        <span class="countdown-sep">:</span>
+        <div class="countdown-unit">
+          <span class="countdown-num" id="cMins">00</span>
+          <span class="countdown-label">분</span>
+        </div>
+        <span class="countdown-sep">:</span>
+        <div class="countdown-unit">
+          <span class="countdown-num" id="cSecs">00</span>
+          <span class="countdown-label">초</span>
+        </div>
+      </div>
+
+      <!-- D-day (type='dday') -->
+      <div class="banner-dday" id="jsDday" style="display:none;">
+        <span class="dday-badge" id="jsDdayBadge"></span>
+      </div>
+
+      <!-- 만료 텍스트 -->
+      <span class="banner-expired" id="jsExpiredText" style="display:none;"></span>
+
+      <span class="banner-suffix" id="jsSuffix"></span>
+    </div>
+
+    <!-- CTA 버튼 -->
+    <a class="banner-cta" id="jsBannerCta" href="#" target="_self"></a>
+
+    <!-- 닫기 버튼 -->
+    <button class="banner-close" id="jsBannerClose" aria-label="배너 닫기">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+
+  </div>
+
+  <!-- 오늘 하루 보지 않기 (하단 배너) -->
+  <div class="banner-hide-row" id="jsHideRow" style="display:none;">
+    <label class="banner-hide-label">
+      <input type="checkbox" id="jsHideCheck">
+      <span>오늘 하루 보지 않기</span>
+    </label>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   【배너 설정】 — API 연동 성공 시 일부 값이 자동으로 덮어씌워집니다
+   ================================================================ */
+const bannerConfig = {
+
+  position:  'top',         // [수정 가능] 'top' | 'bottom'
+
+  // ── 타이머 타입 ─────────────────────────────────────────
+  // 'countdown' : 일·시간·분·초 실시간 카운트다운
+  // 'dday'      : D-7, D-3, D-0 형식
+  // 'text'      : 타이머 없이 텍스트만 표시
+  type:       'countdown',  // ★ [수정 필수]
+  targetDate: '2026-03-31', // ★ [수정 필수] 마감 날짜 'YYYY-MM-DD' (API ended_at으로 자동 교체됨)
+
+  // 만료 후 처리
+  hideWhenExpired: false,   // [수정 가능] true면 만료 시 배너 자동 숨김
+  expiredText:     '이벤트가 종료되었습니다.',   // [수정 가능] (API end_title로 자동 교체됨)
+
+  // ── 콘텐츠 텍스트 ───────────────────────────────────────
+  prefix: '🔥 이벤트 마감까지',   // [수정 가능] 타이머 앞 텍스트 (API start_title로 자동 교체됨)
+  suffix: '남았습니다!',           // [수정 가능] 타이머 뒤 텍스트 (type='text'이면 전체 문구)
+
+  button: {
+    text:   '지금 신청하기 →',     // [수정 가능] 버튼 텍스트
+    url:    '#',                  // ★ [수정 필수] 이동할 URL
+    newTab: false,                // [수정 가능] 새 탭 열기 여부
+  },
+
+  // ── 스타일 ──────────────────────────────────────────────
+  // 배경 예시:
+  // 인디고/보라  : 'linear-gradient(90deg, #6366f1, #8b5cf6)'
+  // 빨강/긴급    : 'linear-gradient(90deg, #ef4444, #f97316)'
+  // 초록/성공    : 'linear-gradient(90deg, #10b981, #059669)'
+  // 다크         : 'linear-gradient(90deg, #1e1b4b, #312e81)'
+  // 단색         : '#6366f1'
+  background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)', // [수정 가능]
+  color:      '#fff',          // [수정 가능] 텍스트/아이콘 색상
+
+  // ── 닫기 옵션 ───────────────────────────────────────────
+  closable:   true,            // [수정 가능] 닫기 버튼 표시 여부
+  hideToday:  true,            // [수정 가능] '오늘 하루 보지 않기' 옵션 (position='bottom' 권장)
+  storageKey: 'dibo-dday-banner', // [수정 가능] 저장소 키
+
+  // 페이지 로드 후 표시 지연 (ms)
+  delay: 400,                  // [수정 가능]
+};
+
+/* ================================================================
+   API 연동 — 타이머 데이터 로드 후 배너 초기화
+   ================================================================ */
+const CONFIG_ID = 'copy_config_id';
+
+async function loadBanner() {
+  try {
+    const res = await axios.get(`https://api.di-bo.me/timer?config_id=${CONFIG_ID}`);
+    const data = res.data;
+
+    if (data && data.length > 0) {
+      const timer = data[0];
+
+      // 마감 날짜 자동 적용 (ended_at → targetDate)
+      if (timer.ended_at) {
+        bannerConfig.targetDate = timer.ended_at.split('T')[0];
+      }
+
+      // 시작 제목 자동 적용 (start_title → prefix)
+      if (timer.start_title) {
+        bannerConfig.prefix = timer.start_title;
+      }
+
+      // 종료 제목 자동 적용 (end_title → expiredText)
+      if (timer.end_title) {
+        bannerConfig.expiredText = timer.end_title;
+      }
+
+      // 시작 시각 이전이면 배너 표시 안 함
+      if (timer.started_at && new Date(timer.started_at) > new Date()) {
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn('타이머 API 연동 실패 — 기본 설정을 사용합니다.', err);
+  }
+
+  initBanner();
+}
+
+/* ================================================================
+   배너 초기화 (수정 불필요)
+   ================================================================ */
+function initBanner() {
+
+  // ── 오늘 하루 보지 않기 체크 ────────────────────────────
+  try {
+    if (localStorage.getItem(bannerConfig.storageKey) === new Date().toDateString()) {
+      document.getElementById('jsBanner').style.display = 'none';
+      return;
+    }
+  } catch {}
+
+  const banner    = document.getElementById('jsBanner');
+  const closeBtn  = document.getElementById('jsBannerClose');
+  const hideCheck = document.getElementById('jsHideCheck');
+
+  // ── 스타일 적용 ─────────────────────────────────────────
+  banner.classList.add('pos-' + (bannerConfig.position || 'top'));
+  banner.style.background = bannerConfig.background || '#6366f1';
+  banner.style.color      = bannerConfig.color || '#fff';
+  banner.style.display    = 'none'; // delay 전 숨김
+
+  // ── 텍스트 채우기 ───────────────────────────────────────
+  document.getElementById('jsPrefix').textContent = bannerConfig.prefix || '';
+  document.getElementById('jsSuffix').textContent = bannerConfig.suffix || '';
+
+  // ── CTA 버튼 ────────────────────────────────────────────
+  const cta = document.getElementById('jsBannerCta');
+  cta.textContent = bannerConfig.button.text || '자세히 보기';
+  cta.href        = bannerConfig.button.url || '#';
+  cta.target      = bannerConfig.button.newTab ? '_blank' : '_self';
+  if (bannerConfig.button.newTab) cta.rel = 'noopener noreferrer';
+  cta.style.color = bannerConfig.color || '#fff';
+
+  // ── 닫기 버튼 ───────────────────────────────────────────
+  if (!bannerConfig.closable) {
+    closeBtn.style.display = 'none';
+  }
+
+  // ── 오늘 하루 보지 않기 옵션 ────────────────────────────
+  if (bannerConfig.hideToday && bannerConfig.position === 'bottom') {
+    document.getElementById('jsHideRow').style.display = 'flex';
+  }
+
+  // ── 타이머/표시 초기화 ──────────────────────────────────
+  const type = bannerConfig.type || 'text';
+
+  if (type === 'countdown') {
+    initCountdown();
+  } else if (type === 'dday') {
+    initDday();
+  }
+  // type === 'text' → 별도 처리 없음, prefix+suffix만 표시
+
+  // ── 딜레이 후 배너 표시 ─────────────────────────────────
+  setTimeout(() => {
+    banner.style.display = '';
+    // 상단 배너이면 body에 padding 추가 (콘텐츠 가림 방지)
+    if (bannerConfig.position === 'top') {
+      document.body.style.paddingTop =
+        (parseInt(document.body.style.paddingTop) || 0) + banner.offsetHeight + 'px';
+    }
+  }, bannerConfig.delay || 400);
+
+  // ── 닫기 로직 ───────────────────────────────────────────
+  closeBtn.addEventListener('click', closeBanner);
+
+  function closeBanner() {
+    banner.classList.add('is-closing');
+
+    if (bannerConfig.hideToday) {
+      try {
+        if (hideCheck.checked) {
+          localStorage.setItem(bannerConfig.storageKey, new Date().toDateString());
+        }
+      } catch {}
+    }
+
+    setTimeout(() => {
+      banner.style.display = 'none';
+      if (bannerConfig.position === 'top') {
+        document.body.style.paddingTop = '';
+      }
+    }, 320);
+  }
+
+  // ── 카운트다운 타이머 ────────────────────────────────────
+  function initCountdown() {
+    document.getElementById('jsCountdown').style.display = 'flex';
+
+    const target = new Date(bannerConfig.targetDate);
+    target.setHours(23, 59, 59, 999); // 마감일 자정까지
+
+    function tick() {
+      const now  = new Date();
+      const diff = target - now;
+
+      if (diff <= 0) {
+        // 만료
+        document.getElementById('jsCountdown').style.display = 'none';
+        const expiredEl = document.getElementById('jsExpiredText');
+        expiredEl.textContent = bannerConfig.expiredText || '이벤트가 종료되었습니다.';
+        expiredEl.style.display = '';
+        if (bannerConfig.hideWhenExpired) closeBanner();
+        return;
+      }
+
+      const days  = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const mins  = Math.floor((diff % 3600000) / 60000);
+      const secs  = Math.floor((diff % 60000) / 1000);
+
+      document.getElementById('cDays').textContent  = String(days).padStart(2, '0');
+      document.getElementById('cHours').textContent = String(hours).padStart(2, '0');
+      document.getElementById('cMins').textContent  = String(mins).padStart(2, '0');
+      document.getElementById('cSecs').textContent  = String(secs).padStart(2, '0');
+
+      setTimeout(tick, 1000);
+    }
+
+    tick();
+  }
+
+  // ── D-day 표시 ───────────────────────────────────────────
+  function initDday() {
+    document.getElementById('jsDday').style.display = 'flex';
+
+    const target = new Date(bannerConfig.targetDate);
+    target.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round((target - today) / 86400000);
+    const badge    = document.getElementById('jsDdayBadge');
+
+    if (diffDays > 0) {
+      badge.textContent = `D-${diffDays}`;
+    } else if (diffDays === 0) {
+      badge.textContent = 'D-DAY';
+      badge.classList.add('is-today');
+    } else {
+      // 만료
+      document.getElementById('jsDday').style.display = 'none';
+      const expiredEl = document.getElementById('jsExpiredText');
+      expiredEl.textContent = bannerConfig.expiredText || '이벤트가 종료되었습니다.';
+      expiredEl.style.display = '';
+      if (bannerConfig.hideWhenExpired) closeBanner();
+    }
+  }
+}
+
+// API 연동 후 배너 초기화 실행
+loadBanner();
+</script>
+
+</body>
+</html>

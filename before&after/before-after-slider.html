@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<!--
+  ================================================================
+  ✦ 디보(dibo) 익스텐션 | Before / After 이미지 비교 슬라이더
+  ================================================================
+
+  【페이지 개요】
+  드래그 핸들로 전/후 이미지를 직접 비교할 수 있는 인터랙티브 섹션입니다.
+  피부관리·인테리어·리모델링·사진보정·헤어 디자인 등
+  시각적 변화를 강조하는 랜딩 페이지에 적합합니다.
+
+  【사용 전 필수 설정】
+  1. 섹션 제목/설명 수정
+     → sectionEyebrow, sectionTitle, sectionSubtitle 변수
+
+  2. 비교 항목 데이터 수정 → comparisonsData 배열
+     - before.image : 변화 전(Before) 이미지 URL  ★ [수정 필수]
+     - after.image  : 변화 후(After) 이미지 URL   ★ [수정 필수]
+     - before.label : 왼쪽 레이블 (기본 BEFORE)   [수정 가능]
+     - after.label  : 오른쪽 레이블 (기본 AFTER)  [수정 가능]
+     - title        : 항목 제목
+     - description  : 항목 설명 (없으면 '' 입력)
+
+  【슬라이더 조작 방법】
+  - PC : 이미지 위에서 마우스 클릭 & 드래그
+  - 모바일 : 손가락으로 터치 & 스와이프
+  - 최초 로드 시 자동 힌트 애니메이션으로 조작 방법을 안내합니다
+  ================================================================
+-->
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Before / After 비교 슬라이더</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f4f5f7;
+      color: #1a1a2e;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---- 섹션 래퍼 ---- */
+    .dibo-ba-section {
+      padding: 88px 24px 96px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* ---- 섹션 헤더 ---- */
+    .dibo-ba-header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .dibo-ba-eyebrow {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #6366f1;
+      background: #eef2ff;
+      padding: 5px 15px;
+      border-radius: 20px;
+      margin-bottom: 18px;
+    }
+
+    .dibo-ba-title {
+      font-size: clamp(26px, 4vw, 40px);
+      font-weight: 700;
+      line-height: 1.25;
+      color: #0f0f1a;
+      margin-bottom: 14px;
+    }
+
+    .dibo-ba-subtitle {
+      font-size: 16px;
+      color: #6b7280;
+      line-height: 1.75;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* ---- 그리드 ---- */
+    .dibo-ba-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+    }
+
+    /* ---- 카드 ---- */
+    .dibo-ba-card {
+      background: #fff;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.07);
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+
+    .dibo-ba-card:hover {
+      box-shadow: 0 8px 36px rgba(0, 0, 0, 0.13);
+      transform: translateY(-5px);
+    }
+
+    /* ---- 슬라이더 영역 ---- */
+    .ba-slider {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      cursor: ew-resize;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: pan-y;
+    }
+
+    /* 이미지 공통 */
+    .ba-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+      display: block;
+    }
+
+    /* Before 이미지 — 하단 레이어, 핸들 오른쪽에 노출 */
+    .ba-img.is-before {
+      z-index: 1;
+    }
+
+    /* After 이미지 — 상단 레이어, 핸들 왼쪽에 노출 (clip-path로 제어) */
+    .ba-img.is-after {
+      z-index: 2;
+      clip-path: inset(0 50% 0 0); /* JS가 동적으로 업데이트 */
+    }
+
+    /* 힌트 애니메이션 중 부드러운 전환 */
+    .ba-img.is-after.is-hinting {
+      transition: clip-path 0.45s cubic-bezier(0.45, 0, 0.55, 1);
+    }
+
+    /* ---- 레이블 ---- */
+    .ba-label {
+      position: absolute;
+      top: 14px;
+      z-index: 8;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 4px 11px;
+      border-radius: 5px;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+    }
+
+    .ba-label.is-after-label {
+      left: 14px;
+      background: rgba(99, 102, 241, 0.88);
+      color: #fff;
+    }
+
+    .ba-label.is-before-label {
+      right: 14px;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+    }
+
+    /* ---- 드래그 핸들 ---- */
+    .ba-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%; /* JS가 동적으로 업데이트 */
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+      width: 48px;
+    }
+
+    .ba-handle.is-hinting {
+      transition: left 0.45s cubic-bezier(0.45, 0, 0.55, 1);
+    }
+
+    .handle-line {
+      flex: 1;
+      width: 2.5px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.28);
+    }
+
+    .handle-btn {
+      flex-shrink: 0;
+      width: 42px;
+      height: 42px;
+      background: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.24);
+    }
+
+    .handle-arrow {
+      display: block;
+      width: 0;
+      height: 0;
+    }
+
+    .handle-arrow.arrow-left {
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-right: 7px solid #6366f1;
+    }
+
+    .handle-arrow.arrow-right {
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 7px solid #6366f1;
+    }
+
+    /* ---- 카드 정보 영역 ---- */
+    .ba-info {
+      padding: 18px 20px 22px;
+    }
+
+    .ba-info-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6366f1;
+      background: #eef2ff;
+      padding: 3px 10px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+
+    .ba-info-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 6px;
+      line-height: 1.45;
+    }
+
+    .ba-info-desc {
+      font-size: 13px;
+      color: #6b7280;
+      line-height: 1.65;
+    }
+
+    /* ---- 드래그 중 커서 ---- */
+    body.is-dragging,
+    body.is-dragging * {
+      cursor: ew-resize !important;
+    }
+
+    /* ---- 반응형 ---- */
+    @media (max-width: 960px) {
+      .dibo-ba-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .dibo-ba-section {
+        padding: 60px 16px 72px;
+      }
+
+      .dibo-ba-header {
+        margin-bottom: 36px;
+      }
+
+      .dibo-ba-subtitle {
+        font-size: 14px;
+      }
+
+      .dibo-ba-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .dibo-ba-card:hover {
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<section class="dibo-ba-section">
+
+  <!-- 섹션 헤더 -->
+  <div class="dibo-ba-header">
+    <span class="dibo-ba-eyebrow" id="jsEyebrow"></span>
+    <h2 class="dibo-ba-title" id="jsTitle"></h2>
+    <p class="dibo-ba-subtitle" id="jsSubtitle"></p>
+  </div>
+
+  <!-- 비교 카드 그리드 -->
+  <div class="dibo-ba-grid" id="jsGrid"></div>
+
+</section>
+
+<script>
+/* ================================================================
+   【섹션 헤더 설정】                           ← [수정 가능]
+   ================================================================ */
+const sectionEyebrow  = 'BEFORE & AFTER';
+const sectionTitle    = '직접 확인하는 놀라운 변화';
+const sectionSubtitle = '핸들을 드래그해 전후를 직접 비교해보세요.';
+
+/* ================================================================
+   【비교 항목 데이터】
+   before.image / after.image : 이미지 URL       ★ [수정 필수]
+   before.label / after.label : 레이블 텍스트    [수정 가능]
+   title       : 항목 제목                       [수정 가능]
+   description : 항목 설명 (없으면 '' 입력)      [수정 가능]
+   ================================================================ */
+const comparisonsData = [
+  {
+    title: '트러블성 피부 집중 케어',
+    description: '5회 클리닉 트리트먼트 후 모공·잡티 개선 결과입니다.',
+    before: { image: 'https://picsum.photos/seed/ba-skin1/800/600?grayscale', label: 'BEFORE' },
+    after:  { image: 'https://picsum.photos/seed/ba-skin1/800/600',           label: 'AFTER'  }
+  },
+  {
+    title: '거실 전체 리모델링',
+    description: '벽지·바닥·조명 교체로 완전히 달라진 공간감.',
+    before: { image: 'https://picsum.photos/seed/ba-room2/800/600?grayscale', label: 'BEFORE' },
+    after:  { image: 'https://picsum.photos/seed/ba-room2/800/600',           label: 'AFTER'  }
+  },
+  {
+    title: '컬러링 & 레이어드 커트',
+    description: '내추럴 브라운 컬러와 레이어드 스타일로 변신.',
+    before: { image: 'https://picsum.photos/seed/ba-hair3/800/600?grayscale', label: 'BEFORE' },
+    after:  { image: 'https://picsum.photos/seed/ba-hair3/800/600',           label: 'AFTER'  }
+  },
+  {
+    title: '건물 외벽 도장 리뉴얼',
+    description: '노후 외벽을 프리미엄 도료로 깨끗하게 새 단장.',
+    before: { image: 'https://picsum.photos/seed/ba-build4/800/600?grayscale', label: 'BEFORE' },
+    after:  { image: 'https://picsum.photos/seed/ba-build4/800/600',           label: 'AFTER'  }
+  },
+  {
+    title: '제품 이미지 리터칭',
+    description: '자연광 색상 보정 및 배경 클린업 작업 전후입니다.',
+    before: { image: 'https://picsum.photos/seed/ba-photo5/800/600?grayscale', label: 'BEFORE' },
+    after:  { image: 'https://picsum.photos/seed/ba-photo5/800/600',           label: 'AFTER'  }
+  },
+  {
+    title: '카페 인테리어 개조',
+    description: '기존 매장을 모던 인더스트리얼 스타일로 리뉴얼.',
+    before: { image: 'https://picsum.photos/seed/ba-cafe6/800/600?grayscale', label: 'BEFORE' },
+    after:  { image: 'https://picsum.photos/seed/ba-cafe6/800/600',           label: 'AFTER'  }
+  }
+];
+
+/* ================================================================
+   이하 코드는 수정하지 않아도 됩니다
+   ================================================================ */
+
+/**
+ * 이미지 블록 API 연동 가이드
+ *
+ * 본 API는 이미지 블록 데이터의 조회(Read)를 지원합니다.
+ * 모든 요청은 발급받은 `access-token`을 헤더에 포함하여 호출해야 합니다.
+ *
+ * 주요 필드 설명:
+ * - main_img_url : Before(변화 전) 이미지 URL
+ * - sub_img_url  : After(변화 후) 이미지 URL
+ * - title        : 항목 제목
+ * - content      : 항목 설명 텍스트
+ * - link         : 연결 링크 (본 컴포넌트에서는 미사용)
+ */
+
+// 섹션 헤더 렌더링
+document.getElementById('jsEyebrow').textContent = sectionEyebrow;
+document.getElementById('jsTitle').textContent   = sectionTitle;
+document.getElementById('jsSubtitle').innerHTML  = sectionSubtitle.replace(/\n/g, '<br>');
+
+// 카드 렌더링
+const grid = document.getElementById('jsGrid');
+
+function renderGrid(data) {
+  grid.innerHTML = '';
+  data.forEach((item, idx) => {
+    const card = document.createElement('div');
+    card.className = 'dibo-ba-card';
+    card.innerHTML = `
+      <div class="ba-slider">
+        <img class="ba-img is-before" src="${item.before.image}" alt="${item.title} - 전">
+        <img class="ba-img is-after"  src="${item.after.image}"  alt="${item.title} - 후">
+        <span class="ba-label is-after-label">${item.after.label || 'AFTER'}</span>
+        <span class="ba-label is-before-label">${item.before.label || 'BEFORE'}</span>
+        <div class="ba-handle">
+          <div class="handle-line"></div>
+          <div class="handle-btn">
+            <span class="handle-arrow arrow-left"></span>
+            <span class="handle-arrow arrow-right"></span>
+          </div>
+          <div class="handle-line"></div>
+        </div>
+      </div>
+      <div class="ba-info">
+        <div class="ba-info-title">${item.title}</div>
+        ${item.description ? `<p class="ba-info-desc">${item.description}</p>` : ''}
+      </div>
+    `;
+    grid.appendChild(card);
+
+    const slider = card.querySelector('.ba-slider');
+    initSlider(slider, idx);
+  });
+}
+
+async function fetchData() {
+  try {
+    const response = await axios.get('https://api.di-bo.me/block?config_id=copy_config_id', {
+      headers: { 'access-token': diboToken }
+    });
+
+    const instData = response.data;
+    const serverData = instData.map(item => ({
+      title:       item.title,
+      description: item.content,
+      before: { image: item.main_img_url, label: 'BEFORE' },
+      after:  { image: item.sub_img_url,  label: 'AFTER'  }
+    }));
+
+    renderGrid(serverData);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    renderGrid(comparisonsData);
+  }
+}
+
+fetchData();
+
+/* ---- 슬라이더 초기화 ---- */
+function initSlider(slider, idx) {
+  const afterImg = slider.querySelector('.ba-img.is-after');
+  const handle   = slider.querySelector('.ba-handle');
+  let position   = 50; // 현재 핸들 위치 (0~100%)
+  let dragging   = false;
+
+  // 위치 업데이트 (after 이미지 clip + 핸들 이동)
+  function setPosition(pct) {
+    pct = Math.max(2, Math.min(98, pct));
+    position = pct;
+    afterImg.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
+    handle.style.left = pct + '%';
+  }
+
+  // 마우스/터치 X 좌표 → 슬라이더 내 비율 계산
+  function toPercent(e) {
+    const rect   = slider.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    return ((clientX - rect.left) / rect.width) * 100;
+  }
+
+  /* ---- 마우스 이벤트 ---- */
+  slider.addEventListener('mousedown', (e) => {
+    dragging = true;
+    document.body.classList.add('is-dragging');
+    setPosition(toPercent(e));
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    setPosition(toPercent(e));
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    document.body.classList.remove('is-dragging');
+  });
+
+  /* ---- 터치 이벤트 ---- */
+  slider.addEventListener('touchstart', (e) => {
+    dragging = true;
+    setPosition(toPercent(e));
+  }, { passive: true });
+
+  slider.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    setPosition(toPercent(e));
+    e.preventDefault(); // 수직 스크롤 방지
+  }, { passive: false });
+
+  slider.addEventListener('touchend', () => { dragging = false; });
+
+  // 초기 위치 설정
+  setPosition(50);
+
+  /* ---- 힌트 애니메이션 (화면에 들어올 때 1회 실행) ---- */
+  playHintOnVisible(slider, afterImg, handle, setPosition, idx);
+}
+
+/* IntersectionObserver로 보이는 순간 힌트 실행 */
+function playHintOnVisible(slider, afterImg, handle, setPosition, idx) {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      observer.disconnect();
+
+      // 카드 순서에 따라 시작 시간 분산
+      setTimeout(() => {
+        runHint(afterImg, handle, setPosition);
+      }, idx * 120 + 300);
+    });
+  }, { threshold: 0.5 });
+
+  observer.observe(slider);
+}
+
+/* 좌→우→중앙 부드러운 힌트 스윕 */
+function runHint(afterImg, handle, setPosition) {
+  // 이미 드래그 중이면 힌트 건너뜀
+  if (document.body.classList.contains('is-dragging')) return;
+
+  afterImg.classList.add('is-hinting');
+  handle.classList.add('is-hinting');
+
+  setPosition(32);
+
+  setTimeout(() => setPosition(68), 450);
+  setTimeout(() => setPosition(50), 900);
+
+  // 힌트 종료 후 transition 클래스 제거
+  setTimeout(() => {
+    afterImg.classList.remove('is-hinting');
+    handle.classList.remove('is-hinting');
+  }, 1350);
+}
+</script>
+
+</body>
+</html>

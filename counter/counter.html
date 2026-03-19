@@ -1,0 +1,941 @@
+<!--
+=======================================================
+  선착순 이벤트 페이지 - 사용 가이드
+=======================================================
+
+【페이지 개요】
+  매일 자정 초기화되는 선착순 참여 이벤트 페이지입니다.
+  참여자는 이름/이메일/전화번호를 입력해 이벤트에 신청할 수 있습니다.
+
+【사용 전 필수 설정】
+  아래 항목들을 수정하여 이벤트에 맞게 커스터마이징하세요.
+
+  1. 이벤트 제목 / 내용 수정
+     → <body> 내 텍스트 직접 수정 (아래 [수정 가능] 주석 참고)
+
+  2. API 연동 설정 (JavaScript 영역)
+     → copy_config_id : 디보(dibo) 설정 ID로 교체
+     → diboToken     : 발급받은 액세스 토큰으로 교체
+
+  3. 선착순 인원 수 변경
+     → const maxParticipants = 100;  ← 원하는 숫자로 변경
+
+  4. 이미지 교체
+     → <img src="..."> 부분의 URL을 원하는 이미지로 교체
+
+=======================================================
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- [수정 가능] 브라우저 탭에 표시되는 페이지 제목 -->
+  <title>선착순 이벤트</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Roboto:wght@900&display=swap');
+
+    @font-face {
+        font-family: 'S-CoreDream';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/S-CoreDream-3Light.woff') format('woff');
+        font-weight: 300;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: 'S-CoreDream';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/S-CoreDream-4Regular.woff') format('woff');
+        font-weight: 400;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: 'S-CoreDream';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/S-CoreDream-6Bold.woff') format('woff');
+        font-weight: 600;
+        font-display: swap;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Noto Sans KR", sans-serif;
+      background: #ffffff;
+    }
+
+    /* 타이머 상단 바 */
+    .dibo-count-line-counter {
+      width: 100%;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #f8518d 0%, #e04079 100%);
+      box-shadow: 0 4px 12px rgba(248, 81, 141, 0.3);
+      gap: 12px;
+    }
+
+    .dibo-count-timer-title {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      text-align: center;
+    }
+
+    .dibo-count-timer-display {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .dibo-count-digit-box {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 60px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .dibo-count-digit-text {
+      color: #f8518d;
+      text-align: center;
+      font-family: 'Roboto', sans-serif;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-count-separator {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .dibo-count-separator-dot {
+      background: #ffffff;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 메인 컨테이너 */
+    .dibo-count-container {
+      background: #ffffff;
+      min-height: calc(100vh - 140px);
+      display: flex;
+      justify-content: center;
+      padding: 60px 20px;
+    }
+
+    .dibo-count-main-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 50px;
+      align-items: center;
+      width: 100%;
+      max-width: 960px;
+    }
+
+    .dibo-count-content-section {
+      display: flex;
+      flex-direction: column;
+      gap: 50px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .dibo-count-header {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .dibo-count-badge {
+      background: #f8518d;
+      border-radius: 30px;
+      padding: 8px 24px;
+    }
+
+    .dibo-count-badge-text {
+      color: #ffffff;
+      text-align: center;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      font-weight: 600;
+    }
+
+    .dibo-count-title-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .dibo-count-title {
+      font-family: 'S-CoreDream';
+      color: #000000;
+      text-align: center;
+      font-size: 48px;
+      letter-spacing: -0.03em;
+      font-weight: 900;
+      line-height: 1.3;
+    }
+
+    .dibo-count-title-highlight {
+      font-family: 'S-CoreDream';
+      color: #f8518d;
+      text-align: center;
+      font-size: 48px;
+      letter-spacing: -0.03em;
+      font-weight: 900;
+      line-height: 1.3;
+    }
+
+    .dibo-count-subtitle {
+      color: #4b4b4b;
+      text-align: center;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+      font-weight: 500;
+    }
+
+    .dibo-count-visual-section {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+      align-items: center;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+
+    .dibo-count-gift-wrapper {
+      width: 60%;
+      max-width: 600px;
+      height: auto;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .dibo-count-progress-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .dibo-count-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      gap: 10px;
+    }
+
+    .dibo-count-progress-label-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .dibo-count-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+    }
+
+    .dibo-count-progress-label {
+      color: #4b4b4b;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      font-weight: 500;
+    }
+
+    .dibo-count-progress-value {
+      color: #4b4b4b;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      font-weight: 700;
+    }
+
+    .dibo-count-progress-bar-wrapper {
+      width: 100%;
+      height: 16px;
+      position: relative;
+    }
+
+    .dibo-count-progress-bar-bg {
+      background: #dedede;
+      border-radius: 8px;
+      width: 100%;
+      height: 16px;
+    }
+
+    .dibo-count-progress-bar-fill {
+      background: #ee8fb2;
+      border-radius: 8px;
+      width: 0%;
+      height: 16px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      transition: width 0.5s ease;
+    }
+
+    .dibo-count-footer {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .dibo-count-button {
+      background: #f9508e;
+      border-radius: 10px;
+      width: 100%;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      border: none;
+    }
+
+    .dibo-count-button:hover:not(:disabled) {
+      background: #e04079;
+    }
+
+    .dibo-count-button:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+
+    .dibo-count-button-text {
+      color: #ffffff;
+      text-align: center;
+      font-size: 20px;
+      letter-spacing: -0.01em;
+      font-weight: 700;
+    }
+
+    .dibo-count-notice {
+      color: #4b4b4b;
+      text-align: center;
+      font-size: 14px;
+      letter-spacing: -0.02em;
+      font-weight: 400;
+    }
+
+    /* 모달 */
+    .dibo-count-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .dibo-count-modal.active {
+      display: flex;
+    }
+
+    .dibo-count-modal-content {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 500px;
+      position: relative;
+      animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .dibo-count-modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: none;
+      font-size: 30px;
+      cursor: pointer;
+      color: #999;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dibo-count-modal-close:hover {
+      color: #333;
+    }
+
+    .dibo-count-modal-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #000;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .dibo-count-form-group {
+      margin-bottom: 20px;
+    }
+
+    .dibo-count-form-label {
+      display: block;
+      font-size: 16px;
+      font-weight: 500;
+      color: #4b4b4b;
+      margin-bottom: 8px;
+    }
+
+    .dibo-count-form-input {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 16px;
+      color: black;
+      transition: border-color 0.3s ease;
+    }
+
+    .dibo-count-form-input:focus {
+      outline: none;
+      border-color: #f8518d;
+    }
+
+    .dibo-count-form-input.error {
+      border-color: #ff4444;
+    }
+
+    .dibo-count-form-error {
+      color: #ff4444;
+      font-size: 14px;
+      margin-top: 5px;
+      min-height: 20px;
+    }
+
+    .dibo-count-modal-button {
+      width: 100%;
+      padding: 18px;
+      background: #f9508e;
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.3s ease;
+    }
+
+    .dibo-count-modal-button:hover {
+      background: #e04079;
+    }
+
+    /* 토스트 */
+    .dibo-count-toast {
+      position: fixed;
+      bottom: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4caf50;
+      color: white;
+      padding: 16px 24px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      z-index: 2000;
+      transition: bottom 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .dibo-count-toast.active {
+      bottom: 30px;
+    }
+
+    /* 모바일 반응형 */
+    @media (max-width: 768px) {
+      .dibo-count-line-counter {
+        padding: 16px 20px;
+        gap: 10px;
+      }
+
+      .dibo-count-timer-title {
+        font-size: 16px;
+      }
+
+      .dibo-count-digit-box {
+        padding: 10px 12px;
+        min-width: 50px;
+      }
+
+      .dibo-count-digit-text {
+        font-size: 28px;
+      }
+
+      .dibo-count-timer-display {
+        gap: 10px;
+      }
+
+      .dibo-count-separator-dot {
+        width: 5px;
+        height: 5px;
+      }
+
+      .dibo-count-container {
+        padding: 40px 16px;
+      }
+
+      .dibo-count-main-wrapper {
+        gap: 40px;
+      }
+
+      .dibo-count-badge-text {
+        font-size: 16px;
+      }
+
+      .dibo-count-title,
+      .dibo-count-title-highlight {
+        font-size: 36px;
+      }
+
+      .dibo-count-subtitle {
+        font-size: 18px;
+      }
+
+      .dibo-count-gift-wrapper {
+        width: 90%;
+      }
+
+      .dibo-count-progress-label,
+      .dibo-count-progress-value {
+        font-size: 16px;
+      }
+
+      .dibo-count-icon {
+        width: 28px;
+        height: 28px;
+      }
+
+      .dibo-count-button {
+        height: 60px;
+      }
+
+      .dibo-count-button-text {
+        font-size: 18px;
+      }
+
+      .dibo-count-notice {
+        font-size: 13px;
+      }
+
+      .dibo-count-modal-content {
+        padding: 30px 20px;
+      }
+
+      .dibo-count-modal-title {
+        font-size: 24px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .dibo-count-line-counter {
+        padding: 14px 16px;
+      }
+
+      .dibo-count-timer-title {
+        font-size: 14px;
+      }
+
+      .dibo-count-digit-box {
+        padding: 8px 10px;
+        min-width: 45px;
+      }
+
+      .dibo-count-digit-text {
+        font-size: 24px;
+      }
+
+      .dibo-count-timer-display {
+        gap: 8px;
+      }
+
+      .dibo-count-title,
+      .dibo-count-title-highlight {
+        font-size: 28px;
+      }
+
+      .dibo-count-subtitle {
+        font-size: 16px;
+      }
+
+      .dibo-count-gift-wrapper {
+        width: 95%;
+      }
+
+      .dibo-count-button-text {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dibo-count-line-counter">
+    <!-- [수정 가능] 타이머 상단 문구 -->
+    <div class="dibo-count-timer-title">⏰ 이벤트 마감까지 남은 시간</div>
+    <div class="dibo-count-timer-display">
+      <div class="dibo-count-digit-box">
+        <div class="dibo-count-digit-text" id="hours">00</div>
+      </div>
+      <div class="dibo-count-separator">
+        <div class="dibo-count-separator-dot"></div>
+        <div class="dibo-count-separator-dot"></div>
+      </div>
+      <div class="dibo-count-digit-box">
+        <div class="dibo-count-digit-text" id="minutes">00</div>
+      </div>
+      <div class="dibo-count-separator">
+        <div class="dibo-count-separator-dot"></div>
+        <div class="dibo-count-separator-dot"></div>
+      </div>
+      <div class="dibo-count-digit-box">
+        <div class="dibo-count-digit-text" id="seconds">00</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dibo-count-container">
+    <div class="dibo-count-main-wrapper">
+      
+      <div class="dibo-count-content-section">
+        <div class="dibo-count-header">
+          <!-- [수정 가능] 이벤트 번호 뱃지 (예: EVENT 01, EVENT 02 ...) -->
+          <div class="dibo-count-badge">
+            <div class="dibo-count-badge-text">EVENT 01</div>
+          </div>
+          <div class="dibo-count-title-group">
+            <!-- [수정 가능] 메인 제목 (검정 텍스트) -->
+            <div class="dibo-count-title">선착순 이벤트</div>
+            <!-- [수정 가능] 강조 제목 (핑크 텍스트) - 이벤트 혜택 내용 -->
+            <div class="dibo-count-title-highlight">1개월 무료 이용권 증정</div>
+          </div>
+          <!-- [수정 가능] 부제목 설명 문구 -->
+          <div class="dibo-count-subtitle">매일 열리는 선착순 이벤트!</div>
+        </div>
+
+        <div class="dibo-count-visual-section">
+          <!-- [수정 가능] 이벤트 대표 이미지 (src 속성의 URL을 원하는 이미지로 교체) -->
+          <img class="dibo-count-gift-wrapper" src="https://dibo-sample.s3.ap-northeast-2.amazonaws.com/extension-starter/gifImage.png" alt="이벤트 선물"/>
+
+          <div class="dibo-count-progress-section">
+            <div class="dibo-count-progress-header">
+              <div class="dibo-count-progress-label-group">
+                <img class="dibo-count-icon" src="https://dibo-sample.s3.ap-northeast-2.amazonaws.com/extension-starter/fluent-color_person-starburst-48.png" alt="참여자 아이콘"/>
+                <div class="dibo-count-progress-label">현재 참여인원</div>
+              </div>
+              <!-- [수정 가능] "/ 100" 부분의 숫자를 maxParticipants 값과 동일하게 변경 -->
+              <div class="dibo-count-progress-value"><span id="current">0</span> / 100</div>
+            </div>
+            <div class="dibo-count-progress-bar-wrapper">
+              <div class="dibo-count-progress-bar-bg"></div>
+              <div class="dibo-count-progress-bar-fill" id="progress"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dibo-count-footer">
+        <!-- [수정 가능] 참여 버튼 문구 -->
+        <button class="dibo-count-button" id="ctaButton" onclick="openModal()">
+          <div class="dibo-count-button-text">지금 참여하기</div>
+        </button>
+        <!-- [수정 가능] 버튼 하단 안내 문구 -->
+        <div class="dibo-count-notice">* 매일 자정에 인원이 초기화 됩니다</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모달 -->
+  <div class="dibo-count-modal" id="modal">
+    <div class="dibo-count-modal-content">
+      <button class="dibo-count-modal-close" onclick="closeModal()">×</button>
+      <!-- [수정 가능] 모달 제목 -->
+      <h2 class="dibo-count-modal-title">이벤트 참여하기</h2>
+
+      <!-- [수정 가능] 입력 필드 - 라벨과 placeholder 텍스트 변경 가능 -->
+      <div class="dibo-count-form-group">
+        <label class="dibo-count-form-label">이름</label>
+        <input type="text" class="dibo-count-form-input" id="name" placeholder="이름을 입력해주세요">
+        <div class="dibo-count-form-error" id="nameError"></div>
+      </div>
+
+      <div class="dibo-count-form-group">
+        <label class="dibo-count-form-label">이메일</label>
+        <input type="email" class="dibo-count-form-input" id="email" placeholder="example@email.com">
+        <div class="dibo-count-form-error" id="emailError"></div>
+      </div>
+
+      <div class="dibo-count-form-group">
+        <label class="dibo-count-form-label">전화번호</label>
+        <input type="tel" class="dibo-count-form-input" id="phone" placeholder="010-1234-5678">
+        <div class="dibo-count-form-error" id="phoneError"></div>
+      </div>
+
+      <!-- [수정 가능] 신청 버튼 문구 -->
+      <button class="dibo-count-modal-button" onclick="submitForm()">신청하기</button>
+    </div>
+  </div>
+
+  <!-- 토스트 - 신청 완료 시 화면 하단에 잠깐 표시되는 알림 메시지 -->
+  <!-- [수정 가능] 신청 완료 후 표시될 메시지 -->
+  <div class="dibo-count-toast" id="successToast">
+    이벤트 참여가 완료되었습니다! 🎉
+  </div>
+
+  <script>
+    let globalcounterId;
+    let hasRunMidnightTask = false;
+    let participants = 0;
+
+    // ★ [수정 필수] 선착순 최대 참여 인원 수
+    // HTML의 "/ 100" 표시도 동일한 숫자로 함께 변경해주세요.
+    const maxParticipants = 100;
+
+    // --- 기본 UI 로직 ---
+
+    function updateTimer() {
+        const now = new Date();
+        const midnight = new Date();
+        midnight.setHours(24, 0, 0, 0);
+        
+        const diff = midnight - now;
+        
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((diff / 1000 / 60) % 60);
+        const seconds = Math.floor((diff / 1000) % 60);
+        
+        document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+        document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+        document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+        
+        if (hours === 0 && minutes === 0 && seconds === 0 && !hasRunMidnightTask) {
+            hasRunMidnightTask = true;
+            fetchIdData(); // 자정에 데이터 새로고침
+        }
+    }
+
+    function updateParticipants() {
+        const progress = (participants / maxParticipants) * 100;
+        document.getElementById('current').textContent = participants;
+        document.getElementById('progress').style.width = Math.min(progress, 100) + '%';
+        
+        const button = document.getElementById('ctaButton');
+        if (participants >= maxParticipants) {
+            button.disabled = true;
+            button.querySelector('.dibo-count-button-text').textContent = '마감되었습니다';
+        } else {
+            button.disabled = false;
+            button.querySelector('.dibo-count-button-text').textContent = '지금 참여하기';
+        }
+    }
+
+    function openModal() {
+        document.getElementById('modal').classList.add('active');
+        clearForm();
+    }
+
+    function closeModal() {
+        document.getElementById('modal').classList.remove('active');
+        clearForm();
+    }
+
+    function clearForm() {
+        document.getElementById('name').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('phone').value = '';
+        ['name', 'email', 'phone'].forEach(id => {
+            document.getElementById(id).classList.remove('error');
+            document.getElementById(id + 'Error').textContent = '';
+        });
+    }
+
+    function validateForm() {
+        let isValid = true;
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        
+        if (!name) {
+            document.getElementById('nameError').textContent = '이름을 입력해주세요';
+            document.getElementById('name').classList.add('error');
+            isValid = false;
+        }
+        
+        const emailRegex = /\S+@\S+\.\S+/;
+        if (!emailRegex.test(email)) {
+            document.getElementById('emailError').textContent = '올바른 이메일 형식이 아닙니다';
+            document.getElementById('email').classList.add('error');
+            isValid = false;
+        }
+        
+        const phoneRegex = /^[0-9-]{10,}$/;
+        if (!phoneRegex.test(phone.replace(/-/g, ""))) {
+            document.getElementById('phoneError').textContent = '올바른 전화번호 형식이 아닙니다';
+            document.getElementById('phone').classList.add('error');
+            isValid = false;
+        }
+        
+        return isValid;
+    }
+
+    // --- API 연동 로직 ---
+
+    // 1. ID 가져오기 (설정한 config_id에 연결된 데이터셋 ID를 조회)
+    const fetchIdData = async () => {
+        try {
+            const res = await axios.get(`https://api.di-bo.me/edit-set?config_id=copy_config_id`, {
+                headers: { 'access-token': diboToken }
+            });
+            if (res.data && res.data.length > 0) {
+                globalcounterId = res.data[0].id;
+                await fetchparticipantsData();
+            }
+        } catch (error) {
+            console.error('ID 로드 실패:', error);
+        }
+    }
+
+    // 2. 참여 데이터 가져오기 및 오늘 날짜 필터링
+    //    저장된 전체 참여 데이터 중 오늘 날짜의 데이터만 집계합니다.
+    const fetchparticipantsData = async () => {
+        if (!globalcounterId) return;
+        try {
+            const res = await axios.get(`https://api.di-bo.me/edit-set/${globalcounterId}/rows?config_id=copy_config_id`, {
+                headers: { 'access-token': diboToken }
+            });
+            
+            const instData = res.data || [];
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+            // column_4(날짜)가 오늘인 데이터만 필터링
+            const todayParticipants = instData.filter(item => {
+                return item.column_4 && item.column_4.includes(today);
+            });
+
+            participants = todayParticipants.length;
+            updateParticipants();
+        } catch (error) {
+            console.error('데이터 로드 실패:', error);
+        }
+    }
+
+    // 3. 데이터 저장하기
+    //    신청 폼의 입력값을 API로 전송합니다.
+    //    column_1~4는 디보 데이터셋의 컬럼 순서와 일치해야 합니다.
+    const postparticipantsData = async (value) => {
+        const formData = new FormData();
+        formData.append('req_body', JSON.stringify({ config_id: 'copy_config_id' }));
+
+        // 데이터 매핑 (column_1: 이름, column_2: 이메일, column_3: 전화번호, column_4: 참여일시)
+        formData.append('column_1', value.name);
+        formData.append('column_2', value.email);
+        formData.append('column_3', value.phone);
+        formData.append('column_4', new Date().toISOString()); // 현재 시간 자동 저장
+
+        try {
+            await axios.post(`https://api.di-bo.me/edit-set/${globalcounterId}/rows`, formData, {
+                headers: { 'access-token': diboToken }
+            });
+            return true;
+        } catch (error) {
+            console.error('데이터 저장 실패:', error);
+            alert('참여 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+            return false;
+        }
+    }
+
+    // 4. 폼 제출 함수 수정
+    async function submitForm() {
+        if (validateForm()) {
+            const formData = {
+                name: document.getElementById('name').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                phone: document.getElementById('phone').value.trim()
+            };
+
+            // API 전송 시작
+            const success = await postparticipantsData(formData);
+            
+            if (success) {
+                // 성공 시 로컬 카운트 증가 및 UI 업데이트
+                participants++;
+                updateParticipants();
+                closeModal();
+                showSuccessToast();
+            }
+        }
+    }
+
+    // --- 초기 실행 (페이지 로드 시 자동 실행 - 수정 불필요) ---
+
+    function showSuccessToast() {
+        const toast = document.getElementById('successToast');
+        toast.classList.add('active');
+        setTimeout(() => toast.classList.remove('active'), 3000);
+    }
+
+    document.getElementById('modal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    // 초기화 함수 실행
+    updateTimer();
+    setInterval(updateTimer, 1000);
+    fetchIdData(); // ID 로드 및 데이터 동기화 시작
+  </script>
+</body>
+</html>
+
+
+

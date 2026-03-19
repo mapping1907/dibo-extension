@@ -1,0 +1,737 @@
+<!--
+=======================================================
+  FAQ 페이지 - 사용 가이드
+=======================================================
+
+【페이지 개요】
+  카테고리별 자주 묻는 질문(FAQ) 목록과 검색 기능을 제공하는 페이지입니다.
+  API 연동 전에는 faqData 배열의 로컬 데이터가 표시되며,
+  연동 후에는 디보(dibo) 데이터셋의 내용으로 자동 대체됩니다.
+
+【사용 전 필수 설정】
+  아래 항목들을 수정하여 서비스에 맞게 커스터마이징하세요.
+
+  1. 페이지 제목 / 설명 수정
+     → <body> 내 h1, p 태그 텍스트 직접 수정
+
+  2. FAQ 기본 데이터 수정 (API 연동 전 임시 데이터)
+     → faqData 배열 내 항목 수정/추가/삭제
+     → 각 항목: category(영문ID), categoryName(표시명), question(질문), answer(답변)
+
+  3. API 연동 설정 (JavaScript 영역)
+     → copy_config_id : 디보(dibo) 설정 ID로 교체
+     → diboToken     : 익스텐션 전역 변수로 자동 주입 (별도 선언 불필요)
+
+  4. 데이터셋 컬럼 구성 (디보 대시보드 기준)
+     → column_1: category (영문 ID)
+     → column_2: categoryName (카테고리 표시명)
+     → column_3: question (질문)
+     → column_4: answer (답변)
+
+=======================================================
+-->
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- [수정 가능] 브라우저 탭에 표시되는 페이지 제목 -->
+	<title>고객센터 FAQ - DIBO</title>
+	<style>
+	  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+
+	  * {
+		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+	  }
+	  body {
+		font-family: 'Noto Sans KR', sans-serif;
+		background: #ffffff;
+		color: #1a1a1a;
+		line-height: 1.6;
+	  }
+	  /* Page Title */
+	  .dibo-faq-page-title {
+		text-align: center;
+		padding: 60px 40px 0 40px;
+		color: #000;
+	  }
+
+	  .dibo-faq-page-title h1 {
+		font-size: 40px;
+		font-weight: 700;
+		margin-bottom: 16px;
+		letter-spacing: -0.02em;
+	  }
+
+	  .dibo-faq-page-title p {
+		font-size: 18px;
+		color: #666;
+		font-weight: 400;
+	  }
+
+	  /* Main Container */
+	  .dibo-faq-container {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 60px 40px;
+		display: flex;
+		gap: 60px;
+	  }
+
+	  /* Sidebar */
+	  .dibo-faq-sidebar {
+		width: 220px;
+		flex-shrink: 0;
+	  }
+
+	  .dibo-faq-sidebar h3 {
+		font-size: 16px;
+		font-weight: 700;
+		color: #000;
+		margin-bottom: 20px;
+		letter-spacing: -0.01em;
+	  }
+
+	  .dibo-faq-category-list {
+		list-style: none;
+	  }
+
+	  .dibo-faq-category-item {
+		margin-bottom: 4px;
+		color: #000;
+	  }
+
+	  .dibo-faq-category-link {
+		display: block;
+		padding: 12px 16px;
+		color: #666 !important;
+		text-decoration: none;
+		font-size: 15px;
+		font-weight: 500;
+		border-radius: 6px;
+		transition: all 0.2s;
+		letter-spacing: -0.01em;
+	  }
+
+	  .dibo-faq-category-link:hover {
+		background: #f5f5f5;
+		color: #000 !important;
+	  }
+
+	  .dibo-faq-category-link.active {
+		background: #000;
+		color: #fff !important;
+	  }
+
+	  /* Content Area */
+	  .dibo-faq-content {
+		flex: 1;
+		min-width: 0;
+	  }
+
+	  /* Search Box */
+	  .dibo-faq-search-box {
+		position: relative;
+		margin-bottom: 40px;
+	  }
+
+	  .dibo-faq-search-input {
+		width: 100%;
+		padding: 16px 20px 16px 48px;
+		font-size: 16px;
+		font-family: 'Noto Sans KR', sans-serif;
+		border: 1px solid #e0e0e0;
+		border-radius: 8px;
+		outline: none;
+		transition: border-color 0.2s;
+		letter-spacing: -0.01em;
+	  }
+
+	  .dibo-faq-search-input:focus {
+		border-color: #000;
+	  }
+
+	  .dibo-faq-search-input::placeholder {
+		color: #999;
+		font-weight: 400;
+	  }
+
+	  .dibo-faq-search-icon {
+		position: absolute;
+		left: 18px;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 18px;
+		height: 18px;
+		pointer-events: none;
+		color: #000 !important;
+	  }
+
+	  /* FAQ List */
+	  .dibo-faq-list {
+		border-top: 2px solid #000;
+	  }
+
+	  .dibo-faq-item {
+		border-bottom: 1px solid #e5e5e5;
+		transition: background 0.2s;
+	  }
+
+	  .dibo-faq-item:hover {
+		background: #fafafa;
+	  }
+
+	  .dibo-faq-item.hidden {
+		display: none;
+	  }
+
+	  .dibo-faq-question {
+		padding: 24px 60px 24px 60px;
+		cursor: pointer;
+		position: relative;
+		display: flex;
+		align-items: flex-start;
+		gap: 16px;
+	  }
+
+	  .dibo-faq-q-icon {
+		width: 32px;
+		height: 32px;
+		background: #000;
+		color: #fff;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 700;
+		font-size: 15px;
+		flex-shrink: 0;
+		margin-top: 2px;
+	  }
+
+	  .dibo-faq-question-content {
+		flex: 1;
+	  }
+
+	  .dibo-faq-category-tag {
+		display: inline-block;
+		font-size: 13px;
+		color: #999;
+		margin-bottom: 6px;
+		font-weight: 500;
+		letter-spacing: -0.01em;
+	  }
+
+	  .dibo-faq-question-text {
+		font-size: 17px;
+		font-weight: 600;
+		color: #1a1a1a;
+		line-height: 1.5;
+		letter-spacing: -0.01em;
+	  }
+
+	  .dibo-faq-arrow {
+		position: absolute;
+		right: 24px;
+		top: 32px;
+		width: 12px;
+		height: 12px;
+		border-right: 2px solid #666;
+		border-bottom: 2px solid #666;
+		transform: rotate(45deg);
+		transition: transform 0.2s;
+	  }
+
+	  .dibo-faq-item.active .dibo-faq-arrow {
+		transform: rotate(-135deg);
+		top: 36px;
+	  }
+
+	  .dibo-faq-answer {
+		max-height: 0;
+		overflow: hidden;
+		transition: max-height 0.3s ease;
+	  }
+
+	  .dibo-faq-answer-content {
+		padding: 0 60px 32px 108px;
+		font-size: 16px;
+		line-height: 1.8;
+		color: #555;
+		font-weight: 400;
+		letter-spacing: -0.01em;
+	  }
+
+	  .dibo-faq-item.active .dibo-faq-answer {
+		max-height: 600px;
+	  }
+
+	  /* No Results */
+	  .dibo-faq-no-results {
+		text-align: center;
+		padding: 80px 20px;
+		display: none;
+	  }
+
+	  .dibo-faq-no-results.show {
+		display: block;
+	  }
+
+	  .dibo-faq-no-results h3 {
+		font-size: 20px;
+		font-weight: 600;
+		color: #999;
+		margin-bottom: 12px;
+		letter-spacing: -0.01em;
+	  }
+
+	  .dibo-faq-no-results p {
+		font-size: 15px;
+		color: #999;
+		font-weight: 400;
+		letter-spacing: -0.01em;
+	  }
+
+	  /* Responsive */
+	  @media (max-width: 968px) {
+		.dibo-faq-container {
+		  flex-direction: column;
+		  gap: 40px;
+		  padding: 40px 20px;
+		}
+
+		.dibo-faq-page-title {
+		  padding: 40px 20px 0 20px;
+		}
+
+		.dibo-faq-page-title h1 {
+		  font-size: 32px;
+		}
+
+		.dibo-faq-page-title p {
+		  font-size: 16px;
+		}
+
+		.dibo-faq-sidebar {
+		  width: 100%;
+		}
+
+		.dibo-faq-sidebar h3 {
+		  font-size: 15px;
+		}
+
+		.dibo-faq-category-list {
+		  display: flex;
+		  flex-wrap: wrap;
+		  gap: 8px;
+		}
+
+		.dibo-faq-category-link {
+		  padding: 10px 16px;
+		  border: 1px solid #e0e0e0;
+		  font-size: 14px;
+		}
+
+		.dibo-faq-category-link.active {
+		  border-color: #000;
+		}
+
+		.dibo-faq-question {
+		  padding: 20px 50px 20px 20px;
+		}
+
+		.dibo-faq-q-icon {
+		  width: 28px;
+		  height: 28px;
+		  font-size: 13px;
+		}
+
+		.dibo-faq-question-text {
+		  font-size: 16px;
+		}
+
+		.dibo-faq-answer-content {
+		  padding: 0 20px 24px 64px;
+		  font-size: 15px;
+		}
+
+		.dibo-faq-arrow {
+		  right: 16px;
+		}
+	  }
+
+	  @media (max-width: 480px) {
+		.dibo-faq-page-title h1 {
+		  font-size: 28px;
+		}
+
+		.dibo-faq-page-title p {
+		  font-size: 15px;
+		}
+
+		.dibo-faq-search-input {
+		  font-size: 15px;
+		  padding: 14px 16px 14px 44px;
+		}
+
+		.dibo-faq-question-text {
+		  font-size: 15px;
+		}
+
+		.dibo-faq-answer-content {
+		  font-size: 14px;
+		}
+	  }
+	</style>
+  </head>
+  <body>
+	<!-- Page Title -->
+	<div class="dibo-faq-page-title">
+	  <!-- [수정 가능] 페이지 메인 제목 -->
+	  <h1>고객센터</h1>
+	  <!-- [수정 가능] 페이지 부제목 설명 -->
+	  <p>자주 묻는 질문과 답변을 확인하세요</p>
+	</div>
+
+	<!-- Main Container -->
+	<div class="dibo-faq-container">
+	  <!-- Sidebar -->
+	  <aside class="dibo-faq-sidebar">
+		<h3>카테고리</h3>
+		<ul class="dibo-faq-category-list" id="categoryList">
+		  <li class="dibo-faq-category-item">
+			<a href="#" class="dibo-faq-category-link active" data-category="all">전체보기</a>
+		  </li>
+		  <!-- 동적으로 생성됩니다 -->
+		</ul>
+	  </aside>
+
+	  <!-- Content -->
+	  <div class="dibo-faq-content">
+		<!-- Search Box -->
+		<div class="dibo-faq-search-box">
+		  <svg class="dibo-faq-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<circle cx="11" cy="11" r="8"></circle>
+			<path d="m21 21-4.35-4.35"></path>
+		  </svg>
+		  <input 
+				 type="text" 
+				 class="dibo-faq-search-input" 
+				 placeholder="궁금한 내용을 검색해보세요"
+				 id="searchInput"
+				 >
+		</div>
+
+		<!-- FAQ List -->
+		<div class="dibo-faq-list" id="faqList">
+		  <!-- FAQ items will be generated here -->
+		</div>
+
+		<!-- No Results -->
+		<div class="dibo-faq-no-results" id="noResults">
+		  <h3>검색 결과가 없습니다</h3>
+		  <p>다른 검색어를 입력하거나 카테고리를 선택해주세요</p>
+		</div>
+	  </div>
+	</div>
+
+	<script>
+	  let globalfaqId;
+	  // ★ [수정 가능] FAQ 기본 데이터 (API 연동 전 화면에 표시될 임시 데이터)
+	  // API 연동이 완료되면 아래 데이터는 자동으로 디보 데이터셋 내용으로 대체됩니다.
+	  // 각 항목 구성:
+	  //   category     : 카테고리 영문 ID (필터링에 사용, 예: 'account', 'payment')
+	  //   categoryName : 사이드바에 표시될 카테고리 이름 (예: '계정', '결제')
+	  //   question     : FAQ 질문 텍스트
+	  //   answer       : 클릭 시 펼쳐지는 답변 텍스트
+	  let faqData = [
+		{
+		  category: 'account',
+		  categoryName: '계정',
+		  question: '회원가입은 어떻게 하나요?',
+		  answer: '홈페이지 우측 상단의 "회원가입" 버튼을 클릭하여 이메일, 비밀번호 등 필수 정보를 입력하시면 됩니다. 이메일 인증 후 바로 서비스를 이용하실 수 있습니다.'
+		},
+		{
+		  category: 'account',
+		  categoryName: '계정',
+		  question: '비밀번호를 잊어버렸어요',
+		  answer: '로그인 페이지에서 "비밀번호 찾기"를 클릭하시고 가입 시 등록하신 이메일 주소를 입력해주세요. 비밀번호 재설정 링크를 이메일로 보내드립니다.'
+		},
+		{
+		  category: 'account',
+		  categoryName: '계정',
+		  question: '회원 탈퇴는 어떻게 하나요?',
+		  answer: '마이페이지의 설정 메뉴에서 "회원 탈퇴" 옵션을 선택하실 수 있습니다. 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없으니 신중하게 결정해주세요.'
+		},
+		{
+		  category: 'payment',
+		  categoryName: '결제',
+		  question: '어떤 결제 수단을 사용할 수 있나요?',
+		  answer: '신용카드, 체크카드, 계좌이체, 가상계좌, 휴대폰 결제 등 다양한 결제 수단을 지원합니다. 해외 카드도 사용 가능합니다.'
+		},
+		{
+		  category: 'payment',
+		  categoryName: '결제',
+		  question: '환불 정책은 어떻게 되나요?',
+		  answer: '구매일로부터 7일 이내 전액 환불이 가능합니다. 서비스 이용 내역이 있는 경우 부분 환불이 적용될 수 있습니다. 환불은 영업일 기준 3-5일 소요됩니다.'
+		},
+		{
+		  category: 'payment',
+		  categoryName: '결제',
+		  question: '정기 결제는 어떻게 취소하나요?',
+		  answer: '마이페이지의 "구독 관리" 메뉴에서 언제든지 정기 결제를 취소하실 수 있습니다. 취소 시점부터 다음 결제가 진행되지 않습니다.'
+		},
+		{
+		  category: 'order',
+		  categoryName: '주문/배송',
+		  question: '배송은 얼마나 걸리나요?',
+		  answer: '주문 후 1-2 영업일 내 발송되며, 지역에 따라 2-3일 내 수령하실 수 있습니다. 제주도 및 도서 산간 지역은 추가 배송 기간이 소요될 수 있습니다.'
+		},
+		{
+		  category: 'order',
+		  categoryName: '주문/배송',
+		  question: '배송지 변경이 가능한가요?',
+		  answer: '발송 전까지는 마이페이지에서 배송지 변경이 가능합니다. 이미 발송된 경우 택배사에 직접 문의하셔야 합니다.'
+		},
+		{
+		  category: 'product',
+		  categoryName: '제품',
+		  question: '제품 사용법을 알고 싶어요',
+		  answer: '각 제품 상세 페이지에서 사용 가이드를 확인하실 수 있으며, 추가 문의사항은 고객센터로 연락주시면 상세히 안내해드립니다.'
+		},
+		{
+		  category: 'product',
+		  categoryName: '제품',
+		  question: '제품에 하자가 있어요',
+		  answer: '제품 수령 후 7일 이내에 고객센터로 연락주시면 교환 또는 환불 처리해드립니다. 제품 사진과 함께 문의해주시면 빠른 처리가 가능합니다.'
+		},
+		{
+		  category: 'return',
+		  categoryName: '교환/환불',
+		  question: '교환은 어떻게 신청하나요?',
+		  answer: '마이페이지의 "주문 내역"에서 교환 신청이 가능합니다. 상품 수령 후 7일 이내 신청하실 수 있으며, 미사용 제품에 한해 교환이 가능합니다.'
+		},
+		{
+		  category: 'return',
+		  categoryName: '교환/환불',
+		  question: '환불은 언제 처리되나요?',
+		  answer: '환불 신청 후 제품 회수 확인 시점부터 3-5 영업일 내 환불 처리됩니다. 결제 수단에 따라 실제 입금까지 추가 시일이 소요될 수 있습니다.'
+		},
+		{
+		  category: 'technical',
+		  categoryName: '기술지원',
+		  question: '사이트 이용 중 오류가 발생해요',
+		  answer: '브라우저 캐시를 삭제하거나 다른 브라우저를 사용해보세요. 문제가 지속되면 오류 화면을 캡처하여 고객센터로 문의해주시면 빠르게 해결해드리겠습니다.'
+		},
+		{
+		  category: 'technical',
+		  categoryName: '기술지원',
+		  question: '모바일 앱은 있나요?',
+		  answer: '현재 iOS와 Android 앱을 제공하고 있습니다. 앱스토어와 플레이스토어에서 "DIBO"를 검색하시면 다운로드 받으실 수 있습니다.'
+		},
+		{
+		  category: 'event',
+		  categoryName: '이벤트',
+		  question: '진행 중인 이벤트가 있나요?',
+		  answer: '현재 진행 중인 이벤트는 홈페이지 메인과 이벤트 페이지에서 확인하실 수 있습니다. 회원가입 시 최신 이벤트 소식을 이메일로 받아보실 수 있습니다.'
+		}
+	  ];
+
+	  // Initialize
+	  const faqList = document.getElementById('faqList');
+	  const searchInput = document.getElementById('searchInput');
+	  const noResults = document.getElementById('noResults');
+	  const categoryList = document.getElementById('categoryList');
+
+	  let currentCategory = 'all';
+
+	  // Render Categories (동적 생성)
+	  function renderCategories(data) {
+		// 중복 제거: categoryName 기준
+		const uniqueCategories = [];
+		const seenNames = new Set();
+
+		data.forEach(item => {
+		  if (!seenNames.has(item.categoryName)) {
+			seenNames.add(item.categoryName);
+			uniqueCategories.push({
+			  category: item.category,
+			  categoryName: item.categoryName
+			});
+		  }
+		});
+
+		// "전체보기"를 제외한 나머지 카테고리 추가
+		const categoryHTML = uniqueCategories.map(cat => `
+            <li class="dibo-faq-category-item">
+                <a href="#" class="dibo-faq-category-link" data-category="${cat.category}">${cat.categoryName}</a>
+            </li>
+        `).join('');
+
+		// 전체보기 뒤에 추가
+		categoryList.innerHTML = `
+            <li class="dibo-faq-category-item">
+                <a href="#" class="dibo-faq-category-link active" data-category="all">전체보기</a>
+            </li>
+        ${categoryHTML}
+        `;
+
+		// 이벤트 리스너 재등록
+		attachCategoryEvents();
+	  }
+
+	  // Category 클릭 이벤트 등록
+	  function attachCategoryEvents() {
+		const categoryLinks = document.querySelectorAll('.dibo-faq-category-link');
+		categoryLinks.forEach(link => {
+		  link.addEventListener('click', function(e) {
+			e.preventDefault();
+			categoryLinks.forEach(l => l.classList.remove('active'));
+			this.classList.add('active');
+			currentCategory = this.dataset.category;
+			filterFAQs();
+		  });
+		});
+	  }
+
+	  // Render FAQ items
+	  function renderFAQs(data) {
+		faqList.innerHTML = data.map(item => `
+            <div class="dibo-faq-item" data-category="${item.category}">
+                <div class="dibo-faq-question">
+                    <div class="dibo-faq-q-icon">Q</div>
+                    <div class="dibo-faq-question-content">
+                        <div class="dibo-faq-category-tag">${item.categoryName}</div>
+                        <div class="dibo-faq-question-text">${item.question}</div>
+                    </div>
+                    <span class="dibo-faq-arrow"></span>
+                </div>
+                <div class="dibo-faq-answer">
+                    <div class="dibo-faq-answer-content">${item.answer}</div>
+                </div>
+            </div>
+        `).join('');
+
+		// Add click event to questions
+		document.querySelectorAll('.dibo-faq-question').forEach(question => {
+		  question.addEventListener('click', function() {
+			const item = this.closest('.dibo-faq-item');
+			const wasActive = item.classList.contains('active');
+
+			// Close all other items
+			document.querySelectorAll('.dibo-faq-item').forEach(faq => {
+			  faq.classList.remove('active');
+			});
+
+			// Toggle current item
+			if (!wasActive) {
+			  item.classList.add('active');
+			}
+		  });
+		});
+	  }
+
+	  // Filter FAQs
+	  function filterFAQs() {
+		const searchTerm = searchInput.value.toLowerCase();
+		const items = document.querySelectorAll('.dibo-faq-item');
+		let visibleCount = 0;
+
+		items.forEach(item => {
+		  const question = item.querySelector('.dibo-faq-question-text').textContent.toLowerCase();
+		  const answer = item.querySelector('.dibo-faq-answer-content').textContent.toLowerCase();
+		  const category = item.dataset.category;
+		  const matchesSearch = question.includes(searchTerm) || answer.includes(searchTerm);
+		  const matchesCategory = currentCategory === 'all' || category === currentCategory;
+
+		  if (matchesSearch && matchesCategory) {
+			item.classList.remove('hidden');
+			visibleCount++;
+		  } else {
+			item.classList.add('hidden');
+		  }
+		});
+
+		// Show/hide no results message
+		if (visibleCount === 0) {
+		  noResults.classList.add('show');
+		} else {
+		  noResults.classList.remove('show');
+		}
+	  }
+
+	  // Search input
+	  searchInput.addEventListener('input', filterFAQs);
+
+	  // Initial render
+	  renderCategories(faqData);
+	  renderFAQs(faqData);
+
+	  // ------------------------
+	  // DIBO API 연동
+	  // ------------------------
+
+	  // 1단계: config_id로 데이터셋 ID 조회
+	  const fetchIdData = async () => {
+		try {
+		  const res = await axios.get(
+			`https://api.di-bo.me/edit-set?config_id=copy_config_id`,
+			{ headers: { 'access-token': diboToken } }
+		  );
+
+		  if (res.data && res.data.length > 0) {
+			globalfaqId = res.data[0].id;
+			await fetchFaqData();
+		  }
+		} catch (error) {
+		  console.error('ID 로드 실패:', error);
+		}
+	  };
+
+	  // 2단계: FAQ 데이터 조회 및 화면 렌더링
+	  // 컬럼 매핑 (디보 데이터셋 컬럼 순서와 일치해야 합니다):
+	  //   column_1 → category (카테고리 영문 ID)
+	  //   column_2 → categoryName (카테고리 표시명)
+	  //   column_3 → question (질문)
+	  //   column_4 → answer (답변)
+	  const fetchFaqData = async () => {
+		if (!globalfaqId) return;
+
+		try {
+		  const res = await axios.get(
+			`https://api.di-bo.me/edit-set/${globalfaqId}/rows?config_id=copy_config_id`,
+			{ headers: { 'access-token': diboToken } }
+		  );
+
+		  const instData = res.data || [];
+
+		  // ✅ faqData 초기화
+		  faqData = [];
+
+		  // ✅ 순서대로 append
+		  for (let i = 0; i < instData.length; i++) {
+			faqData.push({
+			  category: instData[i].column_1,
+			  categoryName: instData[i].column_2,
+			  question: instData[i].column_3,
+			  answer: instData[i].column_4
+			});
+		  }
+
+		  // ✅ 카테고리 + FAQ 렌더링 + 필터 재적용
+		  renderCategories(faqData);
+		  renderFAQs(faqData);
+		  filterFAQs();
+
+		} catch (error) {
+		  console.error('데이터 로드 실패:', error);
+		}
+	  };
+
+	  // 최초 실행
+	  fetchIdData();
+	</script>
+  </body>
+</html>
