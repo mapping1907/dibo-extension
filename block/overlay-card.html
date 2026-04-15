@@ -1,0 +1,311 @@
+<!--
+=======================================================
+  오버레이 카드 (Overlay Card) — DIBO Block Extension
+=======================================================
+
+【제목 (Title)】
+  오버레이 카드 그리드, 마우스오버 텍스트 슬라이드업
+
+【설명 (Description)】
+  이미지 위로 마우스를 올리면 어두운 오버레이와 함께 제목·설명·버튼이 슬라이드업합니다.
+  첫 번째 카드는 와이드 레이아웃으로 강조 표시됩니다(편집 가능).
+  포트폴리오, 쇼케이스, 뉴스/블로그 카드에 적합합니다.
+
+【키워드 (Keywords)】
+  오버레이 카드, 이미지 hover, 쇼케이스, 포트폴리오 카드, 뉴스 카드
+
+【사용 방법】
+  1. 이 파일을 디보 익스텐션 에디터에 붙여넣기 하세요.
+  2. 디보 백오피스 '코드 복사' 시 copy_config_id가 실제 ID로 자동 교체됩니다.
+  3. 로컬 테스트: 브라우저에서 직접 열면 LOCAL_DATA가 표시됩니다.
+
+【LOCAL_DATA 수정 방법】
+  아래 JS의 LOCAL_DATA 배열에서 각 카드 항목을 수정하세요.
+  ─ main_img_url : 카드 배경 이미지 URL             ← [수정 가능]
+  ─ title        : 카드 제목                         ← [수정 가능]
+  ─ content      : hover 시 표시될 상세 설명          ← [수정 가능]
+  ─ link         : '자세히 보기' 버튼 URL             ← [수정 가능]
+  ─ display_order: 표시 순서 (숫자가 작을수록 먼저)   ← [수정 가능]
+
+=======================================================
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- [수정 가능] 브라우저 탭 제목 -->
+  <title>오버레이 카드 — DIBO Block</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:   #1d1d1f;
+      --text: #f5f5f7;
+      --sub:  rgba(245,245,247,.5);
+      --blue: #0071e3;
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: 'Noto Sans KR', 'Poppins', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: var(--bg);
+      min-height: 100vh;
+      padding: 72px 24px;
+    }
+
+    #dibo-block { max-width: 1080px; margin: 0 auto; }
+
+    /* ── 헤더 ── */
+    .section-head {
+      display: flex; align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
+      margin-bottom: 48px;
+    }
+    .section-eyebrow {
+      font-family: 'Poppins', sans-serif;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .18em; text-transform: uppercase;
+      color: var(--blue); margin-bottom: 10px;
+    }
+    .section-title {
+      font-family: 'Poppins', 'Noto Sans KR', sans-serif;
+      font-size: clamp(28px, 4vw, 48px);
+      font-weight: 900; color: var(--text);
+      letter-spacing: -.05em; line-height: 1.1;
+    }
+    .section-link {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 10px 20px; border-radius: 100px;
+      border: 1px solid rgba(255,255,255,.14);
+      color: var(--text); font-size: 13px; font-weight: 600;
+      cursor: pointer; text-decoration: none; flex-shrink: 0; align-self: center;
+      transition: border-color .2s, color .2s;
+    }
+    .section-link:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* ── 그리드 ── */
+    .overlay-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: auto auto;
+      gap: 14px;
+    }
+    @media (max-width: 860px) { .overlay-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .overlay-grid { grid-template-columns: 1fr; } }
+
+    /* ── 카드 ── */
+    .overlay-card {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      background: #2c2c2e;
+      aspect-ratio: 3/4;
+    }
+    /* 첫 카드: 2열 × 2행 차지 → 우측 2장 스택 높이에 자동 맞춤 */
+    .overlay-card:first-child {
+      grid-column: span 2;
+      grid-row: span 2;
+      aspect-ratio: unset; /* 그리드 행 높이가 높이를 결정 */
+    }
+    @media (max-width: 860px) {
+      .overlay-card:first-child { grid-column: span 2; grid-row: span 1; aspect-ratio: 16/9; }
+    }
+    @media (max-width: 480px) {
+      .overlay-card:first-child { grid-column: span 1; grid-row: span 1; aspect-ratio: 4/3; }
+    }
+
+    .overlay-img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform .56s var(--ease);
+    }
+    .overlay-card:hover .overlay-img { transform: scale(1.07); }
+
+    /* 기본 그라디언트 (항상 하단 표시) */
+    .overlay-base {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.65) 0%, transparent 55%);
+    }
+
+    /* hover 오버레이 */
+    .overlay-hover {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.42) 100%);
+      opacity: 0; transition: opacity .36s var(--ease);
+    }
+    .overlay-card:hover .overlay-hover { opacity: 1; }
+
+    /* 항상 보이는 하단 제목 */
+    .overlay-static {
+      position: absolute; bottom: 0; left: 0;
+      padding: 18px 20px; z-index: 2;
+      transition: opacity .22s var(--ease), transform .22s var(--ease);
+    }
+    /* hover 시 fade-out + 살짝 위로 → overlay-detail로 완전 교체 */
+    .overlay-card:hover .overlay-static {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    .overlay-static-title {
+      font-size: 15px; font-weight: 800;
+      color: #fff; letter-spacing: -.01em; line-height: 1.3;
+      word-break: keep-all;
+    }
+    .overlay-card:first-child .overlay-static-title { font-size: 20px; }
+
+    /* hover 상세 콘텐츠 (제목 + 설명 + 버튼) */
+    .overlay-detail {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      justify-content: flex-end;
+      padding: 22px; z-index: 3;
+      opacity: 0; transform: translateY(10px);
+      transition: opacity .36s var(--ease), transform .36s var(--ease);
+    }
+    .overlay-card:hover .overlay-detail { opacity: 1; transform: none; }
+
+    /* hover 시 제목 (overlay-detail 내부) */
+    .overlay-detail-title {
+      font-size: 15px; font-weight: 800;
+      color: #fff; letter-spacing: -.01em; line-height: 1.3;
+      margin-bottom: 8px; word-break: keep-all;
+    }
+    .overlay-card:first-child .overlay-detail-title { font-size: 20px; }
+
+    .overlay-detail-text {
+      font-size: 12.5px; color: rgba(255,255,255,.6);
+      line-height: 1.65; margin-bottom: 14px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden; word-break: keep-all;
+    }
+    .overlay-detail-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: 100px;
+      background: var(--blue); color: #fff;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 12px; font-weight: 700;
+      border: none; cursor: pointer;
+      width: fit-content; text-decoration: none;
+      transition: filter .2s;
+    }
+    .overlay-detail-btn:hover { filter: brightness(1.12); }
+
+    /* 태그 배지 */
+    .overlay-tag {
+      position: absolute; top: 12px; left: 12px; z-index: 4;
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border-radius: 100px; padding: 4px 10px;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase; color: #fff;
+    }
+    .overlay-card:first-child .overlay-tag {
+      background: var(--blue); color: #fff;
+    }
+
+    /* ── 상태 메시지 ── */
+    .state-msg {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 14px; height: 320px;
+      color: var(--sub); font-size: 14px;
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 2px solid rgba(255,255,255,.08);
+      border-top-color: var(--blue);
+      border-radius: 50%; animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="dibo-block"></div>
+
+  <script>
+    /* ★ [수정 가능] 로컬 기본 데이터 — API 연동 전 표시되는 샘플 데이터입니다. */
+    const LOCAL_DATA = [
+      { main_img_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=80', title: '산 정상의 새벽', content: '구름 위에 솟은 봉우리와 새벽빛이 만나는 그 고요한 순간을 담은 작품입니다.', link: '#', display_order: 0 },
+      { main_img_url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=80', title: '숲의 빛',        content: '초록 나뭇잎 사이로 춤추는 금빛 햇살.',                                      link: '#', display_order: 1 },
+      { main_img_url: 'https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?w=600&q=80', title: '도시의 밤',      content: '네온빛으로 물든 도시의 리듬과 에너지.',                                   link: '#', display_order: 2 },
+      { main_img_url: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=600&q=80', title: '봄의 야생화',    content: '들판을 가득 채운 봄의 색채.',                                          link: '#', display_order: 3 },
+      { main_img_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80', title: '빛과 그림자',    content: '자연광이 만들어낸 드라마틱한 순간.',                                    link: '#', display_order: 4 },
+    ];
+
+    const tags = ['Featured', '인기', '신규', '트렌딩', '추천'];
+    let data = LOCAL_DATA;
+
+    async function fetchData() {
+      try {
+        const res = await axios.get(
+          'https://api.di-bo.me/block?config_id=copy_config_id',
+          { headers: { 'access-token': diboToken } }
+        );
+        if (res.data?.length) data = res.data;
+      } catch (e) {}
+      data.sort((a, b) => a.display_order - b.display_order);
+      render();
+    }
+
+    function render() {
+      const el = document.getElementById('dibo-block');
+      if (!data.length) {
+        el.innerHTML = `<div class="state-msg">표시할 데이터가 없습니다.</div>`;
+        return;
+      }
+
+      const cards = data.map((item, i) => {
+        const img = item.main_img_url || 'https://via.placeholder.com/400x500';
+        const tag = tags[i] || `No.${i + 1}`;
+        return `
+          <div class="overlay-card" onclick="${item.link ? `window.open('${item.link}','_blank')` : 'void(0)'}">
+            <img class="overlay-img" src="${img}" alt="${item.title || ''}" loading="${i === 0 ? 'eager' : 'lazy'}" />
+            <div class="overlay-base"></div>
+            <div class="overlay-hover"></div>
+            <div class="overlay-tag">${tag}</div>
+            <div class="overlay-static">
+              <div class="overlay-static-title">${item.title || ''}</div>
+            </div>
+            <div class="overlay-detail">
+              <div class="overlay-detail-title">${item.title || ''}</div>
+              <div class="overlay-detail-text">${item.content || ''}</div>
+              ${item.link ? `<a class="overlay-detail-btn" href="${item.link}" target="_blank" onclick="event.stopPropagation()">
+                자세히 보기
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+
+      el.innerHTML = `
+        <div class="section-head">
+          <div>
+            <div class="section-eyebrow">Showcase</div>
+            <h2 class="section-title">베스트<br>작품들</h2>
+          </div>
+          <a class="section-link" href="#" onclick="return false;">
+            전체 보기
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <div class="overlay-grid">${cards}</div>`;
+    }
+
+    document.getElementById('dibo-block').innerHTML =
+      `<div class="state-msg"><div class="spinner"></div>불러오는 중...</div>`;
+
+    if (typeof axios !== 'undefined') {
+      fetchData();
+    } else {
+      data.sort((a, b) => a.display_order - b.display_order);
+      render();
+    }
+  </script>
+</body>
+</html>

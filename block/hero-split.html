@@ -1,0 +1,375 @@
+<!--
+=======================================================
+  히어로 스플릿 (Hero Split) — DIBO Block Extension
+=======================================================
+
+【제목 (Title)】
+  히어로 스플릿 섹션, 텍스트·이미지 자동 전환 랜딩페이지
+
+【설명 (Description)】
+  좌측 텍스트·CTA 버튼과 우측 이미지를 나란히 배치하는 Apple 스타일 히어로 섹션입니다.
+  복수의 콘텐츠를 등록하면 5초마다 자동 전환되며 dot 내비게이션으로 직접 선택도 가능합니다.
+  서비스 소개, 브랜드 랜딩, 이벤트 메인 비주얼에 적합합니다.
+
+【키워드 (Keywords)】
+  히어로 섹션, 랜딩 페이지, 스플릿 레이아웃, CTA 배너, 브랜드 소개
+
+【사용 방법】
+  1. 이 파일을 디보 익스텐션 에디터에 붙여넣기 하세요.
+  2. 디보 백오피스 '코드 복사' 시 copy_config_id가 실제 ID로 자동 교체됩니다.
+  3. 로컬 테스트: 브라우저에서 직접 열면 LOCAL_DATA가 표시됩니다.
+
+【LOCAL_DATA 수정 방법】
+  아래 JS의 LOCAL_DATA 배열에서 각 슬라이드 항목을 수정하세요.
+  ─ main_img_url : 우측에 표시될 이미지 URL          ← [수정 가능]
+  ─ title        : 좌측 대형 제목                      ← [수정 가능]
+  ─ content      : 좌측 본문 설명                      ← [수정 가능]
+  ─ link         : '시작하기' CTA 버튼 URL              ← [수정 가능]
+  ─ display_order: 표시 순서 (숫자가 작을수록 먼저)     ← [수정 가능]
+
+=======================================================
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- [수정 가능] 브라우저 탭 제목 -->
+  <title>히어로 스플릿 — DIBO Block</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #f5f5f7;
+      --white:  #ffffff;
+      --dark:   #1d1d1f;
+      --mid:    #6e6e73;
+      --border: #d2d2d7;
+      --blue:   #0071e3;
+      --ease:   cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: 'Noto Sans KR', 'Poppins', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px 24px;
+    }
+
+    #dibo-block { width: 100%; max-width: 1080px; }
+
+    /* ── 히어로 섹션 ── */
+    .hero-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 580px;
+      border-radius: 24px;
+      overflow: hidden;
+      background: var(--white);
+      box-shadow: 0 2px 4px rgba(0,0,0,.04), 0 12px 32px rgba(0,0,0,.08);
+    }
+    @media (max-width: 720px) {
+      .hero-section { grid-template-columns: 1fr; min-height: auto; }
+    }
+
+    /* ── 좌측 텍스트 패널 ── */
+    .hero-text {
+      padding: 72px 60px;
+      display: flex; flex-direction: column; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+
+    /* Apple-style subtle dot pattern */
+    .hero-text::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(rgba(0,113,227,.06) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 720px) { .hero-text { padding: 48px 32px; } }
+
+    /* 상태 칩 */
+    .hero-chip {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 6px 14px; border-radius: 100px;
+      background: rgba(0,113,227,.08); color: var(--blue);
+      font-size: 11px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+      margin-bottom: 24px; width: fit-content;
+      position: relative;
+    }
+    .hero-chip-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--blue);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .5; transform: scale(1.5); }
+    }
+
+    .hero-title {
+      font-family: 'Poppins', 'Noto Sans KR', sans-serif;
+      font-size: clamp(28px, 4vw, 50px);
+      font-weight: 900; color: var(--dark);
+      letter-spacing: -.04em; line-height: 1.12;
+      margin-bottom: 18px; position: relative;
+      word-break: keep-all;
+    }
+
+    .hero-content {
+      font-size: 15px; color: var(--mid);
+      line-height: 1.75; margin-bottom: 36px;
+      max-width: 400px; position: relative;
+      word-break: keep-all;
+    }
+
+    /* CTA 버튼 */
+    .hero-btns { display: flex; gap: 10px; flex-wrap: wrap; position: relative; }
+    .hero-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 13px 26px; border-radius: 100px;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 14px; font-weight: 700;
+      border: none; cursor: pointer;
+      text-decoration: none;
+      transition: all .22s var(--ease);
+    }
+    .hero-btn.primary {
+      background: var(--dark); color: #fff;
+    }
+    .hero-btn.primary:hover {
+      background: var(--blue);
+      box-shadow: 0 8px 24px rgba(0,113,227,.32);
+      transform: translateY(-1px);
+    }
+    .hero-btn.ghost {
+      background: transparent; color: var(--mid);
+      border: 1.5px solid var(--border);
+    }
+    .hero-btn.ghost:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* 지표 */
+    .hero-stats {
+      display: flex; gap: 28px;
+      margin-top: 48px; padding-top: 28px;
+      border-top: 1px solid var(--border);
+      position: relative; flex-wrap: wrap;
+    }
+    .stat { display: flex; flex-direction: column; gap: 2px; }
+    .stat-num {
+      font-family: 'Poppins', sans-serif;
+      font-size: 20px; font-weight: 900;
+      color: var(--dark); letter-spacing: -.03em;
+    }
+    .stat-label { font-size: 11px; color: var(--mid); font-weight: 500; }
+
+    /* ── 우측 이미지 패널 ── */
+    .hero-image {
+      position: relative; overflow: hidden; background: #111;
+    }
+    @media (max-width: 720px) { .hero-image { aspect-ratio: 4/3; } }
+
+    .hero-img {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+      transition: transform .8s var(--ease);
+    }
+    .hero-section:hover .hero-img { transform: scale(1.03); }
+
+    /* 이미지 오버레이 */
+    .hero-img-tint {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(0,113,227,.2) 0%, transparent 65%);
+      mix-blend-mode: multiply;
+    }
+
+    /* 플로팅 배지 */
+    .hero-badge {
+      position: absolute; bottom: 24px; left: 24px;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border-radius: 14px; padding: 14px 18px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    }
+    .badge-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--blue);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; flex-shrink: 0;
+    }
+    .badge-texts { display: flex; flex-direction: column; gap: 1px; }
+    .badge-title { font-size: 12px; font-weight: 800; color: var(--dark); }
+    .badge-sub   { font-size: 10px; color: var(--mid); }
+
+    /* Dot 내비게이션 */
+    .hero-nav {
+      position: absolute; top: 20px; right: 20px;
+      display: flex; gap: 5px;
+    }
+    .hero-nav-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(255,255,255,.4);
+      cursor: pointer;
+      transition: background .3s, width .3s var(--ease);
+    }
+    .hero-nav-dot.active { width: 20px; border-radius: 3px; background: #fff; }
+
+    /* ── 상태 메시지 ── */
+    .state-msg {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 14px; height: 320px;
+      color: var(--mid); font-size: 14px;
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 2px solid rgba(0,0,0,.08);
+      border-top-color: var(--blue);
+      border-radius: 50%; animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="dibo-block"></div>
+
+  <script>
+    /* ★ [수정 가능] 로컬 기본 데이터 — API 연동 전 표시되는 샘플 데이터입니다. */
+    const LOCAL_DATA = [
+      {
+        main_img_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=80',
+        title: '당신의 상상을\n현실로',                                                                /* ← [수정 가능] */
+        content: '감각적인 디자인과 탄탄한 기술력이 만나 사용자 경험을 완전히 새롭게 정의합니다.',     /* ← [수정 가능] */
+        link: '#', display_order: 0
+      },
+      {
+        main_img_url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=900&q=80',
+        title: '자연 속으로,\n더 깊이',
+        content: '자연이 만들어낸 가장 완벽한 무대. 경계를 넘어 새로운 세계로 당신을 초대합니다.',
+        link: '#', display_order: 1
+      },
+      {
+        main_img_url: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=900&q=80',
+        title: '생각이 흐르는\n공간',
+        content: '완벽하게 설계된 공간에서 창의력의 한계를 경험하세요. 영감이 머무는 곳.',
+        link: '#', display_order: 2
+      },
+    ];
+
+    let data = LOCAL_DATA;
+    let current = 0;
+    let autoTimer = null;
+
+    async function fetchData() {
+      try {
+        const res = await axios.get(
+          'https://api.di-bo.me/block?config_id=copy_config_id',
+          { headers: { 'access-token': diboToken } }
+        );
+        if (res.data?.length) data = res.data;
+      } catch (e) {}
+      data.sort((a, b) => a.display_order - b.display_order);
+      render();
+    }
+
+    function formatTitle(t) {
+      return (t || '').replace(/\n/g, '<br>');
+    }
+
+    function render() {
+      const el = document.getElementById('dibo-block');
+      if (!data.length) {
+        el.innerHTML = `<div class="state-msg">표시할 데이터가 없습니다.</div>`;
+        return;
+      }
+
+      const dots = data.length > 1
+        ? `<div class="hero-nav">${data.map((_, i) => `<div class="hero-nav-dot${i === 0 ? ' active' : ''}" data-index="${i}"></div>`).join('')}</div>`
+        : '';
+
+      el.innerHTML = `
+        <div class="hero-section">
+          <div class="hero-text">
+            <div class="hero-chip">
+              <div class="hero-chip-dot"></div>
+              지금 시작하기
+            </div>
+            <h1 class="hero-title" id="hero-title">${formatTitle(data[0]?.title)}</h1>
+            <p class="hero-content" id="hero-content">${data[0]?.content || ''}</p>
+            <div class="hero-btns">
+              ${data[0]?.link ? `<a class="hero-btn primary" id="hero-cta" href="${data[0].link}" target="_blank">
+                시작하기
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>` : ''}
+              <button class="hero-btn ghost">더 알아보기</button>
+            </div>
+            <div class="hero-stats">
+              <div class="stat"><span class="stat-num">12K+</span><span class="stat-label">활성 사용자</span></div>
+              <div class="stat"><span class="stat-num">98%</span><span class="stat-label">고객 만족도</span></div>
+              <div class="stat"><span class="stat-num">50+</span><span class="stat-label">파트너사</span></div>
+            </div>
+          </div>
+          <div class="hero-image">
+            <img class="hero-img" id="hero-img"
+              src="${data[0]?.main_img_url || 'https://via.placeholder.com/600x580'}"
+              alt="${data[0]?.title || ''}" />
+            <div class="hero-img-tint"></div>
+            <div class="hero-badge">
+              <div class="badge-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </div>
+              <div class="badge-texts">
+                <span class="badge-title">에디터 픽</span>
+                <span class="badge-sub">Top Rated 2026</span>
+              </div>
+            </div>
+            ${dots}
+          </div>
+        </div>`;
+
+      if (data.length > 1) {
+        el.querySelectorAll('.hero-nav-dot').forEach(dot => {
+          dot.addEventListener('click', () => { goTo(+dot.dataset.index); startAuto(); });
+        });
+        startAuto();
+      }
+    }
+
+    function goTo(idx) {
+      current = (idx + data.length) % data.length;
+      const item = data[current];
+      const img     = document.getElementById('hero-img');
+      const titleEl = document.getElementById('hero-title');
+      const contentEl = document.getElementById('hero-content');
+      const cta     = document.getElementById('hero-cta');
+      if (img)      img.src = item.main_img_url || '';
+      if (titleEl)  titleEl.innerHTML = formatTitle(item.title);
+      if (contentEl) contentEl.textContent = item.content || '';
+      if (cta && item.link) cta.href = item.link;
+      document.querySelectorAll('.hero-nav-dot').forEach((d, i) => d.classList.toggle('active', i === current));
+    }
+
+    function startAuto() {
+      clearInterval(autoTimer);
+      autoTimer = setInterval(() => goTo(current + 1), 5000);
+    }
+
+    document.getElementById('dibo-block').innerHTML =
+      `<div class="state-msg"><div class="spinner"></div>불러오는 중...</div>`;
+
+    if (typeof axios !== 'undefined') {
+      fetchData();
+    } else {
+      data.sort((a, b) => a.display_order - b.display_order);
+      render();
+    }
+  </script>
+</body>
+</html>

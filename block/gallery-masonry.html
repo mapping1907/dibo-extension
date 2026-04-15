@@ -1,0 +1,325 @@
+<!--
+=======================================================
+  갤러리 메이슨리 (Gallery Masonry) — DIBO Block Extension
+=======================================================
+
+【제목 (Title)】
+  메이슨리 이미지 갤러리, 모달 팝업 뷰어 포트폴리오
+
+【설명 (Description)】
+  다양한 비율의 이미지를 메이슨리(벽돌쌓기) 스타일로 배치하는 갤러리입니다.
+  카드 클릭 시 모달 팝업으로 이미지와 상세 설명을 확인할 수 있습니다.
+  포트폴리오, 작품 갤러리, 피드 형태의 이미지 전시에 최적화되어 있습니다.
+
+【키워드 (Keywords)】
+  메이슨리 갤러리, 이미지 갤러리, 모달 뷰어, 포트폴리오, 사진 갤러리
+
+【사용 방법】
+  1. 이 파일을 디보 익스텐션 에디터에 붙여넣기 하세요.
+  2. 디보 백오피스 '코드 복사' 시 copy_config_id가 실제 ID로 자동 교체됩니다.
+  3. 로컬 테스트: 브라우저에서 직접 열면 LOCAL_DATA가 표시됩니다.
+
+【LOCAL_DATA 수정 방법】
+  아래 JS의 LOCAL_DATA 배열에서 각 갤러리 항목을 수정하세요.
+  ─ main_img_url : 갤러리에 표시될 이미지 URL       ← [수정 가능]
+  ─ title        : 모달에 표시될 제목                ← [수정 가능]
+  ─ content      : 모달에 표시될 설명 텍스트          ← [수정 가능]
+  ─ link         : 모달 '자세히 보기' 버튼 URL        ← [수정 가능]
+  ─ display_order: 표시 순서 (숫자가 작을수록 먼저)   ← [수정 가능]
+
+=======================================================
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- [수정 가능] 브라우저 탭 제목 -->
+  <title>갤러리 메이슨리 — DIBO Block</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #1d1d1f;
+      --surface:#2c2c2e;
+      --text:   #f5f5f7;
+      --sub:    rgba(245,245,247,.5);
+      --border: rgba(255,255,255,.08);
+      --blue:   #0071e3;
+      --ease:   cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: 'Noto Sans KR', 'Poppins', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: var(--bg);
+      min-height: 100vh;
+      padding: 72px 24px;
+    }
+
+    #dibo-block { max-width: 1080px; margin: 0 auto; }
+
+    /* ── 헤더 ── */
+    .gallery-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+    .gallery-eyebrow {
+      font-family: 'Poppins', sans-serif;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .18em; text-transform: uppercase;
+      color: var(--blue); margin-bottom: 10px;
+    }
+    .gallery-title {
+      font-family: 'Poppins', 'Noto Sans KR', sans-serif;
+      font-size: clamp(30px, 5vw, 56px);
+      font-weight: 900;
+      color: var(--text);
+      letter-spacing: -.05em;
+      line-height: 1.08;
+    }
+    .gallery-count {
+      font-size: 13px; color: var(--sub);
+      font-weight: 500; white-space: nowrap; align-self: flex-end;
+    }
+
+    /* ── 메이슨리 ── */
+    .masonry {
+      columns: 3;
+      column-gap: 14px;
+    }
+    @media (max-width: 720px) { .masonry { columns: 2; } }
+    @media (max-width: 420px) { .masonry { columns: 1; } }
+
+    .masonry-item {
+      break-inside: avoid;
+      margin-bottom: 14px;
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      background: var(--surface);
+    }
+
+    /* 비율 변주 */
+    .masonry-item:nth-child(3n+1) .masonry-img { aspect-ratio: 3/4; }
+    .masonry-item:nth-child(3n+2) .masonry-img { aspect-ratio: 1/1; }
+    .masonry-item:nth-child(3n)   .masonry-img { aspect-ratio: 4/3; }
+
+    .masonry-img {
+      width: 100%; object-fit: cover; display: block;
+      transition: transform .5s var(--ease);
+    }
+    .masonry-item:hover .masonry-img { transform: scale(1.04); }
+
+    /* ── 오버레이 ── */
+    .masonry-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.8) 0%, transparent 55%);
+      opacity: 0;
+      transition: opacity .32s var(--ease);
+      display: flex; flex-direction: column;
+      justify-content: flex-end;
+      padding: 18px;
+    }
+    .masonry-item:hover .masonry-overlay { opacity: 1; }
+
+    .masonry-overlay-title {
+      font-size: 14px; font-weight: 700;
+      color: #fff; line-height: 1.35; margin-bottom: 4px;
+    }
+    .masonry-overlay-sub {
+      font-size: 12px; color: rgba(255,255,255,.55);
+    }
+
+    /* ── 줌 아이콘 ── */
+    .masonry-zoom {
+      position: absolute; top: 10px; right: 10px;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: rgba(0,0,0,.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      opacity: 0; transform: scale(.6);
+      transition: opacity .28s var(--ease), transform .28s var(--ease);
+    }
+    .masonry-item:hover .masonry-zoom { opacity: 1; transform: scale(1); }
+
+    /* ── 모달 ── */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      animation: fadeIn .22s var(--ease);
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal-box {
+      background: var(--surface);
+      border-radius: 20px;
+      overflow: hidden;
+      max-width: 720px; width: 100%;
+      box-shadow: 0 40px 80px rgba(0,0,0,.7);
+      animation: slideUp .28s var(--ease);
+    }
+    @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+    .modal-img {
+      width: 100%; aspect-ratio: 16/9;
+      object-fit: cover; display: block;
+    }
+    .modal-body { padding: 28px 32px 32px; }
+    .modal-title {
+      font-size: 20px; font-weight: 800;
+      color: var(--text); letter-spacing: -.02em;
+      margin-bottom: 8px; word-break: keep-all;
+    }
+    .modal-content {
+      font-size: 14px; color: var(--sub);
+      line-height: 1.72; margin-bottom: 24px;
+      word-break: keep-all;
+    }
+    .modal-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .modal-btn {
+      padding: 11px 24px; border-radius: 100px;
+      font-size: 14px; font-weight: 700;
+      font-family: 'Noto Sans KR', sans-serif;
+      cursor: pointer; border: none; transition: all .2s;
+    }
+    .modal-btn.primary {
+      background: var(--blue); color: #fff;
+    }
+    .modal-btn.primary:hover { filter: brightness(1.1); }
+    .modal-btn.ghost {
+      background: rgba(255,255,255,.08); color: var(--text);
+    }
+    .modal-btn.ghost:hover { background: rgba(255,255,255,.14); }
+
+    /* ── 상태 메시지 ── */
+    .state-msg {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 14px; height: 320px;
+      color: var(--sub); font-size: 14px;
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 2px solid rgba(255,255,255,.08);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="dibo-block"></div>
+
+  <script>
+    /* ★ [수정 가능] 로컬 기본 데이터 — API 연동 전 표시되는 샘플 데이터입니다. */
+    const LOCAL_DATA = [
+      { main_img_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80', title: '산 정상의 새벽', content: '구름 위에 솟은 봉우리와 함께하는 고요한 새벽의 순간.', link: '#', display_order: 0 },
+      { main_img_url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80', title: '숲의 오솔길',    content: '빛이 스며드는 초록 숲속 오솔길을 따라 걷는 여정.',    link: '#', display_order: 1 },
+      { main_img_url: 'https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?w=800&q=80', title: '도시의 야경',    content: '도시의 밤을 수놓는 네온빛의 에너지와 리듬.',          link: '#', display_order: 2 },
+      { main_img_url: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=800&q=80', title: '야생화의 계절', content: '들판을 가득 채운 야생화, 봄이 터뜨린 색채의 향연.',    link: '#', display_order: 3 },
+      { main_img_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80', title: '빛과 그림자',   content: '자연광이 만들어낸 드라마틱한 인물 포트레이트.',        link: '#', display_order: 4 },
+      { main_img_url: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=800&q=80', title: '고요한 공간',   content: '따뜻한 빛이 내리쬐는 미니멀 인테리어.',              link: '#', display_order: 5 },
+    ];
+
+    let data = LOCAL_DATA;
+
+    async function fetchData() {
+      try {
+        const res = await axios.get(
+          'https://api.di-bo.me/block?config_id=copy_config_id',
+          { headers: { 'access-token': diboToken } }
+        );
+        if (res.data?.length) data = res.data;
+      } catch (e) {}
+      data.sort((a, b) => a.display_order - b.display_order);
+      render();
+    }
+
+    function openModal(item) {
+      const bd = document.createElement('div');
+      bd.className = 'modal-backdrop';
+      bd.innerHTML = `
+        <div class="modal-box">
+          <img class="modal-img" src="${item.main_img_url || 'https://via.placeholder.com/720x405'}" alt="${item.title || ''}" />
+          <div class="modal-body">
+            <div class="modal-title">${item.title || ''}</div>
+            <div class="modal-content">${item.content || ''}</div>
+            <div class="modal-actions">
+              ${item.link ? `<button class="modal-btn primary" onclick="window.open('${item.link}','_blank')">자세히 보기</button>` : ''}
+              <button class="modal-btn ghost" id="modal-close">닫기</button>
+            </div>
+          </div>
+        </div>`;
+      document.body.appendChild(bd);
+      bd.addEventListener('click', e => { if (e.target === bd) bd.remove(); });
+      bd.querySelector('#modal-close').addEventListener('click', () => bd.remove());
+      document.addEventListener('keydown', function esc(e) {
+        if (e.key === 'Escape') { bd.remove(); document.removeEventListener('keydown', esc); }
+      });
+    }
+
+    function render() {
+      const el = document.getElementById('dibo-block');
+      if (!data.length) {
+        el.innerHTML = `<div class="state-msg">표시할 데이터가 없습니다.</div>`;
+        return;
+      }
+
+      const items = data.map(item => {
+        const img = item.main_img_url || 'https://via.placeholder.com/400x500';
+        return `
+          <div class="masonry-item">
+            <img class="masonry-img" src="${img}" alt="${item.title || ''}" loading="lazy" />
+            <div class="masonry-zoom">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            </div>
+            <div class="masonry-overlay">
+              <div class="masonry-overlay-title">${item.title || ''}</div>
+              <div class="masonry-overlay-sub">클릭하여 크게 보기</div>
+            </div>
+          </div>`;
+      }).join('');
+
+      el.innerHTML = `
+        <div class="gallery-header">
+          <div>
+            <div class="gallery-eyebrow">Gallery</div>
+            <h2 class="gallery-title">비주얼<br>갤러리</h2>
+          </div>
+          <span class="gallery-count">${data.length}개 작품</span>
+        </div>
+        <div class="masonry">${items}</div>`;
+
+      el.querySelectorAll('.masonry-item').forEach((card, i) => {
+        card.addEventListener('click', () => openModal(data[i]));
+      });
+    }
+
+    document.getElementById('dibo-block').innerHTML =
+      `<div class="state-msg"><div class="spinner"></div>불러오는 중...</div>`;
+
+    if (typeof axios !== 'undefined') {
+      fetchData();
+    } else {
+      data.sort((a, b) => a.display_order - b.display_order);
+      render();
+    }
+  </script>
+</body>
+</html>

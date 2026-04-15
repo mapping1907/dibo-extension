@@ -1,0 +1,351 @@
+<!--
+=======================================================
+  리스트 호버 (List Hover) — DIBO Block Extension
+=======================================================
+
+【제목 (Title)】
+  인터랙티브 리스트, 항목 선택 시 이미지·텍스트 전환
+
+【설명 (Description)】
+  좌측 리스트에 마우스를 올리면 우측 패널의 이미지·제목·내용이 부드럽게 전환됩니다.
+  포트폴리오 목록, 서비스 소개, 프로젝트 쇼케이스처럼 항목이 많을 때 탁월한 UX를 제공합니다.
+
+【키워드 (Keywords)】
+  리스트 호버, 인터랙티브 목록, 프로젝트 목록, 포트폴리오 리스트, 서비스 소개
+
+【사용 방법】
+  1. 이 파일을 디보 익스텐션 에디터에 붙여넣기 하세요.
+  2. 디보 백오피스 '코드 복사' 시 copy_config_id가 실제 ID로 자동 교체됩니다.
+  3. 로컬 테스트: 브라우저에서 직접 열면 LOCAL_DATA가 표시됩니다.
+
+【LOCAL_DATA 수정 방법】
+  아래 JS의 LOCAL_DATA 배열에서 각 리스트 항목을 수정하세요.
+  ─ main_img_url : hover/클릭 시 우측에 표시될 이미지  ← [수정 가능]
+  ─ title        : 리스트 제목 및 우측 패널 제목         ← [수정 가능]
+  ─ content      : 우측 패널에 표시될 상세 설명           ← [수정 가능]
+  ─ link         : '자세히 보기' 버튼 URL                 ← [수정 가능]
+  ─ display_order: 표시 순서 (숫자가 작을수록 먼저)       ← [수정 가능]
+
+=======================================================
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- [수정 가능] 브라우저 탭 제목 -->
+  <title>리스트 호버 — DIBO Block</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #f5f5f7;
+      --white:  #ffffff;
+      --dark:   #1d1d1f;
+      --mid:    #6e6e73;
+      --border: #d2d2d7;
+      --blue:   #0071e3;
+      --ease:   cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: 'Noto Sans KR', 'Poppins', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: var(--bg);
+      min-height: 100vh;
+      padding: 72px 24px;
+    }
+
+    #dibo-block { max-width: 1080px; margin: 0 auto; }
+
+    /* ── 섹션 헤더 ── */
+    .section-eyebrow {
+      font-family: 'Poppins', sans-serif;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .18em; text-transform: uppercase;
+      color: var(--blue); margin-bottom: 10px;
+    }
+    .section-title {
+      font-family: 'Poppins', 'Noto Sans KR', sans-serif;
+      font-size: clamp(28px, 4vw, 48px);
+      font-weight: 800; color: var(--dark);
+      letter-spacing: -.04em; line-height: 1.12;
+      margin-bottom: 56px;
+      word-break: keep-all;
+    }
+
+    /* ── 레이아웃 ── */
+    .list-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-radius: 20px;
+      overflow: hidden;
+      background: var(--white);
+      box-shadow: 0 2px 4px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.07);
+    }
+    @media (max-width: 680px) {
+      .list-layout { grid-template-columns: 1fr; }
+      .preview-panel { display: none; }
+    }
+
+    /* ── 리스트 패널 ── */
+    .list-panel { border-right: 1px solid var(--border); }
+
+    .list-item {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 14px;
+      padding: 22px 28px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      position: relative;
+      transition: background .22s var(--ease);
+    }
+    .list-item:last-child { border-bottom: none; }
+
+    /* 좌측 액센트 바 */
+    .list-item::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; background: var(--blue);
+      border-radius: 0 2px 2px 0;
+      transform: scaleY(0);
+      transition: transform .28s var(--ease);
+    }
+    .list-item:hover::before,
+    .list-item.active::before { transform: scaleY(1); }
+    .list-item:hover, .list-item.active { background: #f0f6ff; }
+
+    .list-item-inner { display: flex; align-items: center; gap: 14px; min-width: 0; }
+
+    .list-num {
+      flex-shrink: 0; width: 34px; height: 34px;
+      border-radius: 10px; background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Poppins', sans-serif;
+      font-size: 11px; font-weight: 700;
+      color: var(--mid);
+      transition: background .22s, color .22s;
+    }
+    .list-item:hover .list-num,
+    .list-item.active .list-num { background: var(--blue); color: #fff; }
+
+    .list-texts { min-width: 0; }
+    .list-title {
+      font-size: 14px; font-weight: 700;
+      color: var(--dark); letter-spacing: -.01em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 2px;
+      transition: color .2s;
+      word-break: keep-all;
+    }
+    .list-item:hover .list-title,
+    .list-item.active .list-title { color: var(--blue); }
+
+    .list-sub {
+      font-size: 12px; color: var(--mid);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .list-chevron {
+      color: var(--mid); flex-shrink: 0;
+      opacity: 0; transform: translateX(-6px);
+      transition: opacity .22s, transform .22s, color .2s;
+    }
+    .list-item:hover .list-chevron,
+    .list-item.active .list-chevron { opacity: 1; transform: none; color: var(--blue); }
+
+    /* ── 프리뷰 패널 ── */
+    .preview-panel {
+      position: relative; overflow: hidden;
+      background: #111; min-height: 480px;
+    }
+
+    .preview-img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: cover;
+      opacity: 0; transform: scale(1.04);
+      transition: opacity .48s var(--ease), transform .56s var(--ease);
+    }
+    .preview-img.visible { opacity: 1; transform: scale(1); }
+
+    .preview-gradient {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.04) 55%);
+      z-index: 1;
+    }
+
+    .preview-body {
+      position: absolute; bottom: 0; left: 0;
+      padding: 32px 36px; z-index: 2; width: 100%;
+    }
+    .preview-tag {
+      display: inline-block;
+      padding: 4px 11px; border-radius: 100px;
+      background: var(--blue); color: #fff;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      margin-bottom: 12px;
+      opacity: 0; transform: translateY(8px);
+      transition: opacity .38s .08s var(--ease), transform .38s .08s var(--ease);
+    }
+    .preview-body.show .preview-tag { opacity: 1; transform: none; }
+
+    .preview-title {
+      font-size: 20px; font-weight: 800;
+      color: #fff; letter-spacing: -.02em;
+      line-height: 1.3; margin-bottom: 8px;
+      opacity: 0; transform: translateY(10px);
+      transition: opacity .38s .16s var(--ease), transform .38s .16s var(--ease);
+      word-break: keep-all;
+    }
+    .preview-body.show .preview-title { opacity: 1; transform: none; }
+
+    .preview-content {
+      font-size: 13px; color: rgba(255,255,255,.58);
+      line-height: 1.68; margin-bottom: 20px;
+      opacity: 0; transform: translateY(10px);
+      transition: opacity .38s .24s var(--ease), transform .38s .24s var(--ease);
+      word-break: keep-all;
+    }
+    .preview-body.show .preview-content { opacity: 1; transform: none; }
+
+    .preview-cta {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 10px 20px; border-radius: 100px;
+      background: rgba(255,255,255,.14);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: #fff; font-size: 13px; font-weight: 600;
+      border: 1px solid rgba(255,255,255,.2);
+      cursor: pointer; text-decoration: none;
+      opacity: 0; transform: translateY(10px);
+      transition: opacity .38s .32s var(--ease), transform .38s .32s var(--ease), background .2s;
+    }
+    .preview-body.show .preview-cta { opacity: 1; transform: none; }
+    .preview-cta:hover { background: rgba(255,255,255,.24); }
+
+    /* ── 상태 메시지 ── */
+    .state-msg {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 14px; height: 320px;
+      color: var(--mid); font-size: 14px;
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 2px solid rgba(0,0,0,.08);
+      border-top-color: var(--blue);
+      border-radius: 50%; animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="dibo-block"></div>
+
+  <script>
+    /* ★ [수정 가능] 로컬 기본 데이터 — API 연동 전 표시되는 샘플 데이터입니다. */
+    const LOCAL_DATA = [
+      { main_img_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80', title: '산 정상의 새벽', content: '구름 위에 솟은 봉우리와 함께하는 새벽의 고요한 순간. 자연의 장엄함이 말문을 막습니다.', link: '#', display_order: 0 },
+      { main_img_url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80', title: '숲의 오솔길',   content: '빛이 스며드는 숲속 오솔길. 나뭇잎 사이로 쏟아지는 금빛 햇살이 하루를 특별하게 만듭니다.', link: '#', display_order: 1 },
+      { main_img_url: 'https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?w=800&q=80', title: '도시의 야경',   content: '잠들지 않는 도시, 그 에너지와 빛의 향연. 도시의 심장이 뛰는 밤의 리듬을 담았습니다.', link: '#', display_order: 2 },
+      { main_img_url: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=800&q=80', title: '야생화의 계절', content: '들판을 가득 채운 야생화의 폭발적인 색채. 짧지만 강렬한 봄의 절정을 포착했습니다.', link: '#', display_order: 3 },
+      { main_img_url: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=800&q=80', title: '미니멀 공간',   content: '따뜻한 빛이 내리쬐는 미니멀 인테리어. 비움의 미학을 통해 완성된 삶의 질감입니다.', link: '#', display_order: 4 },
+    ];
+
+    let data = LOCAL_DATA;
+    let activeIdx = 0;
+
+    async function fetchData() {
+      try {
+        const res = await axios.get(
+          'https://api.di-bo.me/block?config_id=copy_config_id',
+          { headers: { 'access-token': diboToken } }
+        );
+        if (res.data?.length) data = res.data;
+      } catch (e) {}
+      data.sort((a, b) => a.display_order - b.display_order);
+      render();
+    }
+
+    function render() {
+      const el = document.getElementById('dibo-block');
+      if (!data.length) {
+        el.innerHTML = `<div class="state-msg">표시할 데이터가 없습니다.</div>`;
+        return;
+      }
+
+      const listItems = data.map((item, i) => `
+        <div class="list-item${i === 0 ? ' active' : ''}" data-index="${i}">
+          <div class="list-item-inner">
+            <div class="list-num">${String(i + 1).padStart(2, '0')}</div>
+            <div class="list-texts">
+              <div class="list-title">${item.title || ''}</div>
+              <div class="list-sub">${(item.content || '').slice(0, 28)}${(item.content || '').length > 28 ? '…' : ''}</div>
+            </div>
+          </div>
+          <div class="list-chevron">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>`).join('');
+
+      const previewImgs = data.map((item, i) => `
+        <img class="preview-img${i === 0 ? ' visible' : ''}" data-index="${i}"
+          src="${item.main_img_url || 'https://via.placeholder.com/600x480'}"
+          alt="${item.title || ''}" loading="${i === 0 ? 'eager' : 'lazy'}" />`).join('');
+
+      el.innerHTML = `
+        <div class="section-eyebrow">Projects</div>
+        <h2 class="section-title">프로젝트<br>둘러보기</h2>
+        <div class="list-layout">
+          <div class="list-panel">${listItems}</div>
+          <div class="preview-panel">
+            ${previewImgs}
+            <div class="preview-gradient"></div>
+            <div class="preview-body show" id="preview-body">
+              <div class="preview-tag">Featured</div>
+              <div class="preview-title">${data[0]?.title || ''}</div>
+              <div class="preview-content">${data[0]?.content || ''}</div>
+              ${data[0]?.link ? `<a class="preview-cta" href="${data[0].link}" target="_blank">자세히 보기 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>` : ''}
+            </div>
+          </div>
+        </div>`;
+
+      el.querySelectorAll('.list-item').forEach(item => {
+        item.addEventListener('click',      () => activate(+item.dataset.index));
+        item.addEventListener('mouseenter', () => activate(+item.dataset.index));
+      });
+    }
+
+    function activate(idx) {
+      if (idx === activeIdx) return;
+      activeIdx = idx;
+      const item = data[idx];
+
+      document.querySelectorAll('.list-item').forEach((el, i) => el.classList.toggle('active', i === idx));
+      document.querySelectorAll('.preview-img').forEach((img, i) => img.classList.toggle('visible', i === idx));
+
+      const body = document.getElementById('preview-body');
+      body.classList.remove('show');
+      setTimeout(() => {
+        body.querySelector('.preview-title').textContent = item.title || '';
+        body.querySelector('.preview-content').textContent = item.content || '';
+        const cta = body.querySelector('.preview-cta');
+        if (cta && item.link) cta.href = item.link;
+        body.classList.add('show');
+      }, 80);
+    }
+
+    document.getElementById('dibo-block').innerHTML =
+      `<div class="state-msg"><div class="spinner"></div>불러오는 중...</div>`;
+
+    if (typeof axios !== 'undefined') {
+      fetchData();
+    } else {
+      data.sort((a, b) => a.display_order - b.display_order);
+      render();
+    }
+  </script>
+</body>
+</html>
