@@ -3,14 +3,15 @@
   로그인 페이지 - 사용 가이드
 =======================================================
 
-【사용 전 필수 설정】
-  1. LOGIN_TYPE  : 로그인 방식 설정 (아래 스크립트 상단에서 변경)
-     - 'email' → 이메일 + 비밀번호 로그인 (기본값)
-     - 'id'    → 아이디 + 비밀번호 로그인
-  2. diboToken  : 익스텐션 전역 변수로 자동 주입 (별도 선언 불필요)
-  3. 로그인 후 member-token은 localStorage의 'dibo_member_token' 키에 저장됩니다.
-  4. 페이지 연결: sign-up.html / find-id.html / find-pwd.html / my-page.html
+【자동 설정값】
+  1. diboToken  : 익스텐션 전역 변수로 자동 주입 (별도 선언 불필요)
+  2. 로그인 후 member-token은 localStorage의 'dibo_member_token' 키에 저장됩니다.
+  3. 페이지 연결: sign-up.html / find-id.html / find-pwd.html / my-page.html
      → 같은 members-package 폴더 안에 위치해야 합니다.
+
+【관리자 강제 가입 계정 처리】
+  - 로그인 응답의 pwd_change_required: true 이면 비밀번호 변경 화면으로 이동합니다.
+  - email_verified: false 이면 이메일 인증 후 비밀번호 변경 순서로 진행합니다.
 
 =======================================================
 -->
@@ -92,14 +93,35 @@
       background: #fff;
     }
 
-    .dibo-auth-input:focus {
-      border-color: #000;
+    .dibo-auth-input:focus { border-color: #000; }
+    .dibo-auth-input::placeholder { color: #bbb; font-weight: 400; }
+
+    /* Input with button */
+    .dibo-auth-input-row {
+      display: flex;
+      gap: 8px;
     }
 
-    .dibo-auth-input::placeholder {
-      color: #bbb;
-      font-weight: 400;
+    .dibo-auth-input-row .dibo-auth-input {
+      flex: 1;
     }
+
+    .dibo-auth-input-btn {
+      white-space: nowrap;
+      padding: 0 16px;
+      background: #000;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Noto Sans KR', sans-serif;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .dibo-auth-input-btn:hover { opacity: 0.8; }
+    .dibo-auth-input-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
     /* Options row */
     .dibo-auth-options {
@@ -173,10 +195,131 @@
       background: #fff5f5;
       border: 1px solid #ffcdd2;
       color: #c62828;
-      display: none;
     }
 
     .dibo-auth-alert.error.show { display: block; }
+
+    /* Notice box */
+    .dibo-auth-notice {
+      background: #f0faf6;
+      border: 1.5px solid #b2dfdb;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .dibo-auth-notice-icon {
+      font-size: 28px;
+      margin-bottom: 10px;
+      display: block;
+      text-align: center;
+    }
+
+    .dibo-auth-notice-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #00796b;
+      margin-bottom: 8px;
+      text-align: center;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-auth-notice-desc {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      text-align: center;
+    }
+
+    /* Step indicator */
+    .dibo-auth-steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      gap: 0;
+    }
+
+    .dibo-auth-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      flex: 1;
+      max-width: 120px;
+      position: relative;
+    }
+
+    .dibo-auth-step::after {
+      content: '';
+      position: absolute;
+      top: 14px;
+      left: calc(50% + 18px);
+      right: calc(-50% + 18px);
+      height: 2px;
+      background: #e0e0e0;
+    }
+
+    .dibo-auth-step:last-child::after { display: none; }
+
+    .dibo-auth-step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid #ddd;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #bbb;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dibo-auth-step.active .dibo-auth-step-num {
+      border-color: #000;
+      background: #000;
+      color: #fff;
+    }
+
+    .dibo-auth-step.done .dibo-auth-step-num {
+      border-color: #000;
+      background: #000;
+      color: #fff;
+    }
+
+    .dibo-auth-step.done::after { background: #000; }
+
+    .dibo-auth-step-label {
+      font-size: 11px;
+      color: #bbb;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .dibo-auth-step.active .dibo-auth-step-label,
+    .dibo-auth-step.done .dibo-auth-step-label { color: #000; }
+
+    /* Hint text */
+    .dibo-auth-hint {
+      font-size: 13px;
+      color: #888;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+    }
+
+    /* Countdown */
+    .dibo-auth-countdown {
+      font-size: 13px;
+      color: #e53935;
+      margin-top: 6px;
+      letter-spacing: -0.01em;
+      display: none;
+    }
 
     /* Divider */
     .dibo-auth-divider {
@@ -239,32 +382,24 @@
 <body>
 
   <div class="dibo-auth-wrap">
-    <!-- [수정 가능] 사이트 로고 / 이름 -->
     <div class="dibo-auth-logo">DIBO</div>
 
-    <div class="dibo-auth-card">
+    <!-- ── 화면 1: 로그인 ── -->
+    <div class="dibo-auth-card" id="screenLogin">
       <h1 class="dibo-auth-title">로그인</h1>
-
-      <!-- 오류 메시지 -->
       <div class="dibo-auth-alert error" id="loginError"></div>
 
-      <!-- 로그인 폼 -->
       <form id="loginForm" onsubmit="handleLogin(event)">
-        <!-- 로그인 ID 입력 (LOGIN_TYPE 변수에 따라 자동 설정) -->
         <div class="dibo-auth-form-group" id="loginIdGroup">
           <label class="dibo-auth-label" id="loginIdLabel">이메일</label>
           <input type="email" class="dibo-auth-input" id="inputLoginId"
             placeholder="이메일 주소를 입력하세요" autocomplete="email">
         </div>
-
-        <!-- 비밀번호 -->
         <div class="dibo-auth-form-group">
           <label class="dibo-auth-label">비밀번호</label>
           <input type="password" class="dibo-auth-input" id="inputPwd"
             placeholder="비밀번호를 입력하세요" autocomplete="current-password">
         </div>
-
-        <!-- 로그인 유지 + 비밀번호 찾기 -->
         <div class="dibo-auth-options">
           <label class="dibo-auth-remember">
             <input type="checkbox" id="rememberMe">
@@ -272,12 +407,10 @@
           </label>
           <a href="find-pwd.html" class="dibo-auth-forgot">비밀번호 찾기</a>
         </div>
-
         <button type="submit" class="dibo-auth-btn" id="loginBtn">로그인</button>
       </form>
 
       <div class="dibo-auth-divider"><span>또는</span></div>
-
       <div class="dibo-auth-links">
         <a href="sign-up.html" class="dibo-auth-link primary">회원가입</a>
         <span class="dibo-auth-sep">|</span>
@@ -286,6 +419,96 @@
         <a href="find-pwd.html" class="dibo-auth-link">비밀번호 찾기</a>
       </div>
     </div>
+
+    <!-- ── 화면 2: 이메일 인증 (관리자 가입 계정, email_verified=false) ── -->
+    <div class="dibo-auth-card" id="screenEmailVerify" style="display:none">
+
+      <!-- 진행 단계 -->
+      <div class="dibo-auth-steps">
+        <div class="dibo-auth-step active" id="vstep1">
+          <div class="dibo-auth-step-num">1</div>
+          <div class="dibo-auth-step-label">이메일 인증</div>
+        </div>
+        <div class="dibo-auth-step" id="vstep2">
+          <div class="dibo-auth-step-num">2</div>
+          <div class="dibo-auth-step-label">비밀번호 변경</div>
+        </div>
+      </div>
+
+      <!-- 관리자 가입 안내 -->
+      <div class="dibo-auth-notice">
+        <span class="dibo-auth-notice-icon">🔐</span>
+        <div class="dibo-auth-notice-title">관리자에 의해 등록된 계정입니다</div>
+        <div class="dibo-auth-notice-desc">
+          보안을 위해 이메일 인증 후<br>
+          새 비밀번호를 설정해야 서비스를 이용하실 수 있습니다.
+        </div>
+      </div>
+
+      <h1 class="dibo-auth-title" style="margin-bottom:8px">이메일 인증</h1>
+      <p class="dibo-auth-hint">등록된 이메일로 인증 코드를 발송합니다.</p>
+
+      <div class="dibo-auth-alert error" id="verifyError"></div>
+
+      <div class="dibo-auth-form-group">
+        <label class="dibo-auth-label">이메일</label>
+        <div class="dibo-auth-input-row">
+          <input type="email" class="dibo-auth-input" id="verifyEmail" readonly>
+          <button type="button" class="dibo-auth-input-btn" id="sendCodeBtn" onclick="sendEmailCode()">인증코드 발송</button>
+        </div>
+        <div class="dibo-auth-countdown" id="codeCountdown"></div>
+      </div>
+
+      <div class="dibo-auth-form-group" id="codeInputGroup" style="display:none">
+        <label class="dibo-auth-label">인증 코드</label>
+        <input type="text" class="dibo-auth-input" id="verifyCode"
+          placeholder="이메일로 받은 6자리 코드를 입력하세요" maxlength="6" inputmode="numeric">
+      </div>
+
+      <button type="button" class="dibo-auth-btn" id="verifyCodeBtn"
+        style="display:none" onclick="verifyEmailCode()">인증 확인</button>
+    </div>
+
+    <!-- ── 화면 3: 비밀번호 변경 ── -->
+    <div class="dibo-auth-card" id="screenChangePwd" style="display:none">
+
+      <!-- 진행 단계 (email_verified=false 경유 시만 표시) -->
+      <div class="dibo-auth-steps" id="changePwdSteps" style="display:none">
+        <div class="dibo-auth-step done">
+          <div class="dibo-auth-step-num">1</div>
+          <div class="dibo-auth-step-label">이메일 인증</div>
+        </div>
+        <div class="dibo-auth-step active">
+          <div class="dibo-auth-step-num">2</div>
+          <div class="dibo-auth-step-label">비밀번호 변경</div>
+        </div>
+      </div>
+
+      <h1 class="dibo-auth-title" style="margin-bottom:8px">새 비밀번호 설정</h1>
+      <p class="dibo-auth-hint" id="changePwdHint">임시 비밀번호를 사용 중입니다. 새 비밀번호를 설정해주세요.</p>
+
+      <div class="dibo-auth-alert error" id="changePwdError"></div>
+
+      <div class="dibo-auth-form-group">
+        <label class="dibo-auth-label">현재 비밀번호 (임시 비밀번호)</label>
+        <input type="password" class="dibo-auth-input" id="currentPwd"
+          placeholder="임시 비밀번호를 입력하세요">
+      </div>
+      <div class="dibo-auth-form-group">
+        <label class="dibo-auth-label">새 비밀번호</label>
+        <input type="password" class="dibo-auth-input" id="newPwd"
+          placeholder="새 비밀번호를 입력하세요">
+        <div style="font-size:12px;color:#aaa;margin-top:6px" id="pwHintText"></div>
+      </div>
+      <div class="dibo-auth-form-group">
+        <label class="dibo-auth-label">새 비밀번호 확인</label>
+        <input type="password" class="dibo-auth-input" id="newPwdConfirm"
+          placeholder="새 비밀번호를 한 번 더 입력하세요">
+      </div>
+
+      <button type="button" class="dibo-auth-btn" id="changePwdBtn" onclick="changePassword()">비밀번호 변경</button>
+    </div>
+
   </div>
 
   <script>
@@ -294,42 +517,52 @@
     // 'id'    → 아이디 + 비밀번호
     const LOGIN_TYPE = 'email';
 
-    // ── 로그인 타입에 따라 입력 필드 초기화 ──────────
+    // ── 내부 상태 ─────────────────────────────────────
+    let _memberToken = '';   // 로그인 후 임시 보관 (비밀번호 변경용)
+    let _loginId     = '';   // 로그인 ID (재로그인용)
+    let _tempPwd     = '';   // 임시 비밀번호 보관 (change-password current_pwd용)
+    let _pwPolicy    = null; // 그룹 비밀번호 정책
+    let _countdownTimer = null;
+
+    // ── 로그인 타입 초기화 ────────────────────────────
     (function initLoginType() {
       const label = document.getElementById('loginIdLabel');
       const input = document.getElementById('inputLoginId');
       if (LOGIN_TYPE === 'id') {
-        label.textContent        = '아이디';
-        input.type               = 'text';
-        input.placeholder        = '아이디를 입력하세요';
-        input.autocomplete       = 'username';
+        label.textContent  = '아이디';
+        input.type         = 'text';
+        input.placeholder  = '아이디를 입력하세요';
+        input.autocomplete = 'username';
       }
-      // 'email'은 HTML 기본값 그대로 사용
     })();
 
+    // ── 화면 전환 ─────────────────────────────────────
+    function showScreen(id) {
+      ['screenLogin','screenEmailVerify','screenChangePwd'].forEach(s => {
+        document.getElementById(s).style.display = s === id ? '' : 'none';
+      });
+    }
+
     // ── 오류 표시 ─────────────────────────────────────
-    function showError(msg) {
-      const el = document.getElementById('loginError');
+    function showError(elId, msg) {
+      const el = document.getElementById(elId);
       el.textContent = msg;
       el.classList.add('show');
     }
-    function hideError() {
-      document.getElementById('loginError').classList.remove('show');
+    function hideError(elId) {
+      document.getElementById(elId).classList.remove('show');
     }
 
     // ── 로그인 처리 ───────────────────────────────────
     async function handleLogin(e) {
       e.preventDefault();
-      hideError();
+      hideError('loginError');
 
       const loginId = document.getElementById('inputLoginId').value.trim();
       const pwd     = document.getElementById('inputPwd').value.trim();
 
-      if (!loginId) {
-        showError(LOGIN_TYPE === 'email' ? '이메일을 입력해주세요.' : '아이디를 입력해주세요.');
-        return;
-      }
-      if (!pwd) { showError('비밀번호를 입력해주세요.'); return; }
+      if (!loginId) { showError('loginError', LOGIN_TYPE === 'email' ? '이메일을 입력해주세요.' : '아이디를 입력해주세요.'); return; }
+      if (!pwd)     { showError('loginError', '비밀번호를 입력해주세요.'); return; }
 
       const body = { pwd };
       if (LOGIN_TYPE === 'email') body.email   = loginId;
@@ -346,29 +579,175 @@
           { headers: { 'access-token': diboToken, 'origin': window.location.origin } }
         );
 
-        localStorage.setItem('dibo_member_token', res.data.member_token);
-        if (document.getElementById('rememberMe').checked) {
-          localStorage.setItem('dibo_remember_id', loginId);
+        const { member_token, pwd_change_required, email_verified } = res.data;
+
+        // 비밀번호 변경 불필요 → 정상 로그인
+        if (!pwd_change_required) {
+          localStorage.setItem('dibo_member_token', member_token);
+          if (document.getElementById('rememberMe').checked) {
+            localStorage.setItem('dibo_remember_id', loginId);
+          }
+          const returnUrl = new URLSearchParams(window.location.search).get('return') || '/';
+          window.location.href = returnUrl;
+          return;
         }
 
-        const returnUrl = new URLSearchParams(window.location.search).get('return') || 'my-page.html';
-        window.location.href = returnUrl;
+        // 비밀번호 변경 필요 → 상태 저장
+        _memberToken = member_token;
+        _loginId     = loginId;
+        _tempPwd     = pwd;
+
+        if (!email_verified) {
+          // 이메일 인증 필요
+          document.getElementById('verifyEmail').value = LOGIN_TYPE === 'email' ? loginId : '';
+          showScreen('screenEmailVerify');
+        } else {
+          // 이메일 인증 완료 → 바로 비밀번호 변경
+          showChangePwdScreen(false);
+        }
 
       } catch (err) {
         const status = err.response?.status;
         const detail = err.response?.data?.detail || '';
         if (status === 400) {
-          showError(LOGIN_TYPE === 'email'
+          showError('loginError', LOGIN_TYPE === 'email'
             ? '이메일 또는 비밀번호가 일치하지 않습니다.'
             : '아이디 또는 비밀번호가 일치하지 않습니다.');
         } else if (status === 403) {
-          showError(detail || '승인 대기 중인 계정입니다. 관리자에게 문의해주세요.');
+          showError('loginError', detail || '승인 대기 중인 계정입니다. 관리자에게 문의해주세요.');
         } else {
-          showError('로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+          showError('loginError', '로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
         }
       } finally {
         btn.disabled = false;
         btn.textContent = '로그인';
+      }
+    }
+
+    // ── 인증코드 발송 ─────────────────────────────────
+    async function sendEmailCode() {
+      hideError('verifyError');
+      const email = document.getElementById('verifyEmail').value.trim();
+      if (!email) { showError('verifyError', '이메일을 확인해주세요.'); return; }
+
+      const btn = document.getElementById('sendCodeBtn');
+      btn.disabled = true;
+      btn.textContent = '발송 중...';
+
+      try {
+        await axios.post(
+          'https://api.di-bo.me/member/email-send',
+          { email },
+          { headers: { 'access-token': diboToken } }
+        );
+
+        document.getElementById('codeInputGroup').style.display = '';
+        document.getElementById('verifyCodeBtn').style.display  = '';
+        btn.textContent = '재발송';
+        startCountdown(180); // 3분 카운트다운
+
+      } catch (err) {
+        showError('verifyError', err.response?.data?.detail || '인증코드 발송에 실패했습니다.');
+        btn.textContent = '인증코드 발송';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function startCountdown(sec) {
+      if (_countdownTimer) clearInterval(_countdownTimer);
+      const el = document.getElementById('codeCountdown');
+      el.style.display = 'block';
+      let remain = sec;
+      const tick = () => {
+        const m = String(Math.floor(remain / 60)).padStart(2, '0');
+        const s = String(remain % 60).padStart(2, '0');
+        el.textContent = `인증코드 유효 시간: ${m}:${s}`;
+        if (remain <= 0) {
+          clearInterval(_countdownTimer);
+          el.textContent = '인증코드가 만료되었습니다. 재발송해주세요.';
+        }
+        remain--;
+      };
+      tick();
+      _countdownTimer = setInterval(tick, 1000);
+    }
+
+    // ── 인증코드 검증 ─────────────────────────────────
+    async function verifyEmailCode() {
+      hideError('verifyError');
+      const email = document.getElementById('verifyEmail').value.trim();
+      const code  = document.getElementById('verifyCode').value.trim();
+      if (!code) { showError('verifyError', '인증 코드를 입력해주세요.'); return; }
+
+      const btn = document.getElementById('verifyCodeBtn');
+      btn.disabled = true;
+      btn.textContent = '확인 중...';
+
+      try {
+        await axios.post(
+          'https://api.di-bo.me/member/email-verify',
+          { email, token: code },
+          { headers: { 'access-token': diboToken } }
+        );
+
+        if (_countdownTimer) clearInterval(_countdownTimer);
+        showChangePwdScreen(true); // 단계 표시 포함
+
+      } catch (err) {
+        showError('verifyError', err.response?.data?.detail || '인증 코드가 올바르지 않습니다.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '인증 확인';
+      }
+    }
+
+    // ── 비밀번호 변경 화면 표시 ───────────────────────
+    function showChangePwdScreen(fromEmailVerify) {
+      document.getElementById('changePwdSteps').style.display = fromEmailVerify ? '' : 'none';
+      document.getElementById('currentPwd').value = _tempPwd;
+      document.getElementById('changePwdHint').textContent =
+        fromEmailVerify
+          ? '이메일 인증이 완료되었습니다. 이제 새 비밀번호를 설정해주세요.'
+          : '임시 비밀번호를 사용 중입니다. 새 비밀번호를 설정해주세요.';
+      showScreen('screenChangePwd');
+    }
+
+    // ── 비밀번호 변경 ─────────────────────────────────
+    async function changePassword() {
+      hideError('changePwdError');
+      const currentPwd   = document.getElementById('currentPwd').value;
+      const newPwd       = document.getElementById('newPwd').value;
+      const newPwdConfirm = document.getElementById('newPwdConfirm').value;
+
+      if (!currentPwd) { showError('changePwdError', '현재 비밀번호를 입력해주세요.'); return; }
+      if (!newPwd)     { showError('changePwdError', '새 비밀번호를 입력해주세요.'); return; }
+      if (newPwd !== newPwdConfirm) { showError('changePwdError', '새 비밀번호가 일치하지 않습니다.'); return; }
+
+      const btn = document.getElementById('changePwdBtn');
+      btn.disabled = true;
+      btn.textContent = '변경 중...';
+
+      try {
+        await axios.put(
+          'https://api.di-bo.me/member/change-password',
+          { current_pwd: currentPwd, new_pwd: newPwd },
+          { headers: { 'access-token': diboToken, 'member-token': _memberToken } }
+        );
+
+        alert('비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해주세요.');
+
+        // 상태 초기화 후 로그인 화면으로
+        _memberToken = '';
+        _tempPwd     = '';
+        document.getElementById('inputPwd').value = '';
+        showScreen('screenLogin');
+
+      } catch (err) {
+        showError('changePwdError', err.response?.data?.detail || '비밀번호 변경에 실패했습니다.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '비밀번호 변경';
       }
     }
 
@@ -381,7 +760,7 @@
 
     // ── 이미 로그인 상태라면 마이페이지로 ──────────────
     if (localStorage.getItem('dibo_member_token')) {
-      window.location.href = 'my-page.html';
+      window.location.href = '/';
     }
   </script>
 </body>

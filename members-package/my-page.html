@@ -4,15 +4,15 @@
 =======================================================
 
 【사용 전 필수 설정】
-  1. copy_site_id  → 사이트 ID로 교체
+  1. copy_site_id  : 디보 관리자에서 코드 복사 시 실제 사이트 ID로 자동 치환
   2. diboToken     : 익스텐션 전역 변수로 자동 주입 (별도 선언 불필요)
   3. 로그인 후 localStorage의 'dibo_member_token' 에서 토큰을 읽습니다.
 
 【기능】
-  - 내 정보: 회원 정보 조회
-  - 정보 수정: 이름, 연락처, 주소 등 수정
+  - 내 정보: 프로필 이미지, 가입일, 약관동의 여부 포함 회원 정보 조회
+  - 정보 수정: 이름, 연락처, 주소 등 수정 (프로필 이미지 포함)
   - 비밀번호 변경: 이메일 인증 후 변경
-  - 회원 탈퇴
+  - 회원 탈퇴: 버튼 클릭 → 모달 확인
 
 =======================================================
 -->
@@ -54,6 +54,8 @@
       box-shadow: 0 2px 16px rgba(0,0,0,0.07);
       position: sticky;
       top: 20px;
+      display: flex;
+      flex-direction: column;
     }
 
     .dibo-mp-profile-mini {
@@ -80,10 +82,6 @@
       object-fit: cover;
     }
 
-    .dibo-mp-avatar-icon {
-      color: #fff;
-    }
-
     .dibo-mp-profile-name {
       font-size: 15px;
       font-weight: 700;
@@ -102,6 +100,7 @@
     /* Nav */
     .dibo-mp-nav {
       padding: 16px 0;
+      flex: 1;
     }
 
     .dibo-mp-nav-item {
@@ -170,6 +169,54 @@
       letter-spacing: -0.01em;
     }
 
+    /* Profile image in info panel */
+    .dibo-mp-profile-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding-bottom: 24px;
+      margin-bottom: 4px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .dibo-mp-profile-img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .dibo-mp-profile-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .dibo-mp-profile-header-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .dibo-mp-profile-header-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #000;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .dibo-mp-profile-header-email {
+      font-size: 13px;
+      color: #999;
+      letter-spacing: -0.01em;
+      word-break: break-all;
+    }
+
     /* Info rows */
     .dibo-mp-info-list {
       border-top: 1px solid #f0f0f0;
@@ -209,8 +256,11 @@
       font-weight: 600;
     }
 
-    .dibo-mp-badge.approved { background: #e8f5e9; color: #2e7d32; }
-    .dibo-mp-badge.pending  { background: #fff8e1; color: #f57f17; }
+    .dibo-mp-badge.approved  { background: #e8f5e9; color: #2e7d32; }
+    .dibo-mp-badge.pending   { background: #fff8e1; color: #f57f17; }
+    .dibo-mp-badge.agreed    { background: #e3f2fd; color: #1565c0; }
+    .dibo-mp-badge.disagreed { background: #fce4ec; color: #c62828; }
+    .dibo-mp-badge.na        { background: #f5f5f5; color: #9e9e9e; }
 
     /* Form */
     .dibo-mp-form-group {
@@ -303,7 +353,7 @@
 
     .dibo-mp-timer.show { display: block; }
 
-    /* Password strength */
+    /* Password hint */
     .dibo-mp-pw-hint {
       font-size: 12px;
       color: #aaa;
@@ -358,8 +408,6 @@
 
     .dibo-mp-avatar-edit-btn.primary { background: #000; color: #fff; border: none; }
     .dibo-mp-avatar-edit-btn.primary:hover { opacity: 0.82; }
-    .dibo-mp-avatar-edit-btn.outline { background: #fff; color: #666; border: 1.5px solid #ddd; }
-    .dibo-mp-avatar-edit-btn.outline:hover { border-color: #999; color: #333; }
 
     /* Section divider */
     .dibo-mp-section-title {
@@ -403,8 +451,10 @@
     .dibo-mp-btn.primary:disabled { opacity: 0.45; cursor: not-allowed; }
     .dibo-mp-btn.outline { background: #fff; color: #333; border: 1.5px solid #ddd; }
     .dibo-mp-btn.outline:hover { border-color: #000; color: #000; }
-    .dibo-mp-btn.danger { background: #fff; color: #e53935; border: 1.5px solid #ffcdd2; }
-    .dibo-mp-btn.danger:hover { background: #ffebee; }
+    .dibo-mp-btn.danger { background: #e53935; color: #fff; border: none; }
+    .dibo-mp-btn.danger:hover { background: #c62828; }
+    .dibo-mp-btn.danger-outline { background: #fff; color: #e53935; border: 1.5px solid #ffcdd2; }
+    .dibo-mp-btn.danger-outline:hover { background: #ffebee; }
 
     .dibo-mp-btn-row {
       display: flex;
@@ -412,40 +462,88 @@
       margin-top: 28px;
     }
 
-    /* Withdraw */
-    .dibo-mp-withdraw-box {
-      border: 1.5px solid #ffcdd2;
-      border-radius: 12px;
-      padding: 24px;
+    /* ── 회원 탈퇴 모달 ── */
+    .dibo-withdraw-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dibo-withdraw-overlay.show {
+      display: flex;
+    }
+
+    .dibo-withdraw-modal {
+      background: #fff;
+      border-radius: 20px;
+      padding: 36px 32px 28px;
+      width: 100%;
+      max-width: 420px;
+      margin: 0 16px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    }
+
+    .dibo-withdraw-modal-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
       background: #fff5f5;
-    }
-
-    .dibo-mp-withdraw-box h3 {
-      font-size: 15px;
-      font-weight: 700;
-      color: #c62828;
-      margin-bottom: 8px;
-      letter-spacing: -0.01em;
-    }
-
-    .dibo-mp-withdraw-box p {
-      font-size: 14px;
-      color: #666;
-      line-height: 1.6;
-      margin-bottom: 20px;
-      letter-spacing: -0.01em;
-    }
-
-    .dibo-mp-withdraw-check {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 20px;
-      cursor: pointer;
+      justify-content: center;
+      margin: 0 auto 16px;
     }
 
-    .dibo-mp-withdraw-check input { accent-color: #e53935; width: 16px; height: 16px; }
-    .dibo-mp-withdraw-check span { font-size: 14px; color: #333; letter-spacing: -0.01em; }
+    .dibo-withdraw-modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #000;
+      text-align: center;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+
+    .dibo-withdraw-modal-desc {
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+      line-height: 1.65;
+      letter-spacing: -0.01em;
+      margin-bottom: 24px;
+    }
+
+    .dibo-withdraw-modal-desc strong {
+      color: #e53935;
+      font-weight: 600;
+    }
+
+    .dibo-withdraw-modal-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .dibo-withdraw-modal-btns .dibo-mp-btn {
+      flex: 1;
+      text-align: center;
+    }
+
+    .dibo-withdraw-modal-alert {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      background: #fff5f5;
+      border: 1px solid #ffcdd2;
+      color: #c62828;
+      margin-bottom: 16px;
+      display: none;
+      letter-spacing: -0.01em;
+    }
+
+    .dibo-withdraw-modal-alert.show { display: block; }
 
     /* Mobile header */
     .dibo-mp-mobile-header {
@@ -474,7 +572,6 @@
       color: #999;
       cursor: pointer;
       white-space: nowrap;
-      border-bottom: 2px solid transparent;
       border: none;
       background: none;
       font-family: 'Noto Sans KR', sans-serif;
@@ -485,7 +582,7 @@
     .dibo-mp-mobile-nav-item.active {
       color: #000;
       font-weight: 700;
-      border-bottom-color: #000;
+      border-bottom: 2px solid #000;
     }
 
     /* Loading */
@@ -504,28 +601,50 @@
       }
 
       .dibo-mp-sidebar { display: none; }
-
       .dibo-mp-mobile-header { display: block; }
 
-      .dibo-mp-main {
-        padding: 20px 16px;
-      }
+      .dibo-mp-main { padding: 20px 16px; }
 
-      .dibo-mp-panel {
-        padding: 24px 20px;
-      }
+      .dibo-mp-panel { padding: 24px 20px; }
 
       .dibo-mp-info-row { flex-direction: column; gap: 4px; }
       .dibo-mp-info-label { width: auto; }
+
+      .dibo-mp-profile-header { flex-direction: column; text-align: center; }
     }
 
     @media (max-width: 480px) {
       .dibo-mp-btn-row { flex-direction: column; }
       .dibo-mp-avatar-edit { flex-direction: column; align-items: flex-start; }
+      .dibo-withdraw-modal-btns { flex-direction: column-reverse; }
     }
   </style>
 </head>
 <body>
+
+  <!-- 회원 탈퇴 모달 -->
+  <div class="dibo-withdraw-overlay" id="withdrawModal" onclick="closeWithdrawModal(event)">
+    <div class="dibo-withdraw-modal">
+      <div class="dibo-withdraw-modal-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2.5">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <div class="dibo-withdraw-modal-title">정말 탈퇴하시겠습니까?</div>
+      <div class="dibo-withdraw-modal-desc">
+        탈퇴 시 <strong>모든 개인 정보와 이용 내역이 즉시 삭제</strong>되며,<br>
+        삭제된 데이터는 복구할 수 없습니다.<br>
+        탈퇴 후에는 동일한 이메일로 재가입이 제한될 수 있습니다.
+      </div>
+      <div class="dibo-withdraw-modal-alert" id="withdrawModalAlert"></div>
+      <div class="dibo-withdraw-modal-btns">
+        <button class="dibo-mp-btn outline" onclick="closeWithdrawModal()">취소</button>
+        <button class="dibo-mp-btn danger" id="withdrawConfirmBtn" onclick="withdraw()">탈퇴하기</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 모바일 상단 탭 -->
   <div class="dibo-mp-mobile-header">
@@ -533,7 +652,7 @@
       <button class="dibo-mp-mobile-nav-item active" onclick="showPanel('info')">내 정보</button>
       <button class="dibo-mp-mobile-nav-item" onclick="showPanel('edit')">정보 수정</button>
       <button class="dibo-mp-mobile-nav-item" onclick="showPanel('password')">비밀번호 변경</button>
-      <button class="dibo-mp-mobile-nav-item" onclick="showPanel('withdraw')">회원 탈퇴</button>
+      <button class="dibo-mp-mobile-nav-item" style="color:#e53935" onclick="openWithdrawModal()">회원 탈퇴</button>
     </div>
   </div>
 
@@ -542,7 +661,7 @@
     <aside class="dibo-mp-sidebar">
       <div class="dibo-mp-profile-mini">
         <div class="dibo-mp-avatar" id="sidebarAvatar">
-          <svg class="dibo-mp-avatar-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
             <circle cx="12" cy="7" r="4"/>
           </svg>
@@ -567,7 +686,7 @@
 
         <div class="dibo-mp-nav-divider"></div>
 
-        <button class="dibo-mp-nav-item danger" onclick="showPanel('withdraw')">
+        <button class="dibo-mp-nav-item danger" onclick="openWithdrawModal()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           회원 탈퇴
         </button>
@@ -656,31 +775,6 @@
         </div>
       </div>
 
-      <!-- ── 회원 탈퇴 패널 ── -->
-      <div class="dibo-mp-panel" id="panelWithdraw">
-        <h2 class="dibo-mp-panel-title">회원 탈퇴</h2>
-        <p class="dibo-mp-panel-desc">탈퇴 전에 아래 내용을 확인해주세요.</p>
-
-        <div class="dibo-mp-alert error"   id="withdrawError"></div>
-        <div class="dibo-mp-alert success" id="withdrawSuccess"></div>
-
-        <div class="dibo-mp-withdraw-box">
-          <h3>⚠️ 탈퇴 전 꼭 확인해주세요</h3>
-          <p>
-            회원 탈퇴 시 모든 개인 정보와 이용 내역이 즉시 삭제되며,
-            삭제된 데이터는 복구할 수 없습니다.<br>
-            탈퇴 후에는 동일한 이메일로 재가입이 제한될 수 있습니다.
-          </p>
-
-          <label class="dibo-mp-withdraw-check" id="withdrawAgreeLabel">
-            <input type="checkbox" id="withdrawAgree">
-            <span>위 내용을 확인했으며, 회원 탈퇴에 동의합니다.</span>
-          </label>
-
-          <button class="dibo-mp-btn danger" id="withdrawBtn" onclick="withdraw()">회원 탈퇴</button>
-        </div>
-      </div>
-
     </main>
   </div>
 
@@ -692,6 +786,7 @@
     let   memberId    = '';
     let   memberEmail = '';
     let   memberData  = null;
+    let   groupData   = null;
     let   pwTimer     = null;
     let   pwVerifiedToken = '';
 
@@ -712,7 +807,6 @@
       const payload = decodeJWT(memberToken);
       memberId = payload.member_id || '';
 
-      // 토큰 만료 체크
       if (payload.exp && Date.now() / 1000 > payload.exp) {
         localStorage.removeItem('dibo_member_token');
         window.location.href = 'log-in.html';
@@ -732,17 +826,33 @@
         memberId    = memberData.id || memberId;
         memberEmail = memberData.email || '';
 
+        // 그룹 정보 조회 (약관 확인용)
+        if (memberData.group_id) {
+          await loadGroupInfo(memberData.group_id);
+        }
+
         updateSidebar(memberData);
         renderInfoPanel(memberData);
         renderEditPanel(memberData);
         document.getElementById('pwEmail').value = memberEmail;
 
       } catch (err) {
-        // API 접근 불가 시 토큰 디코딩으로 기본 정보 표시
         const payload = decodeJWT(memberToken);
         memberEmail = payload.email || '';
         renderInfoFallback(payload);
         document.getElementById('pwEmail').value = memberEmail;
+      }
+    }
+
+    async function loadGroupInfo(groupId) {
+      try {
+        const res = await axios.get(
+          `https://api.di-bo.me/member-group/${groupId}?site_id=${MY_SITE_ID}`,
+          { headers: { 'access-token': diboToken } }
+        );
+        groupData = res.data;
+      } catch (e) {
+        groupData = null;
       }
     }
 
@@ -751,25 +861,45 @@
       document.getElementById('sidebarName').textContent  = data.name  || '회원';
       document.getElementById('sidebarEmail').textContent = data.email || data.user_id || '';
       if (data.profile_img) {
-        ['sidebarAvatar'].forEach(id => {
-          document.getElementById(id).innerHTML = `<img src="${data.profile_img}" alt="프로필">`;
-        });
+        document.getElementById('sidebarAvatar').innerHTML = `<img src="${data.profile_img}" alt="프로필">`;
       }
     }
 
     // ── 내 정보 패널 렌더링 ───────────────────────────
     function renderInfoPanel(data) {
+      // 프로필 이미지
+      const avatarHtml = data.profile_img
+        ? `<img src="${data.profile_img}" alt="프로필">`
+        : `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+
+      const profileHeader = `
+        <div class="dibo-mp-profile-header">
+          <div class="dibo-mp-profile-img">${avatarHtml}</div>
+          <div class="dibo-mp-profile-header-info">
+            <div class="dibo-mp-profile-header-name">${escHtml(data.name || '회원')}</div>
+            <div class="dibo-mp-profile-header-email">${escHtml(data.email || data.user_id || '')}</div>
+          </div>
+        </div>`;
+
+      // 상태 뱃지
       const statusBadge = data.status === 'approved'
         ? '<span class="dibo-mp-badge approved">승인</span>'
         : '<span class="dibo-mp-badge pending">승인 대기</span>';
 
+      // 약관동의 여부
+      let termsBadge = '<span class="dibo-mp-badge na">해당 없음</span>';
+      if (groupData && groupData.terms_enabled) {
+        if (data.terms_agreed_at) {
+          const agreedDate = new Date(data.terms_agreed_at).toLocaleDateString('ko-KR');
+          termsBadge = `<span class="dibo-mp-badge agreed">동의</span> <span style="font-size:13px;color:#888;margin-left:6px">${agreedDate}</span>`;
+        } else {
+          termsBadge = '<span class="dibo-mp-badge disagreed">미동의</span>';
+        }
+      }
+
       const typeLabel = data.member_type === 'business' ? '사업자 회원' : '일반 회원';
 
       let rows = `
-        <div class="dibo-mp-info-row">
-          <div class="dibo-mp-info-label">이름</div>
-          <div class="dibo-mp-info-value">${escHtml(data.name || '-')}</div>
-        </div>
         <div class="dibo-mp-info-row">
           <div class="dibo-mp-info-label">이메일</div>
           <div class="dibo-mp-info-value">${escHtml(data.email || '-')}</div>
@@ -786,12 +916,14 @@
       if (data.phone_num) rows += infoRow('연락처', data.phone_num);
       if (data.address)   rows += infoRow('주소',   data.address);
       if (data.birth_date)rows += infoRow('생년월일', data.birth_date);
-      if (data.gender)    rows += infoRow('성별', data.gender);
+      if (data.gender)    rows += infoRow('성별',   data.gender);
 
       if (data.member_type === 'business') {
-        if (data.business_name)   rows += infoRow('사업자명', data.business_name);
+        if (data.business_name)   rows += infoRow('사업자명',       data.business_name);
         if (data.business_number) rows += infoRow('사업자등록번호', data.business_number);
-        if (data.representative)  rows += infoRow('대표자명', data.representative);
+        if (data.representative)  rows += infoRow('대표자명',       data.representative);
+        if (data.business_phone)  rows += infoRow('사업장 연락처',  data.business_phone);
+        if (data.business_address)rows += infoRow('사업장 주소',    data.business_address);
       }
 
       // 커스텀 필드
@@ -801,11 +933,21 @@
         });
       }
 
+      // 가입일
       if (data.created_at) {
         rows += infoRow('가입일', new Date(data.created_at).toLocaleDateString('ko-KR'));
       }
 
+      // 약관동의
+      if (groupData && groupData.terms_enabled) {
+        rows += `<div class="dibo-mp-info-row">
+          <div class="dibo-mp-info-label">약관 동의</div>
+          <div class="dibo-mp-info-value">${termsBadge}</div>
+        </div>`;
+      }
+
       document.getElementById('infoContent').innerHTML = `
+        ${profileHeader}
         <div class="dibo-mp-info-list">${rows}</div>
         <div class="dibo-mp-btn-row">
           <button class="dibo-mp-btn outline" onclick="showPanel('edit')">정보 수정</button>
@@ -827,8 +969,7 @@
 
     // ── 정보 수정 패널 렌더링 ─────────────────────────
     function renderEditPanel(data) {
-      const isProfile = !!data.profile_img;
-      const avatarHtml = isProfile
+      const avatarHtml = data.profile_img
         ? `<img src="${data.profile_img}" alt="프로필">`
         : `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
 
@@ -884,13 +1025,12 @@
         </div>`;
       }
 
-      // 사업자 전용
       if (data.member_type === 'business') {
         html += `<div class="dibo-mp-section-title">사업자 정보</div>`;
-        if (data.business_name  !== undefined) html += editField('사업자명',       'business_name',   data.business_name   || '', 'text');
-        if (data.representative !== undefined) html += editField('대표자명',       'representative',  data.representative  || '', 'text');
-        if (data.business_phone !== undefined) html += editField('사업장 연락처',  'business_phone',  data.business_phone  || '', 'tel');
-        if (data.business_address !== undefined) html += editField('사업장 주소',  'business_address',data.business_address|| '', 'text');
+        if (data.business_name      !== undefined) html += editField('사업자명',      'business_name',    data.business_name    || '', 'text');
+        if (data.representative     !== undefined) html += editField('대표자명',      'representative',   data.representative   || '', 'text');
+        if (data.business_phone     !== undefined) html += editField('사업장 연락처', 'business_phone',   data.business_phone   || '', 'tel');
+        if (data.business_address   !== undefined) html += editField('사업장 주소',   'business_address', data.business_address || '', 'text');
       }
 
       html += `
@@ -949,16 +1089,14 @@
       clearEditAlerts();
 
       try {
-        const res = await axios.put(
+        await axios.put(
           `https://api.di-bo.me/member/${memberId}?site_id=${MY_SITE_ID}`,
           formData,
           { headers: { 'access-token': diboToken, 'member-token': memberToken } }
         );
-
         showEditSuccess('정보가 성공적으로 수정되었습니다.');
         await loadMemberInfo();
         setTimeout(() => showPanel('info'), 1500);
-
       } catch (err) {
         showEditError(err.response?.data?.detail || '정보 수정에 실패했습니다. 다시 시도해주세요.');
       } finally {
@@ -983,12 +1121,10 @@
           { email },
           { headers: { 'access-token': diboToken } }
         );
-
         document.getElementById('pwStepSend').style.display = 'none';
         document.getElementById('pwStepCode').style.display = '';
         showPwSuccess('인증 코드가 발송되었습니다. 이메일을 확인해주세요.');
         startPwTimer(180);
-
       } catch (err) {
         showPwError('인증 코드 발송에 실패했습니다. 잠시 후 다시 시도해주세요.');
         btn.disabled = false;
@@ -1026,14 +1162,12 @@
           { email: memberEmail, token: code },
           { headers: { 'access-token': diboToken } }
         );
-
         pwVerifiedToken = code;
         if (pwTimer) clearInterval(pwTimer);
         document.getElementById('pwTimer').classList.remove('show');
         document.getElementById('pwStepCode').style.display = 'none';
         document.getElementById('pwStepNew').style.display  = '';
         clearPwAlerts();
-
       } catch (err) {
         showPwError('인증 코드가 올바르지 않습니다.');
       }
@@ -1043,9 +1177,9 @@
       const newPwd     = document.getElementById('newPwd').value;
       const confirmPwd = document.getElementById('newPwdConfirm').value;
 
-      if (!newPwd) { showPwError('새 비밀번호를 입력해주세요.'); return; }
-      if (newPwd.length < 8) { showPwError('비밀번호는 8자 이상이어야 합니다.'); return; }
-      if (newPwd !== confirmPwd) { showPwError('비밀번호가 일치하지 않습니다.'); return; }
+      if (!newPwd)              { showPwError('새 비밀번호를 입력해주세요.'); return; }
+      if (newPwd.length < 8)   { showPwError('비밀번호는 8자 이상이어야 합니다.'); return; }
+      if (newPwd !== confirmPwd){ showPwError('비밀번호가 일치하지 않습니다.'); return; }
 
       const btn = document.getElementById('pwChangeBtn');
       btn.disabled = true;
@@ -1058,14 +1192,12 @@
           { login_id: memberEmail, pwd: newPwd, token: pwVerifiedToken },
           { headers: { 'access-token': diboToken } }
         );
-
         showPwSuccess('비밀번호가 성공적으로 변경되었습니다.');
         document.getElementById('pwStepNew').style.display  = 'none';
         document.getElementById('pwStepSend').style.display = '';
         document.getElementById('newPwd').value = '';
         document.getElementById('newPwdConfirm').value = '';
         pwVerifiedToken = '';
-
       } catch (err) {
         showPwError(err.response?.data?.detail || '비밀번호 변경에 실패했습니다. 다시 시도해주세요.');
       } finally {
@@ -1074,58 +1206,64 @@
       }
     }
 
-    // ── 회원 탈퇴 ─────────────────────────────────────
+    // ── 회원 탈퇴 모달 ────────────────────────────────
+    function openWithdrawModal() {
+      document.getElementById('withdrawModal').classList.add('show');
+      document.getElementById('withdrawModalAlert').classList.remove('show');
+      document.getElementById('withdrawModalAlert').textContent = '';
+      const btn = document.getElementById('withdrawConfirmBtn');
+      btn.disabled = false;
+      btn.textContent = '탈퇴하기';
+    }
+
+    function closeWithdrawModal(event) {
+      if (event && event.target !== document.getElementById('withdrawModal')) return;
+      document.getElementById('withdrawModal').classList.remove('show');
+    }
+
     async function withdraw() {
-      if (!document.getElementById('withdrawAgree').checked) {
-        showWithdrawError('탈퇴 동의 체크박스를 선택해주세요.');
-        return;
-      }
-
-      if (!confirm('정말 탈퇴하시겠습니까? 탈퇴 후 모든 정보는 삭제되며 복구할 수 없습니다.')) return;
-
-      const btn = document.getElementById('withdrawBtn');
+      const btn = document.getElementById('withdrawConfirmBtn');
       btn.disabled = true;
       btn.textContent = '처리 중...';
-      clearWithdrawAlerts();
+      const alertEl = document.getElementById('withdrawModalAlert');
+      alertEl.classList.remove('show');
 
       try {
         await axios.delete(
           'https://api.di-bo.me/member/withdraw',
           { headers: { 'access-token': diboToken, 'member-token': memberToken } }
         );
-
         localStorage.removeItem('dibo_member_token');
-        showWithdrawSuccess('회원 탈퇴가 완료되었습니다. 이용해주셔서 감사합니다.');
-        document.getElementById('withdrawBtn').style.display = 'none';
-        document.getElementById('withdrawAgreeLabel').style.display = 'none';
-        setTimeout(() => { window.location.href = 'log-in.html'; }, 2000);
-
+        document.getElementById('withdrawModal').classList.remove('show');
+        window.location.href = '/';
       } catch (err) {
-        showWithdrawError(err.response?.data?.detail || '탈퇴 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+        alertEl.textContent = err.response?.data?.detail || '탈퇴 처리 중 오류가 발생했습니다. 다시 시도해주세요.';
+        alertEl.classList.add('show');
         btn.disabled = false;
-        btn.textContent = '회원 탈퇴';
+        btn.textContent = '탈퇴하기';
       }
     }
 
     // ── 로그아웃 ──────────────────────────────────────
     function logout() {
       localStorage.removeItem('dibo_member_token');
-      window.location.href = 'log-in.html';
+      window.location.href = '/';
     }
 
     // ── 패널 전환 ─────────────────────────────────────
     function showPanel(id) {
-      const panelMap = { info:'panelInfo', edit:'panelEdit', password:'panelPassword', withdraw:'panelWithdraw' };
+      const panelMap = { info:'panelInfo', edit:'panelEdit', password:'panelPassword' };
       Object.entries(panelMap).forEach(([key, panelId]) => {
         document.getElementById(panelId).classList.toggle('active', key === id);
       });
 
-      // 사이드바 네비 활성화
-      document.querySelectorAll('.dibo-mp-nav-item').forEach(el => {
-        el.classList.remove('active');
-      });
+      document.querySelectorAll('.dibo-mp-nav-item').forEach(el => el.classList.remove('active'));
+      const navMap = { info: 0, edit: 1, password: 2 };
+      const navItems = document.querySelectorAll('.dibo-mp-nav-item');
+      if (navMap[id] !== undefined) navItems[navMap[id]]?.classList.add('active');
+
       document.querySelectorAll('.dibo-mp-mobile-nav-item').forEach((el, i) => {
-        const panels = ['info','edit','password','withdraw'];
+        const panels = ['info', 'edit', 'password'];
         el.classList.toggle('active', panels[i] === id);
       });
 
@@ -1150,17 +1288,13 @@
     }
 
     // ── 알림 헬퍼 ────────────────────────────────────
-    function showEditError(msg)     { showAlert('editError',    msg); }
-    function showEditSuccess(msg)   { showAlert('editSuccess',  msg); }
-    function clearEditAlerts()      { clearAlerts('editError','editSuccess'); }
+    function showEditError(msg)   { showAlert('editError',   msg); }
+    function showEditSuccess(msg) { showAlert('editSuccess', msg); }
+    function clearEditAlerts()    { clearAlerts('editError','editSuccess'); }
 
-    function showPwError(msg)       { showAlert('pwError',      msg); }
-    function showPwSuccess(msg)     { showAlert('pwSuccess',    msg); }
-    function clearPwAlerts()        { clearAlerts('pwError','pwSuccess'); }
-
-    function showWithdrawError(msg) { showAlert('withdrawError',   msg); }
-    function showWithdrawSuccess(msg){ showAlert('withdrawSuccess', msg); }
-    function clearWithdrawAlerts()  { clearAlerts('withdrawError','withdrawSuccess'); }
+    function showPwError(msg)     { showAlert('pwError',     msg); }
+    function showPwSuccess(msg)   { showAlert('pwSuccess',   msg); }
+    function clearPwAlerts()      { clearAlerts('pwError','pwSuccess'); }
 
     function showAlert(id, msg) {
       const el = document.getElementById(id);
