@@ -1,0 +1,531 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- ================================================
+   DIBO F16 · 슬라이더 예산 설정 폼 · 부동산 버전
+   class prefix : dibo-f16-
+   아임웹 코드위젯 즉시 적용
+   ================================================ -->
+<style>
+  .dibo-f16-wrap {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #1e2a3a;
+    border-radius: 20px;
+    padding: 28px 20px 32px;
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  }
+
+  .dibo-f16-badge {
+    display: inline-block;
+    background: rgba(77,171,247,0.15);
+    color: #4dabf7;
+    border: 1px solid rgba(77,171,247,0.3);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+
+  .dibo-f16-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 4px;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+  }
+
+  .dibo-f16-subtitle {
+    font-size: 12px;
+    color: #6a8aaa;
+    margin: 0 0 24px;
+    line-height: 1.6;
+  }
+
+  /* ── 슬라이더 ── */
+  .dibo-f16-slider-section { margin-bottom: 22px; }
+
+  .dibo-f16-slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .dibo-f16-slider-label { font-size: 12px; font-weight: 700; color: #8aaac8; }
+
+  .dibo-f16-slider-value {
+    font-size: 16px;
+    font-weight: 800;
+    color: #4dabf7;
+  }
+
+  .dibo-f16-range-wrap {
+    position: relative;
+    height: 32px;
+    display: flex;
+    align-items: center;
+  }
+
+  .dibo-f16-range-track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #2e3f54;
+    border-radius: 4px;
+  }
+
+  .dibo-f16-range-fill {
+    position: absolute;
+    height: 4px;
+    background: #4dabf7;
+    border-radius: 4px;
+    pointer-events: none;
+  }
+
+  .dibo-f16-range {
+    position: absolute;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 4px;
+    appearance: none;
+    background: transparent;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .dibo-f16-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #4dabf7;
+    border: 3px solid #1e2a3a;
+    box-shadow: 0 0 0 2px #4dabf7;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+  }
+
+  .dibo-f16-range::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 0 4px rgba(77,171,247,0.3);
+  }
+
+  .dibo-f16-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #4dabf7;
+    border: 3px solid #1e2a3a;
+    box-shadow: 0 0 0 2px #4dabf7;
+    cursor: pointer;
+  }
+
+  .dibo-f16-range-min { position: absolute; left: 0; }
+  .dibo-f16-range-max { position: absolute; right: 0; }
+  .dibo-f16-range-min, .dibo-f16-range-max { pointer-events: none; }
+
+  /* 두 thumb를 겹쳐 듀얼 range 효과 */
+  .dibo-f16-range-wrap input[type=range]:last-child { pointer-events: none; }
+  .dibo-f16-range-wrap input[type=range]:last-child::-webkit-slider-thumb { pointer-events: all; }
+  .dibo-f16-range-wrap input[type=range]:last-child::-moz-range-thumb { pointer-events: all; }
+
+  .dibo-f16-range-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+  }
+
+  .dibo-f16-range-labels span { font-size: 10px; color: #5a7090; }
+
+  /* ── 필터 칩 ── */
+  .dibo-f16-filter-section { margin-bottom: 20px; }
+
+  .dibo-f16-filter-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #8aaac8;
+    margin-bottom: 10px;
+  }
+
+  .dibo-f16-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 14px;
+  }
+
+  .dibo-f16-chip {
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #8aaac8;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    font-family: inherit;
+  }
+
+  .dibo-f16-chip:hover { border-color: rgba(77,171,247,0.5); color: #cce5ff; }
+
+  .dibo-f16-chip.is-active {
+    background: rgba(77,171,247,0.18);
+    border-color: #4dabf7;
+    color: #4dabf7;
+  }
+
+  /* ── 조건 요약 ── */
+  .dibo-f16-summary {
+    background: rgba(77,171,247,0.08);
+    border: 1px solid rgba(77,171,247,0.2);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .dibo-f16-summary-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #4dabf7;
+    margin-bottom: 4px;
+  }
+
+  .dibo-f16-summary-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #cce5ff;
+  }
+
+  .dibo-f16-summary-label { color: #6a8aaa; font-weight: 600; min-width: 52px; }
+
+  /* ── 연락처 ── */
+  .dibo-f16-contact {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .dibo-f16-contact.is-open { max-height: 280px; }
+
+  .dibo-f16-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .dibo-f16-label { font-size: 11px; font-weight: 600; color: #6a8aaa; }
+
+  .dibo-f16-input {
+    height: 46px;
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 14px;
+    color: #fff;
+    background: rgba(255,255,255,0.06);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+    width: 100%;
+  }
+
+  .dibo-f16-input:focus {
+    border-color: #4dabf7;
+    box-shadow: 0 0 0 3px rgba(77,171,247,0.15);
+  }
+
+  .dibo-f16-input::placeholder { color: #3a5070; }
+
+  .dibo-f16-agree {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+
+  .dibo-f16-checkbox {
+    width: 15px;
+    height: 15px;
+    accent-color: #4dabf7;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .dibo-f16-agree-text { font-size: 11px; color: #5a7090; line-height: 1.55; }
+  .dibo-f16-agree-link { color: #4dabf7; text-decoration: underline; cursor: pointer; }
+
+  .dibo-f16-cta-btn {
+    width: 100%;
+    height: 52px;
+    background: #4dabf7;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+    margin-bottom: 8px;
+  }
+
+  .dibo-f16-cta-btn:hover { background: #339de0; }
+  .dibo-f16-cta-btn:active { transform: scale(0.98); }
+
+  .dibo-f16-submit {
+    width: 100%;
+    height: 52px;
+    background: #4dabf7;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .dibo-f16-submit:hover { background: #339de0; }
+  .dibo-f16-submit:active { transform: scale(0.98); }
+  .dibo-f16-submit:disabled { background: #2a4a6a; color: #4a6a8a; cursor: default; transform: none; }
+
+  /* ── 완료 ── */
+  .dibo-f16-thanks {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px 0 8px;
+    gap: 10px;
+  }
+
+  .dibo-f16-thanks-icon { font-size: 44px; }
+  .dibo-f16-thanks-title { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.4px; }
+  .dibo-f16-thanks-msg { font-size: 12px; color: #6a8aaa; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="dibo-f16-wrap">
+  <div class="dibo-f16-badge">🏠 맞춤 매물 상담</div>
+  <p class="dibo-f16-title">내 조건에 맞는 매물을<br>전문가가 찾아드립니다</p>
+  <p class="dibo-f16-subtitle">예산과 선호 조건을 설정하면 담당 중개사가 연락드립니다</p>
+
+  <div id="diboF16FormArea">
+    <!-- 예산 슬라이더 -->
+    <div class="dibo-f16-slider-section">
+      <div class="dibo-f16-slider-header">
+        <span class="dibo-f16-slider-label">예산 범위</span>
+        <span class="dibo-f16-slider-value" id="diboF16BudgetDisplay">1억 ~ 3억</span>
+      </div>
+      <div class="dibo-f16-range-wrap" id="diboF16RangeWrap">
+        <div class="dibo-f16-range-track"></div>
+        <div class="dibo-f16-range-fill" id="diboF16RangeFill"></div>
+        <input class="dibo-f16-range dibo-f16-range-min" type="range" id="diboF16RangeMin" min="0" max="20" value="2" step="1" />
+        <input class="dibo-f16-range dibo-f16-range-max" type="range" id="diboF16RangeMax" min="0" max="20" value="6" step="1" />
+      </div>
+      <div class="dibo-f16-range-labels">
+        <span>5천만</span>
+        <span>5억</span>
+        <span>10억</span>
+        <span>15억</span>
+        <span>20억+</span>
+      </div>
+    </div>
+
+    <!-- 지역 필터 -->
+    <div class="dibo-f16-filter-section">
+      <p class="dibo-f16-filter-title">선호 지역 (복수 선택)</p>
+      <div class="dibo-f16-chips" id="diboF16RegionChips">
+        <button class="dibo-f16-chip" data-val="서울 강남">서울 강남</button>
+        <button class="dibo-f16-chip" data-val="서울 서북권">서울 서북권</button>
+        <button class="dibo-f16-chip" data-val="서울 동북권">서울 동북권</button>
+        <button class="dibo-f16-chip" data-val="경기 분당">경기 분당</button>
+        <button class="dibo-f16-chip" data-val="경기 일산">경기 일산</button>
+        <button class="dibo-f16-chip" data-val="인천">인천</button>
+      </div>
+
+      <p class="dibo-f16-filter-title">매물 유형 (복수 선택)</p>
+      <div class="dibo-f16-chips" id="diboF16TypeChips">
+        <button class="dibo-f16-chip" data-val="아파트">아파트</button>
+        <button class="dibo-f16-chip" data-val="오피스텔">오피스텔</button>
+        <button class="dibo-f16-chip" data-val="빌라">빌라</button>
+        <button class="dibo-f16-chip" data-val="단독주택">단독주택</button>
+        <button class="dibo-f16-chip" data-val="상가">상가</button>
+      </div>
+    </div>
+
+    <!-- 조건 요약 -->
+    <div class="dibo-f16-summary">
+      <p class="dibo-f16-summary-title">🔍 설정된 조건</p>
+      <div class="dibo-f16-summary-row">
+        <span class="dibo-f16-summary-label">예산</span>
+        <span id="diboF16SumBudget">1억 ~ 3억</span>
+      </div>
+      <div class="dibo-f16-summary-row">
+        <span class="dibo-f16-summary-label">지역</span>
+        <span id="diboF16SumRegion">미선택</span>
+      </div>
+      <div class="dibo-f16-summary-row">
+        <span class="dibo-f16-summary-label">유형</span>
+        <span id="diboF16SumType">미선택</span>
+      </div>
+    </div>
+
+    <!-- CTA 버튼 -->
+    <button class="dibo-f16-cta-btn" id="diboF16CtaBtn">조건에 맞는 매물 알아보기</button>
+
+    <!-- 연락처 -->
+    <div class="dibo-f16-contact" id="diboF16Contact">
+      <div>
+        <div class="dibo-f16-field">
+          <span class="dibo-f16-label">성함</span>
+          <input class="dibo-f16-input" type="text" id="diboF16Name" placeholder="홍길동" maxlength="20" />
+        </div>
+        <div class="dibo-f16-field">
+          <span class="dibo-f16-label">연락처</span>
+          <input class="dibo-f16-input" type="tel" id="diboF16Tel" placeholder="010-0000-0000" maxlength="13" />
+        </div>
+        <label class="dibo-f16-agree">
+          <input class="dibo-f16-checkbox" type="checkbox" id="diboF16Agree" />
+          <span class="dibo-f16-agree-text">
+            <span class="dibo-f16-agree-link">[필수] 개인정보 수집·이용 동의</span>에 동의합니다.
+          </span>
+        </label>
+        <button class="dibo-f16-submit" id="diboF16Submit" disabled>상담 신청하기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dibo-f16-thanks" id="diboF16Thanks">
+    <div class="dibo-f16-thanks-icon">🏡</div>
+    <p class="dibo-f16-thanks-title">상담 신청 완료!</p>
+    <p class="dibo-f16-thanks-msg">설정하신 조건에 맞는 매물을 찾아<br>영업일 기준 1일 내 연락드리겠습니다.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  /* 예산 단계 배열 (단위: 억) */
+  var STEPS = [0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,6,7,8,9,10,11,12,13,15,18,20];
+
+  var rangeMin  = document.getElementById('diboF16RangeMin');
+  var rangeMax  = document.getElementById('diboF16RangeMax');
+  var fillEl    = document.getElementById('diboF16RangeFill');
+  var budgetEl  = document.getElementById('diboF16BudgetDisplay');
+  var sumBudget = document.getElementById('diboF16SumBudget');
+  var sumRegion = document.getElementById('diboF16SumRegion');
+  var sumType   = document.getElementById('diboF16SumType');
+  var regionChips = document.querySelectorAll('#diboF16RegionChips .dibo-f16-chip');
+  var typeChips   = document.querySelectorAll('#diboF16TypeChips .dibo-f16-chip');
+  var ctaBtn    = document.getElementById('diboF16CtaBtn');
+  var contactEl = document.getElementById('diboF16Contact');
+  var nameEl    = document.getElementById('diboF16Name');
+  var telEl     = document.getElementById('diboF16Tel');
+  var agreeEl   = document.getElementById('diboF16Agree');
+  var submitEl  = document.getElementById('diboF16Submit');
+  var formArea  = document.getElementById('diboF16FormArea');
+  var thanksArea= document.getElementById('diboF16Thanks');
+
+  var selRegions = [];
+  var selTypes   = [];
+
+  function stepLabel(v) {
+    var val = STEPS[v];
+    if (val >= 1) return val + '억';
+    return (val * 10000).toLocaleString() + '만';
+  }
+
+  function updateSlider() {
+    var min = parseInt(rangeMin.value);
+    var max = parseInt(rangeMax.value);
+    if (min > max) { var t = min; min = max; max = t; }
+    var pct  = 100 / (STEPS.length - 1);
+    var left = min * pct;
+    var right= 100 - max * pct;
+    fillEl.style.left  = left + '%';
+    fillEl.style.right = right + '%';
+    var label = stepLabel(min) + ' ~ ' + stepLabel(max);
+    budgetEl.textContent = label;
+    sumBudget.textContent = label;
+  }
+
+  rangeMin.addEventListener('input', updateSlider);
+  rangeMax.addEventListener('input', updateSlider);
+  updateSlider();
+
+  /* ── 칩 선택 ── */
+  function bindChips(chips, arr, summaryEl) {
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        chip.classList.toggle('is-active');
+        var v = chip.dataset.val;
+        var idx = arr.indexOf(v);
+        if (idx === -1) arr.push(v);
+        else arr.splice(idx, 1);
+        summaryEl.textContent = arr.length ? arr.join(', ') : '미선택';
+      });
+    });
+  }
+
+  bindChips(regionChips, selRegions, sumRegion);
+  bindChips(typeChips, selTypes, sumType);
+
+  /* ── CTA ── */
+  ctaBtn.addEventListener('click', function () {
+    contactEl.classList.add('is-open');
+    ctaBtn.style.display = 'none';
+    setTimeout(function () {
+      contactEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+  });
+
+  /* ── 전화번호 포맷 ── */
+  telEl.addEventListener('input', function () {
+    var v = telEl.value.replace(/\D/g,'');
+    if (v.length <= 3)      telEl.value = v;
+    else if (v.length <= 7) telEl.value = v.slice(0,3)+'-'+v.slice(3);
+    else                    telEl.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+    validate();
+  });
+
+  nameEl.addEventListener('input', validate);
+  agreeEl.addEventListener('change', validate);
+
+  function validate() {
+    submitEl.disabled = !(
+      nameEl.value.trim().length >= 2 &&
+      telEl.value.replace(/\D/g,'').length >= 10 &&
+      agreeEl.checked
+    );
+  }
+
+  submitEl.addEventListener('click', function () {
+    if (this.disabled) return;
+    formArea.style.display = 'none';
+    thanksArea.style.display = 'flex';
+  });
+})();
+</script>
+</body>
+</html>

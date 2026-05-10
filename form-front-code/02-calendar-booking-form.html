@@ -1,0 +1,668 @@
+﻿<!DOCTYPE html>
+<!--
+  ================================================================
+  ✦ 디보(dibo) 익스텐션 | 달력 날짜 + 시간대 예약 신청 폼 – 스튜디오·살롱·의원
+  ================================================================
+
+  【페이지 개요】
+  달력에서 날짜를 선택하고 시간대를 고른 뒤 이름·연락처를 입력하는
+  3단계 예약 폼입니다. 예약 불가 시간대를 지정할 수 있어 현실적인
+  스케줄 관리가 가능합니다. 필라테스·요가 스튜디오, 뷰티 살롱,
+  의원·클리닉 등 수업·시술 예약이 필요한 랜딩 페이지에 최적화되어 있습니다.
+
+  【SEO 키워드】
+  필라테스 1회 체험 예약, 달력 예약 폼, 수업 예약 시스템,
+  운동 스튜디오 체험 신청, 날짜 시간 선택 예약 폼
+
+  【사용 전 필수 설정】
+  1. 예약 가능 시간대 수정
+     → TIMES 배열 (현재: '09:00'~'17:00' 8개 슬롯)
+
+  2. 예약 불가 시간대 지정
+     → UNAVAIL 배열에 인덱스 번호 추가 (0부터 시작)
+
+  3. 폼 제목·설명 수정
+     → 헤더의 배지·제목·부제목 HTML 텍스트 수정
+
+  4. 스튜디오명·수업 정보 수정
+     → 선택 완료 패널의 장소·수업 시간 텍스트 수정
+
+  5. 폼 제출 처리 연동  ★ [수정 필수]
+     → handleSubmit 함수 내부에 실제 API 엔드포인트 연동 코드 추가
+
+  【예약 폼 조작 방법】
+  - ① 달력에서 날짜 클릭 → ② 시간 버튼 선택 → ③ 이름·연락처 입력 → 예약 완료
+  - 비활성(회색) 시간대는 선택 불가 처리됩니다
+  - 선택 완료 패널에서 날짜·시간 재선택 가능합니다
+  ================================================================
+-->
+<html lang="ko">
+<head>
+<!-- ================================================
+   DIBO F02 · 달력 + 시간 예약 입력폼 · 필라테스 버전
+   class prefix : dibo-f02-
+   아임웹 코드위젯 즉시 적용
+   모달에 넣고 사용학세요 (권장 너비 480px)
+   ================================================ -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  .dibo-f02-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f5f0ff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(124,92,219,0.15);
+  }
+
+  /* ── 헤더 ── */
+  .dibo-f02-header {
+    background: #7c5cdb;
+    padding: 28px 24px 24px;
+    color: #fff;
+  }
+
+  .dibo-f02-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    letter-spacing: 0.3px;
+  }
+
+  .dibo-f02-header h2 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+  }
+
+  .dibo-f02-header p {
+    margin: 0;
+    font-size: 13px;
+    opacity: 0.85;
+  }
+
+  /* ── 단계 인디케이터 ── */
+  .dibo-f02-steps {
+    display: flex;
+    gap: 0;
+    padding: 0 24px;
+    background: #7c5cdb;
+    padding-bottom: 0;
+  }
+
+  .dibo-f02-step {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+    letter-spacing: 0.2px;
+  }
+
+  .dibo-f02-step.active {
+    color: #fff;
+    border-bottom-color: #fff;
+  }
+
+  .dibo-f02-step.done {
+    color: rgba(255,255,255,0.7);
+  }
+
+  /* ── 컨텐츠 영역 ── */
+  .dibo-f02-body {
+    padding: 24px;
+  }
+
+  /* ── 달력 ── */
+  .dibo-f02-cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .dibo-f02-cal-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+    letter-spacing: -0.3px;
+  }
+
+  .dibo-f02-cal-btn {
+    width: 32px;
+    height: 32px;
+    border: 1.5px solid #ddd;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s, background 0.2s;
+    color: #333;
+  }
+
+  .dibo-f02-cal-btn:hover {
+    border-color: #7c5cdb;
+    background: #f5f0ff;
+  }
+
+  .dibo-f02-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  .dibo-f02-dow {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #999;
+    padding: 4px 0 8px;
+  }
+
+  .dibo-f02-dow:first-child { color: #f05; }
+  .dibo-f02-dow:last-child  { color: #4a90d9; }
+
+  .dibo-f02-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 13px;
+    cursor: pointer;
+    color: #333;
+    transition: background 0.2s, color 0.2s;
+    font-weight: 500;
+  }
+
+  .dibo-f02-day:hover:not(.empty):not(.past) {
+    background: #ede8ff;
+  }
+
+  .dibo-f02-day.today {
+    font-weight: 800;
+    color: #7c5cdb;
+  }
+
+  .dibo-f02-day.selected {
+    background: #7c5cdb;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .dibo-f02-day.past {
+    color: #ccc;
+    cursor: default;
+  }
+
+  .dibo-f02-day.empty {
+    cursor: default;
+  }
+
+  /* ── 타임슬롯 ── */
+  .dibo-f02-slots-wrap {
+    display: none;
+    margin-top: 20px;
+  }
+
+  .dibo-f02-slots-wrap.visible { display: block; }
+
+  .dibo-f02-slots-date {
+    font-size: 13px;
+    font-weight: 600;
+    color: #7c5cdb;
+    margin-bottom: 10px;
+  }
+
+  .dibo-f02-slots {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .dibo-f02-slot {
+    padding: 9px 0;
+    text-align: center;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #fff;
+    color: #333;
+    transition: all 0.2s;
+  }
+
+  .dibo-f02-slot:hover:not(.unavail) {
+    border-color: #7c5cdb;
+    color: #7c5cdb;
+  }
+
+  .dibo-f02-slot.selected {
+    background: #7c5cdb;
+    border-color: #7c5cdb;
+    color: #fff;
+  }
+
+  .dibo-f02-slot.unavail {
+    background: #f5f5f5;
+    color: #ccc;
+    cursor: default;
+    text-decoration: line-through;
+  }
+
+  /* ── 연락처 영역 ── */
+  .dibo-f02-contact-wrap {
+    display: none;
+    margin-top: 20px;
+  }
+
+  .dibo-f02-contact-wrap.visible { display: block; }
+
+  .dibo-f02-summary {
+    background: #ede8ff;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #4a3080;
+    line-height: 1.7;
+    font-weight: 500;
+  }
+
+  .dibo-f02-summary strong {
+    color: #7c5cdb;
+  }
+
+  .dibo-f02-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 12px;
+  }
+
+  .dibo-f02-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #555;
+  }
+
+  .dibo-f02-input {
+    height: 44px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 14px;
+    color: #1a1a1a;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+
+  .dibo-f02-input:focus {
+    border-color: #7c5cdb;
+  }
+
+  .dibo-f02-input::placeholder { color: #bbb; }
+
+  .dibo-f02-agree {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+
+  .dibo-f02-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #7c5cdb;
+    margin-top: 1px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .dibo-f02-agree-text {
+    font-size: 11px;
+    color: #888;
+    line-height: 1.5;
+  }
+
+  .dibo-f02-agree-link {
+    color: #7c5cdb;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .dibo-f02-submit {
+    width: 100%;
+    height: 50px;
+    background: #7c5cdb;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .dibo-f02-submit:hover { background: #6b4bc9; }
+  .dibo-f02-submit:active { transform: scale(0.98); }
+  .dibo-f02-submit:disabled {
+    background: #c5b4f0;
+    cursor: default;
+    transform: none;
+  }
+
+  /* ── 완료 ── */
+  .dibo-f02-thanks {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 24px;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .dibo-f02-thanks-icon { font-size: 44px; }
+
+  .dibo-f02-thanks-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -0.5px;
+  }
+
+  .dibo-f02-thanks-msg {
+    font-size: 13px;
+    color: #777;
+    line-height: 1.7;
+  }
+
+  .dibo-f02-thanks-card {
+    background: #ede8ff;
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 13px;
+    color: #4a3080;
+    line-height: 1.8;
+    font-weight: 500;
+    width: 100%;
+    box-sizing: border-box;
+  }
+</style>
+</head>
+<body>
+<div class="dibo-f02-wrap">
+
+  <div class="dibo-f02-header">
+    <div class="dibo-f02-badge">🧘 1회 무료 체험</div>
+    <h2>체험 수업을<br>예약해보세요</h2>
+    <p>날짜와 시간을 선택하면 바로 예약이 완료됩니다</p>
+  </div>
+
+  <div class="dibo-f02-steps">
+    <div class="dibo-f02-step active" id="diboF02S1">① 날짜 선택</div>
+    <div class="dibo-f02-step" id="diboF02S2">② 시간 선택</div>
+    <div class="dibo-f02-step" id="diboF02S3">③ 정보 입력</div>
+  </div>
+
+  <!-- 달력 -->
+  <div class="dibo-f02-body">
+    <div id="diboF02CalWrap">
+      <div class="dibo-f02-cal-nav">
+        <button class="dibo-f02-cal-btn" id="diboF02Prev">‹</button>
+        <span class="dibo-f02-cal-title" id="diboF02CalTitle"></span>
+        <button class="dibo-f02-cal-btn" id="diboF02Next">›</button>
+      </div>
+      <div class="dibo-f02-cal-grid" id="diboF02CalGrid"></div>
+    </div>
+
+    <!-- 타임슬롯 -->
+    <div class="dibo-f02-slots-wrap" id="diboF02SlotsWrap">
+      <div class="dibo-f02-slots-date" id="diboF02SlotsDate"></div>
+      <div class="dibo-f02-slots" id="diboF02Slots"></div>
+    </div>
+
+    <!-- 연락처 -->
+    <div class="dibo-f02-contact-wrap" id="diboF02ContactWrap">
+      <div class="dibo-f02-summary" id="diboF02Summary"></div>
+
+      <div class="dibo-f02-field">
+        <span class="dibo-f02-label">이름</span>
+        <input class="dibo-f02-input" type="text" id="diboF02Name" placeholder="홍길동" maxlength="20" />
+      </div>
+      <div class="dibo-f02-field">
+        <span class="dibo-f02-label">연락처</span>
+        <input class="dibo-f02-input" type="tel" id="diboF02Tel" placeholder="010-0000-0000" maxlength="13" />
+      </div>
+
+      <label class="dibo-f02-agree">
+        <input class="dibo-f02-checkbox" type="checkbox" id="diboF02Agree" />
+        <span class="dibo-f02-agree-text">
+          <span class="dibo-f02-agree-link">[필수] 개인정보 수집·이용 동의</span>에 동의합니다.
+        </span>
+      </label>
+
+      <button class="dibo-f02-submit" id="diboF02Submit" disabled>체험 수업 예약하기</button>
+    </div>
+
+    <!-- 완료 -->
+    <div class="dibo-f02-thanks" id="diboF02Thanks">
+      <div class="dibo-f02-thanks-icon">🎉</div>
+      <p class="dibo-f02-thanks-title">예약이 완료되었습니다!</p>
+      <div class="dibo-f02-thanks-card" id="diboF02ThanksCard"></div>
+      <p class="dibo-f02-thanks-msg">예약 확인 문자를 발송해 드립니다.<br>당일 취소는 최소 2시간 전 연락 부탁드립니다.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Dibo Edit API ── */
+var diboF02EditId = null;
+(async function () {
+  try {
+    var res = await axios.get('https://api.di-bo.me/edit-set?config_id=copy_config_id', {
+      headers: { 'access-token': diboLoginManager.access_token }
+    });
+    diboF02EditId = res.data[0]?.id || null;
+  } catch (e) { console.error('[F02] Edit Set 조회 실패:', e); }
+})();
+
+async function diboF02PostEdit(name, tel, date, time) {
+  if (!diboF02EditId) return;
+  const fd = new FormData();
+  fd.append('req_body', JSON.stringify({ config_id: 'copy_config_id' }));
+  fd.append('column_01', name);  // 이름
+  fd.append('column_02', tel);   // 연락처
+  fd.append('column_03', date);  // 예약 날짜
+  fd.append('column_04', time);  // 예약 시간
+  fd.append('column_05', ''); fd.append('column_06', ''); fd.append('column_07', '');
+  fd.append('column_08', ''); fd.append('column_09', ''); fd.append('column_10', '');
+  try {
+    await axios.post(
+      'https://api.di-bo.me/edit-set/' + diboF02EditId + '/rows',
+      fd,
+      { headers: { 'access-token': diboLoginManager?.access_token } }
+    );
+  } catch (e) { console.error('[F02] 데이터 제출 실패:', e); }
+}
+
+(function () {
+  var TIMES = ['09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00'];
+  var UNAVAIL = [1, 4]; /* 인덱스 기준 마감 슬롯 */
+
+  var cur = new Date();
+  var selYear, selMonth, selDay, selTime;
+
+  var calTitle  = document.getElementById('diboF02CalTitle');
+  var calGrid   = document.getElementById('diboF02CalGrid');
+  var slotsWrap = document.getElementById('diboF02SlotsWrap');
+  var slotsDate = document.getElementById('diboF02SlotsDate');
+  var slotsEl   = document.getElementById('diboF02Slots');
+  var contactWrap = document.getElementById('diboF02ContactWrap');
+  var summaryEl = document.getElementById('diboF02Summary');
+  var nameEl    = document.getElementById('diboF02Name');
+  var telEl     = document.getElementById('diboF02Tel');
+  var agreeEl   = document.getElementById('diboF02Agree');
+  var submitEl  = document.getElementById('diboF02Submit');
+  var thanksEl  = document.getElementById('diboF02Thanks');
+  var thanksCard= document.getElementById('diboF02ThanksCard');
+
+  var s1 = document.getElementById('diboF02S1');
+  var s2 = document.getElementById('diboF02S2');
+  var s3 = document.getElementById('diboF02S3');
+
+  function renderCal() {
+    var y = cur.getFullYear(), m = cur.getMonth();
+    calTitle.textContent = y + '년 ' + (m + 1) + '월';
+
+    var html = ['일','월','화','수','목','금','토']
+      .map(function(d){ return '<div class="dibo-f02-dow">' + d + '</div>'; }).join('');
+
+    var first = new Date(y, m, 1).getDay();
+    var last  = new Date(y, m + 1, 0).getDate();
+    var today = new Date();
+
+    for (var i = 0; i < first; i++) html += '<div class="dibo-f02-day empty"></div>';
+
+    for (var d = 1; d <= last; d++) {
+      var date = new Date(y, m, d);
+      var cls  = 'dibo-f02-day';
+      var isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      var isToday = date.toDateString() === today.toDateString();
+      var isSel = (selYear === y && selMonth === m && selDay === d);
+
+      if (isPast)   cls += ' past';
+      if (isToday)  cls += ' today';
+      if (isSel)    cls += ' selected';
+
+      html += '<div class="' + cls + '" data-d="' + d + '">' + d + '</div>';
+    }
+
+    calGrid.innerHTML = html;
+
+    calGrid.querySelectorAll('.dibo-f02-day:not(.empty):not(.past)').forEach(function (el) {
+      el.addEventListener('click', function () {
+        selYear = y; selMonth = m; selDay = parseInt(this.dataset.d);
+        renderCal();
+        showSlots();
+      });
+    });
+  }
+
+  function showSlots() {
+    var names = ['일','월','화','수','목','금','토'];
+    var date  = new Date(selYear, selMonth, selDay);
+    slotsDate.textContent = (selMonth+1) + '월 ' + selDay + '일 (' + names[date.getDay()] + ') 예약 가능 시간';
+    selTime = null;
+
+    slotsEl.innerHTML = TIMES.map(function (t, i) {
+      var cls = 'dibo-f02-slot' + (UNAVAIL.indexOf(i) !== -1 ? ' unavail' : '');
+      return '<div class="' + cls + '" data-t="' + t + '">' + t + '</div>';
+    }).join('');
+
+    slotsEl.querySelectorAll('.dibo-f02-slot:not(.unavail)').forEach(function (el) {
+      el.addEventListener('click', function () {
+        slotsEl.querySelectorAll('.dibo-f02-slot').forEach(function(s){ s.classList.remove('selected'); });
+        this.classList.add('selected');
+        selTime = this.dataset.t;
+        showContact();
+      });
+    });
+
+    slotsWrap.classList.add('visible');
+    contactWrap.classList.remove('visible');
+
+    s1.classList.add('done'); s1.classList.remove('active');
+    s2.classList.add('active');
+    s3.classList.remove('active', 'done');
+  }
+
+  function showContact() {
+    var names = ['일','월','화','수','목','금','토'];
+    var date  = new Date(selYear, selMonth, selDay);
+    summaryEl.innerHTML =
+      '📅 <strong>' + (selMonth+1) + '월 ' + selDay + '일 (' + names[date.getDay()] + ')</strong><br>' +
+      '⏰ <strong>' + selTime + '</strong> 체험 수업 (50분)<br>' +
+      '📍 스튜디오 1관';
+
+    contactWrap.classList.add('visible');
+    s2.classList.add('done'); s2.classList.remove('active');
+    s3.classList.add('active');
+    validate();
+  }
+
+  /* 이전/다음 달 */
+  document.getElementById('diboF02Prev').addEventListener('click', function () {
+    cur = new Date(cur.getFullYear(), cur.getMonth() - 1, 1);
+    renderCal();
+  });
+  document.getElementById('diboF02Next').addEventListener('click', function () {
+    cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+    renderCal();
+  });
+
+  /* 전화번호 하이픈 */
+  telEl.addEventListener('input', function () {
+    var v = telEl.value.replace(/\D/g,'');
+    if (v.length <= 3)       telEl.value = v;
+    else if (v.length <= 7)  telEl.value = v.slice(0,3)+'-'+v.slice(3);
+    else                     telEl.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+    validate();
+  });
+  nameEl.addEventListener('input', validate);
+  agreeEl.addEventListener('change', validate);
+
+  function validate() {
+    var ok = nameEl.value.trim().length >= 2 &&
+             telEl.value.replace(/\D/g,'').length >= 10 &&
+             agreeEl.checked;
+    submitEl.disabled = !ok;
+  }
+
+  submitEl.addEventListener('click', function () {
+    if (submitEl.disabled) return;
+    var names = ['일','월','화','수','목','금','토'];
+    var date  = new Date(selYear, selMonth, selDay);
+    var dateStr = selYear + '-' + String(selMonth + 1).padStart(2, '0') + '-' + String(selDay).padStart(2, '0')
+                + ' (' + names[date.getDay()] + ')';
+    diboF02PostEdit(nameEl.value.trim(), telEl.value, dateStr, selTime);
+
+    thanksCard.innerHTML =
+      '📅 ' + (selMonth+1) + '월 ' + selDay + '일 (' + names[date.getDay()] + ')<br>' +
+      '⏰ ' + selTime + ' 체험 수업<br>' +
+      '👤 ' + nameEl.value + '님';
+
+    document.getElementById('diboF02CalWrap').style.display = 'none';
+    slotsWrap.style.display = 'none';
+    contactWrap.style.display = 'none';
+    thanksEl.style.display = 'flex';
+  });
+
+  renderCal();
+})();
+</script>
+</body>
+</html>

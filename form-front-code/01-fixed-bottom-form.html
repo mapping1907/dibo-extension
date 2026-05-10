@@ -1,0 +1,710 @@
+﻿<!DOCTYPE html>
+<!--
+  ================================================================
+  ✦ 디보(dibo) 익스텐션 | 우측 고정 상담 신청 폼 – 피부과·의원·클리닉
+  ================================================================
+
+  【페이지 개요】
+  스크롤 중에도 화면에 항상 노출되는 우측 고정형 상담 신청 폼입니다.
+  모바일에서는 우측 슬라이드업 패널, PC(768px+)에서는 우측 슬라이드아웃
+  패널로 자동 전환되어 이탈 방지 및 전환율(CVR) 극대화에 최적화되어 있습니다.
+  피부과·성형외과·의원·클리닉 등 의료·미용 분야 랜딩 페이지에 적합합니다.
+
+  【SEO 키워드】
+  피부과 무료 상담 신청, 우측 고정 CTA 폼, 이탈 방지 상담폼,
+  랜딩페이지 상담 신청, 모바일 시술 예약 문의
+
+  【사용 전 필수 설정】
+  1. 탭 타이틀 / 폼 제목 수정
+     → 모바일 탭 바 텍스트, 배지 텍스트, 폼 제목·부제목 HTML 수정
+
+  2. 입력 필드 수정
+     → 이름·연락처 필드의 레이블 및 placeholder 텍스트 수정
+
+  3. 버튼 텍스트 수정
+     → 제출 버튼 문구 (현재: "무료 상담 신청하기")
+
+  4. 테마 컬러 수정
+     → CSS에서 #4a90d9 (파란색) 값을 브랜드 컬러로 일괄 변경
+
+  5. 폼 제출 처리 연동  ★ [수정 필수]
+     → handleSubmit 함수 내부에 실제 API 엔드포인트 연동 코드 추가
+
+  【폼 열기 / 닫기 방식】
+  - 모바일  : 우측 탭 바 터치 → 폼 슬라이드업
+  - PC(768px+) : 우측 고정 탭 클릭 → 사이드 패널 슬라이드아웃
+  - 폼 닫기 : X 버튼 또는 배경 영역 클릭
+  ================================================================
+-->
+<html lang="ko">
+<head>
+<!-- ================================================
+   DIBO F01 · 우측 고정 입력폼 · 피부과 버전
+   class prefix : dibo-f01-
+   모바일 : 우측 고정 슬라이드업
+   PC (768px+) : 우측 고정 슬라이드아웃 패널
+   아임웹 코드위젯 즉시 적용
+   ================================================ -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+/* ============================
+   공통
+   ============================ */
+.dibo-f01-wrap {
+  position: fixed;
+  z-index: 9999;
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ============================
+   모바일 : 우측 슬라이드업
+   (기본값 — 768px 미만)
+   ============================ */
+
+/* 래퍼 */
+.dibo-f01-wrap {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: auto;
+}
+
+/* 탭 바 */
+.dibo-f01-tab-mobile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #4a90d9;
+  color: #fff;
+  padding: 14px 20px;
+  cursor: pointer;
+  box-shadow: 0 -4px 20px rgba(74,144,217,0.35);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dibo-f01-tab-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dibo-f01-tab-icon {
+  width: 28px;
+  height: 28px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.dibo-f01-tab-text {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.dibo-f01-tab-sub {
+  font-size: 11px;
+  background: rgba(255,255,255,0.2);
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: 2px;
+}
+
+.dibo-f01-tab-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.35s ease;
+}
+
+.dibo-f01-wrap.is-open .dibo-f01-tab-arrow {
+  transform: rotate(-180deg);
+}
+
+/* 패널 */
+.dibo-f01-panel-mobile {
+  background: #fff;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.1);
+}
+
+.dibo-f01-wrap.is-open .dibo-f01-panel-mobile {
+  max-height: 440px;
+}
+
+.dibo-f01-inner-mobile {
+  padding: 22px 20px 24px;
+}
+
+.dibo-f01-m-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 3px;
+  letter-spacing: -0.4px;
+}
+
+.dibo-f01-m-desc {
+  font-size: 12px;
+  color: #999;
+  margin: 0 0 16px;
+}
+
+.dibo-f01-fields-mobile {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.dibo-f01-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dibo-f01-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  letter-spacing: 0.2px;
+}
+
+.dibo-f01-input {
+  width: 100%;
+  height: 44px;
+  border: 1.5px solid #e4e4e4;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: #1a1a1a;
+  background: #f8f9fb;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.dibo-f01-input:focus {
+  border-color: #4a90d9;
+  background: #fff;
+}
+
+.dibo-f01-input::placeholder { color: #c0c0c0; }
+
+.dibo-f01-agree {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 14px;
+  cursor: pointer;
+}
+
+.dibo-f01-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #4a90d9;
+  margin-top: 1px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dibo-f01-agree-text {
+  font-size: 11px;
+  color: #999;
+  line-height: 1.55;
+}
+
+.dibo-f01-agree-link {
+  color: #4a90d9;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.dibo-f01-btn {
+  width: 100%;
+  height: 48px;
+  background: #4a90d9;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: -0.3px;
+  transition: background 0.2s, transform 0.1s;
+  font-family: inherit;
+}
+
+.dibo-f01-btn:hover  { background: #3a7ec8; }
+.dibo-f01-btn:active { transform: scale(0.98); }
+.dibo-f01-btn:disabled {
+  background: #b8d4ef;
+  cursor: default;
+  transform: none;
+}
+
+/* 완료 메시지 */
+.dibo-f01-thanks {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 20px 32px;
+  text-align: center;
+  gap: 6px;
+}
+
+.dibo-f01-thanks-icon  { font-size: 38px; line-height: 1; }
+.dibo-f01-thanks-title { font-size: 16px; font-weight: 700; color: #1a1a1a; letter-spacing: -0.4px; margin: 4px 0 0; }
+.dibo-f01-thanks-msg   { font-size: 12px; color: #888; line-height: 1.65; }
+
+/* PC 전용 요소 — 모바일에서 숨김 */
+.dibo-f01-pc-tab,
+.dibo-f01-panel-pc {
+  display: none;
+}
+
+
+/* ============================
+   PC : 우측 슬라이드아웃 패널
+   (768px 이상)
+   ============================ */
+@media (min-width: 768px) {
+
+  /* 래퍼 재정의 — 탭+패널 하나의 덩어리로 우측 끝에 고정 */
+  .dibo-f01-wrap {
+    bottom: auto;
+    left: auto;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: stretch;
+    flex-direction: row-reverse;
+    width: 44px;
+    overflow: hidden;
+    transition: width 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 16px 0 0 16px;
+    box-shadow: -4px 0 28px rgba(74,144,217,0.28);
+  }
+
+  .dibo-f01-wrap.is-open {
+    width: 384px; /* 탭 44px + 패널 340px */
+  }
+
+  /* 모바일 요소 숨김 */
+  .dibo-f01-tab-mobile,
+  .dibo-f01-panel-mobile {
+    display: none !important;
+  }
+
+  /* ── PC 세로 탭 ── */
+  .dibo-f01-pc-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #4a90d9;
+    color: #fff;
+    width: 44px;
+    flex-shrink: 0;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+  }
+
+  .dibo-f01-pc-tab:hover { background: #3a7ec8; }
+
+  .dibo-f01-pc-tab-icon {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .dibo-f01-pc-tab-text {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+
+  .dibo-f01-pc-tab-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.35s ease;
+  }
+
+  .dibo-f01-wrap.is-open .dibo-f01-pc-tab-arrow {
+    transform: rotate(180deg);
+  }
+
+  /* ── PC 패널 ── */
+  .dibo-f01-panel-pc {
+    display: block;
+    min-width: 340px;
+    background: #fff;
+  }
+
+  /* 패널 내부 */
+  .dibo-f01-inner-pc {
+    width: 340px;
+    padding: 32px 28px 28px;
+    box-sizing: border-box;
+  }
+
+  /* 헤더 영역 */
+  .dibo-f01-pc-head {
+    margin-bottom: 24px;
+  }
+
+  .dibo-f01-pc-badge {
+    display: inline-block;
+    background: #eef5fd;
+    color: #4a90d9;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    letter-spacing: 0.2px;
+  }
+
+  .dibo-f01-pc-title {
+    font-size: 19px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin: 0 0 4px;
+    letter-spacing: -0.5px;
+    line-height: 1.35;
+  }
+
+  .dibo-f01-pc-desc {
+    font-size: 12px;
+    color: #aaa;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* 구분선 */
+  .dibo-f01-divider {
+    height: 1px;
+    background: #f0f0f0;
+    margin: 0 0 20px;
+  }
+
+  /* PC 필드 — 세로 배치 */
+  .dibo-f01-fields-pc {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  /* 포인트 리스트 */
+  .dibo-f01-points {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .dibo-f01-point {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #666;
+  }
+
+  .dibo-f01-point-dot {
+    width: 6px;
+    height: 6px;
+    background: #4a90d9;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* PC 완료 */
+  .dibo-f01-thanks-pc {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0 8px;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .dibo-f01-thanks-pc-icon  { font-size: 44px; }
+  .dibo-f01-thanks-pc-title { font-size: 17px; font-weight: 800; color: #1a1a1a; letter-spacing: -0.4px; }
+  .dibo-f01-thanks-pc-msg   { font-size: 12px; color: #888; line-height: 1.7; }
+}
+
+</style>
+</head>
+<body>
+<div class="dibo-f01-wrap" id="diboF01">
+
+  <!-- ==============================
+       모바일 : 우측 탭 바
+       ============================== -->
+  <div class="dibo-f01-tab-mobile" id="diboF01TabMobile">
+    <div class="dibo-f01-tab-left">
+      <div class="dibo-f01-tab-icon">💬</div>
+      <span class="dibo-f01-tab-text">무료 상담 신청</span>
+      <span class="dibo-f01-tab-sub">30초 완료</span>
+    </div>
+    <span class="dibo-f01-tab-arrow">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="4,13.5 10,6.5 16,13.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>
+  </div>
+
+  <!-- 모바일 패널 -->
+  <div class="dibo-f01-panel-mobile" id="diboF01PanelMobile">
+    <div class="dibo-f01-inner-mobile" id="diboF01FormMobile">
+      <p class="dibo-f01-m-title">지금 바로 무료 상담 받아보세요</p>
+      <p class="dibo-f01-m-desc">이름과 연락처만 남겨주시면 빠르게 연락드립니다.</p>
+
+      <div class="dibo-f01-fields-mobile">
+        <div class="dibo-f01-field">
+          <span class="dibo-f01-label">이름</span>
+          <input class="dibo-f01-input" type="text" id="diboF01NameM" placeholder="홍길동" maxlength="20" />
+        </div>
+        <div class="dibo-f01-field">
+          <span class="dibo-f01-label">연락처</span>
+          <input class="dibo-f01-input" type="tel" id="diboF01TelM" placeholder="010-0000-0000" maxlength="13" />
+        </div>
+      </div>
+
+      <label class="dibo-f01-agree">
+        <input class="dibo-f01-checkbox" type="checkbox" id="diboF01AgreeM" />
+        <span class="dibo-f01-agree-text">
+          <span class="dibo-f01-agree-link">[필수] 개인정보 수집·이용 동의</span>에 동의합니다.<br>
+          수집 항목: 이름, 연락처 / 목적: 상담 예약 및 안내
+        </span>
+      </label>
+
+      <button class="dibo-f01-btn" id="diboF01SubmitM" disabled>무료 상담 신청하기</button>
+    </div>
+
+    <div class="dibo-f01-thanks" id="diboF01ThanksM">
+      <div class="dibo-f01-thanks-icon">✅</div>
+      <p class="dibo-f01-thanks-title">상담 신청이 완료되었습니다!</p>
+      <p class="dibo-f01-thanks-msg">빠른 시간 내 담당자가 연락드리겠습니다.<br>평일 09:00 – 18:00 운영</p>
+    </div>
+  </div>
+
+
+  <!-- ==============================
+       PC : 우측 세로 탭
+       ============================== -->
+  <div class="dibo-f01-pc-tab" id="diboF01TabPC">
+    <div class="dibo-f01-pc-tab-icon">💬</div>
+    <span class="dibo-f01-pc-tab-text">무료 상담 신청</span>
+    <span class="dibo-f01-pc-tab-arrow">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="10,2.5 4.5,8 10,13.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>
+  </div>
+
+  <!-- PC 패널 -->
+  <div class="dibo-f01-panel-pc" id="diboF01PanelPC">
+    <div class="dibo-f01-inner-pc">
+
+      <!-- 헤더 -->
+      <div class="dibo-f01-pc-head" id="diboF01FormPC">
+        <div class="dibo-f01-pc-badge">✨ 무료 피부 상담</div>
+        <p class="dibo-f01-pc-title">전문 피부과 상담을<br>무료로 받아보세요</p>
+        <p class="dibo-f01-pc-desc">이름과 연락처만 남겨주시면<br>담당 상담사가 직접 연락드립니다.</p>
+      </div>
+
+      <div class="dibo-f01-divider"></div>
+
+      <!-- 포인트 -->
+      <div class="dibo-f01-points" id="diboF01FormPCBody">
+        <div class="dibo-f01-point">
+          <div class="dibo-f01-point-dot"></div>
+          맞춤 시술 1:1 상담
+        </div>
+        <div class="dibo-f01-point">
+          <div class="dibo-f01-point-dot"></div>
+          당일 예약 가능
+        </div>
+        <div class="dibo-f01-point">
+          <div class="dibo-f01-point-dot"></div>
+          상담 후 비용 안내 (숨김 없음)
+        </div>
+      </div>
+
+      <!-- 필드 -->
+      <div class="dibo-f01-fields-pc">
+        <div class="dibo-f01-field">
+          <span class="dibo-f01-label">이름</span>
+          <input class="dibo-f01-input" type="text" id="diboF01NamePC" placeholder="홍길동" maxlength="20" />
+        </div>
+        <div class="dibo-f01-field">
+          <span class="dibo-f01-label">연락처</span>
+          <input class="dibo-f01-input" type="tel" id="diboF01TelPC" placeholder="010-0000-0000" maxlength="13" />
+        </div>
+      </div>
+
+      <label class="dibo-f01-agree" style="margin-bottom:16px;">
+        <input class="dibo-f01-checkbox" type="checkbox" id="diboF01AgreePC" />
+        <span class="dibo-f01-agree-text">
+          <span class="dibo-f01-agree-link">[필수] 개인정보 수집·이용 동의</span>에 동의합니다.
+        </span>
+      </label>
+
+      <button class="dibo-f01-btn" id="diboF01SubmitPC" disabled>무료 상담 신청하기</button>
+
+      <!-- PC 완료 -->
+      <div class="dibo-f01-thanks-pc" id="diboF01ThanksPC">
+        <div class="dibo-f01-thanks-pc-icon">✅</div>
+        <p class="dibo-f01-thanks-pc-title">신청 완료!</p>
+        <p class="dibo-f01-thanks-pc-msg">담당자가 빠르게 연락드리겠습니다.<br>평일 09:00 – 18:00 운영</p>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+
+<script>
+/* ── Dibo Edit API ── */
+var diboF01EditId = null;
+(async function () {
+  try {
+    var res = await axios.get('https://api.di-bo.me/edit-set?config_id=copy_config_id', {
+      headers: { 'access-token': diboLoginManager.access_token }
+    });
+    diboF01EditId = res.data[0]?.id || null;
+  } catch (e) { console.error('[F01] Edit Set 조회 실패:', e); }
+})();
+
+async function diboF01PostEdit(name, tel) {
+  if (!diboF01EditId) return;
+  const fd = new FormData();
+  fd.append('req_body', JSON.stringify({ config_id: 'copy_config_id' }));
+  fd.append('column_01', name);  // 이름
+  fd.append('column_02', tel);   // 연락처
+  fd.append('column_03', ''); fd.append('column_04', ''); fd.append('column_05', '');
+  fd.append('column_06', ''); fd.append('column_07', ''); fd.append('column_08', '');
+  fd.append('column_09', ''); fd.append('column_10', '');
+  try {
+    await axios.post(
+      'https://api.di-bo.me/edit-set/' + diboF01EditId + '/rows',
+      fd,
+      { headers: { 'access-token': diboLoginManager?.access_token } }
+    );
+  } catch (e) { console.error('[F01] 데이터 제출 실패:', e); }
+}
+
+(function () {
+  var wrap = document.getElementById('diboF01');
+
+  /* ── 모바일 탭 토글 ── */
+  var tabM = document.getElementById('diboF01TabMobile');
+  tabM.addEventListener('click', function () {
+    wrap.classList.toggle('is-open');
+    if (wrap.classList.contains('is-open')) {
+      setTimeout(function () { document.getElementById('diboF01NameM').focus(); }, 420);
+    }
+  });
+
+  /* ── PC 탭 토글 ── */
+  var tabPC = document.getElementById('diboF01TabPC');
+  tabPC.addEventListener('click', function () {
+    wrap.classList.toggle('is-open');
+    if (wrap.classList.contains('is-open')) {
+      setTimeout(function () { document.getElementById('diboF01NamePC').focus(); }, 420);
+    }
+  });
+
+  /* ── 전화번호 하이픈 ── */
+  function formatTel(el) {
+    el.addEventListener('input', function () {
+      var v = el.value.replace(/\D/g, '');
+      if (v.length <= 3)       el.value = v;
+      else if (v.length <= 7)  el.value = v.slice(0,3)+'-'+v.slice(3);
+      else                     el.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+    });
+  }
+  formatTel(document.getElementById('diboF01TelM'));
+  formatTel(document.getElementById('diboF01TelPC'));
+
+  /* ── 유효성 검사 ── */
+  function makeValidator(nameId, telId, agreeId, submitId) {
+    var n = document.getElementById(nameId);
+    var t = document.getElementById(telId);
+    var a = document.getElementById(agreeId);
+    var s = document.getElementById(submitId);
+
+    function check() {
+      s.disabled = !(n.value.trim().length >= 2 &&
+                     t.value.replace(/\D/g,'').length >= 10 &&
+                     a.checked);
+    }
+    n.addEventListener('input',  check);
+    t.addEventListener('input',  check);
+    a.addEventListener('change', check);
+  }
+
+  makeValidator('diboF01NameM',  'diboF01TelM',  'diboF01AgreeM',  'diboF01SubmitM');
+  makeValidator('diboF01NamePC', 'diboF01TelPC', 'diboF01AgreePC', 'diboF01SubmitPC');
+
+  /* ── 제출 처리 ── */
+  function makeSubmit(submitId, formIds, thanksId, nameId, telId) {
+    document.getElementById(submitId).addEventListener('click', function () {
+      if (this.disabled) return;
+      diboF01PostEdit(
+        document.getElementById(nameId).value.trim(),
+        document.getElementById(telId).value
+      );
+      formIds.forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      var t = document.getElementById(thanksId);
+      t.style.display = 'flex';
+    });
+  }
+
+  makeSubmit('diboF01SubmitM',
+    ['diboF01FormMobile'],
+    'diboF01ThanksM',
+    'diboF01NameM', 'diboF01TelM');
+
+  makeSubmit('diboF01SubmitPC',
+    ['diboF01FormPC', 'dibo-f01-divider', 'diboF01FormPCBody'],
+    'diboF01ThanksPC',
+    'diboF01NamePC', 'diboF01TelPC');
+
+  /* PC 완료 시 divider도 숨기기 */
+  document.getElementById('diboF01SubmitPC').addEventListener('click', function () {
+    var dividers = document.querySelectorAll('#diboF01PanelPC .dibo-f01-divider, #diboF01PanelPC .dibo-f01-points');
+    dividers.forEach(function(el){ el.style.display='none'; });
+  });
+
+})();
+</script>
+</body>
+</html>

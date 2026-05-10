@@ -1,0 +1,506 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- ================================================
+   DIBO F11 · 상담사 프로필 선택 폼 · 학원 버전
+   class prefix : dibo-f11-
+   아임웹 코드위젯 즉시 적용
+   ================================================ -->
+<style>
+  .dibo-f11-wrap {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f9f9ff;
+    border-radius: 20px;
+    padding: 28px 20px 32px;
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: 0 4px 32px rgba(91,94,244,0.10);
+  }
+
+  .dibo-f11-badge {
+    display: inline-block;
+    background: #ede9ff;
+    color: #5b5ef4;
+    border: 1px solid #c7c4ff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+
+  .dibo-f11-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin: 0 0 4px;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+  }
+
+  .dibo-f11-subtitle {
+    font-size: 12px;
+    color: #9090b0;
+    margin: 0 0 24px;
+    line-height: 1.6;
+  }
+
+  /* ── 선생님 카드 ── */
+  .dibo-f11-teachers {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .dibo-f11-teacher-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 2px solid #e8e6ff;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .dibo-f11-teacher-card:hover { border-color: #c7c4ff; }
+
+  .dibo-f11-teacher-card.is-selected {
+    border-color: #5b5ef4;
+    background: #f5f4ff;
+    box-shadow: 0 2px 16px rgba(91,94,244,0.15);
+  }
+
+  .dibo-f11-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ede9ff, #c7c4ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    border: 2px solid #e8e6ff;
+  }
+
+  .dibo-f11-teacher-card.is-selected .dibo-f11-avatar { border-color: #a5a3ff; }
+
+  .dibo-f11-teacher-info { flex: 1; min-width: 0; }
+
+  .dibo-f11-teacher-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 2px;
+  }
+
+  .dibo-f11-teacher-career {
+    font-size: 11px;
+    color: #7070a0;
+    margin: 0 0 5px;
+  }
+
+  .dibo-f11-teacher-desc {
+    font-size: 12px;
+    color: #5050a0;
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .dibo-f11-teacher-check {
+    width: 22px;
+    height: 22px;
+    background: #5b5ef4;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .dibo-f11-teacher-card.is-selected .dibo-f11-teacher-check {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* ── 섹션 ── */
+  .dibo-f11-section {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .dibo-f11-section.is-open { max-height: 600px; }
+
+  .dibo-f11-section-inner { padding-top: 4px; }
+
+  .dibo-f11-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #3030a0;
+    margin: 0 0 10px;
+  }
+
+  /* ── 과목 칩 ── */
+  .dibo-f11-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .dibo-f11-chip {
+    padding: 7px 14px;
+    background: #fff;
+    border: 1.5px solid #e0deff;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #5050a0;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    font-family: inherit;
+  }
+
+  .dibo-f11-chip:hover { border-color: #a5a3ff; }
+
+  .dibo-f11-chip.is-active {
+    background: #5b5ef4;
+    border-color: #5b5ef4;
+    color: #fff;
+  }
+
+  /* ── 상담 선호 시간 ── */
+  .dibo-f11-times {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .dibo-f11-time-chip {
+    padding: 7px 12px;
+    background: #fff;
+    border: 1.5px solid #e0deff;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #5050a0;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    font-family: inherit;
+  }
+
+  .dibo-f11-time-chip:hover { border-color: #a5a3ff; }
+
+  .dibo-f11-time-chip.is-active {
+    background: #5b5ef4;
+    border-color: #5b5ef4;
+    color: #fff;
+  }
+
+  /* ── 입력 필드 ── */
+  .dibo-f11-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .dibo-f11-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #7070a0;
+  }
+
+  .dibo-f11-input {
+    height: 46px;
+    border: 1.5px solid #e0deff;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 14px;
+    color: #1a1a2e;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+    width: 100%;
+  }
+
+  .dibo-f11-input:focus {
+    border-color: #5b5ef4;
+    box-shadow: 0 0 0 3px rgba(91,94,244,0.12);
+  }
+
+  .dibo-f11-input::placeholder { color: #c0c0e0; }
+
+  /* ── 요약 ── */
+  .dibo-f11-summary {
+    background: #ede9ff;
+    border: 1px solid #c7c4ff;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    font-size: 12px;
+    color: #3030a0;
+    line-height: 1.7;
+  }
+
+  .dibo-f11-summary strong { color: #5b5ef4; font-weight: 700; }
+
+  .dibo-f11-agree {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+
+  .dibo-f11-checkbox {
+    width: 15px;
+    height: 15px;
+    accent-color: #5b5ef4;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .dibo-f11-agree-text { font-size: 11px; color: #9090b0; line-height: 1.55; }
+  .dibo-f11-agree-link { color: #5b5ef4; text-decoration: underline; cursor: pointer; }
+
+  .dibo-f11-submit {
+    width: 100%;
+    height: 52px;
+    background: #5b5ef4;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .dibo-f11-submit:hover { background: #4a4de0; }
+  .dibo-f11-submit:active { transform: scale(0.98); }
+  .dibo-f11-submit:disabled { background: #c7c4ff; cursor: default; transform: none; }
+
+  /* ── 완료 ── */
+  .dibo-f11-thanks {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px 0 8px;
+    gap: 10px;
+  }
+
+  .dibo-f11-thanks-icon { font-size: 44px; }
+  .dibo-f11-thanks-title { font-size: 18px; font-weight: 800; color: #1a1a2e; letter-spacing: -0.4px; }
+  .dibo-f11-thanks-msg { font-size: 12px; color: #9090b0; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="dibo-f11-wrap">
+  <div class="dibo-f11-badge">📚 선생님 맞춤 상담</div>
+  <p class="dibo-f11-title">우리 아이에게 딱 맞는<br>선생님과 상담받으세요</p>
+  <p class="dibo-f11-subtitle">선생님을 직접 선택하고 원하는 과목·시간을 알려주세요</p>
+
+  <div id="diboF11FormArea">
+    <!-- 선생님 카드 -->
+    <div class="dibo-f11-teachers" id="diboF11Teachers">
+      <div class="dibo-f11-teacher-card" data-name="김지수">
+        <div class="dibo-f11-avatar">👩‍🏫</div>
+        <div class="dibo-f11-teacher-info">
+          <p class="dibo-f11-teacher-name">김지수 선생님</p>
+          <p class="dibo-f11-teacher-career">서울대 사범대 · 수학 전공 · 8년 경력</p>
+          <p class="dibo-f11-teacher-desc">"개념부터 차근차근, 수포자도 OK"</p>
+        </div>
+        <div class="dibo-f11-teacher-check">
+          <svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="dibo-f11-teacher-card" data-name="이현우">
+        <div class="dibo-f11-avatar">👨‍🏫</div>
+        <div class="dibo-f11-teacher-info">
+          <p class="dibo-f11-teacher-name">이현우 선생님</p>
+          <p class="dibo-f11-teacher-career">연세대 영어교육 · 토익 990 · 6년 경력</p>
+          <p class="dibo-f11-teacher-desc">"회화부터 수능까지, 실용 영어 전문"</p>
+        </div>
+        <div class="dibo-f11-teacher-check">
+          <svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="dibo-f11-teacher-card" data-name="박민서">
+        <div class="dibo-f11-avatar">👩‍🏫</div>
+        <div class="dibo-f11-teacher-info">
+          <p class="dibo-f11-teacher-name">박민서 선생님</p>
+          <p class="dibo-f11-teacher-career">고려대 국어교육 · 논술 전문 · 5년 경력</p>
+          <p class="dibo-f11-teacher-desc">"독해력과 글쓰기, 논리적 사고 향상"</p>
+        </div>
+        <div class="dibo-f11-teacher-check">
+          <svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- 과목 + 시간 + 연락처 -->
+    <div class="dibo-f11-section" id="diboF11Section">
+      <div class="dibo-f11-section-inner">
+
+        <p class="dibo-f11-section-title">원하시는 과목을 선택해주세요 (복수 선택 가능)</p>
+        <div class="dibo-f11-chips" id="diboF11Chips">
+          <button class="dibo-f11-chip" data-subject="수학">수학</button>
+          <button class="dibo-f11-chip" data-subject="영어">영어</button>
+          <button class="dibo-f11-chip" data-subject="국어">국어</button>
+          <button class="dibo-f11-chip" data-subject="과학">과학</button>
+          <button class="dibo-f11-chip" data-subject="사회">사회</button>
+          <button class="dibo-f11-chip" data-subject="논술">논술</button>
+        </div>
+
+        <p class="dibo-f11-section-title">상담 선호 시간대를 선택해주세요</p>
+        <div class="dibo-f11-times" id="diboF11Times">
+          <button class="dibo-f11-time-chip" data-time="평일 오전">평일 오전</button>
+          <button class="dibo-f11-time-chip" data-time="평일 오후">평일 오후</button>
+          <button class="dibo-f11-time-chip" data-time="평일 저녁">평일 저녁</button>
+          <button class="dibo-f11-time-chip" data-time="주말 오전">주말 오전</button>
+          <button class="dibo-f11-time-chip" data-time="주말 오후">주말 오후</button>
+        </div>
+
+        <div class="dibo-f11-summary" id="diboF11Summary" style="display:none"></div>
+
+        <div class="dibo-f11-field">
+          <span class="dibo-f11-label">학부모 성함</span>
+          <input class="dibo-f11-input" type="text" id="diboF11Name" placeholder="홍길동" maxlength="20" />
+        </div>
+        <div class="dibo-f11-field">
+          <span class="dibo-f11-label">연락처</span>
+          <input class="dibo-f11-input" type="tel" id="diboF11Tel" placeholder="010-0000-0000" maxlength="13" />
+        </div>
+
+        <label class="dibo-f11-agree">
+          <input class="dibo-f11-checkbox" type="checkbox" id="diboF11Agree" />
+          <span class="dibo-f11-agree-text">
+            <span class="dibo-f11-agree-link">[필수] 개인정보 수집·이용 동의</span>에 동의합니다.
+          </span>
+        </label>
+
+        <button class="dibo-f11-submit" id="diboF11Submit" disabled>상담 신청하기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dibo-f11-thanks" id="diboF11Thanks">
+    <div class="dibo-f11-thanks-icon">🎉</div>
+    <p class="dibo-f11-thanks-title">상담 신청 완료!</p>
+    <p class="dibo-f11-thanks-msg">선택하신 선생님이 영업일 기준 1일 내<br>직접 연락드리겠습니다.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  var teacherCards = document.querySelectorAll('.dibo-f11-teacher-card');
+  var section      = document.getElementById('diboF11Section');
+  var chips        = document.querySelectorAll('.dibo-f11-chip');
+  var timeChips    = document.querySelectorAll('.dibo-f11-time-chip');
+  var summaryEl    = document.getElementById('diboF11Summary');
+  var nameEl       = document.getElementById('diboF11Name');
+  var telEl        = document.getElementById('diboF11Tel');
+  var agreeEl      = document.getElementById('diboF11Agree');
+  var submitEl     = document.getElementById('diboF11Submit');
+  var formArea     = document.getElementById('diboF11FormArea');
+  var thanksArea   = document.getElementById('diboF11Thanks');
+
+  var selTeacher  = '';
+  var selSubjects = [];
+  var selTime     = '';
+
+  /* ── 선생님 선택 ── */
+  teacherCards.forEach(function (card) {
+    card.addEventListener('click', function () {
+      teacherCards.forEach(function (c) { c.classList.remove('is-selected'); });
+      card.classList.add('is-selected');
+      selTeacher = card.dataset.name;
+      section.classList.add('is-open');
+      updateSummary();
+      validate();
+    });
+  });
+
+  /* ── 과목 칩 ── */
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chip.classList.toggle('is-active');
+      var s = chip.dataset.subject;
+      var idx = selSubjects.indexOf(s);
+      if (idx === -1) selSubjects.push(s);
+      else selSubjects.splice(idx, 1);
+      updateSummary();
+      validate();
+    });
+  });
+
+  /* ── 시간 칩 ── */
+  timeChips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      timeChips.forEach(function (c) { c.classList.remove('is-active'); });
+      chip.classList.add('is-active');
+      selTime = chip.dataset.time;
+      updateSummary();
+      validate();
+    });
+  });
+
+  function updateSummary() {
+    if (!selTeacher) { summaryEl.style.display = 'none'; return; }
+    summaryEl.style.display = 'block';
+    summaryEl.innerHTML =
+      '선생님: <strong>' + selTeacher + '</strong>' +
+      (selSubjects.length ? ' &nbsp;|&nbsp; 과목: <strong>' + selSubjects.join(', ') + '</strong>' : '') +
+      (selTime ? ' &nbsp;|&nbsp; 시간: <strong>' + selTime + '</strong>' : '');
+  }
+
+  /* ── 전화번호 포맷 ── */
+  telEl.addEventListener('input', function () {
+    var v = telEl.value.replace(/\D/g,'');
+    if (v.length <= 3)      telEl.value = v;
+    else if (v.length <= 7) telEl.value = v.slice(0,3)+'-'+v.slice(3);
+    else                    telEl.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+    validate();
+  });
+
+  nameEl.addEventListener('input', validate);
+  agreeEl.addEventListener('change', validate);
+
+  function validate() {
+    submitEl.disabled = !(
+      selTeacher &&
+      selSubjects.length >= 1 &&
+      selTime &&
+      nameEl.value.trim().length >= 2 &&
+      telEl.value.replace(/\D/g,'').length >= 10 &&
+      agreeEl.checked
+    );
+  }
+
+  submitEl.addEventListener('click', function () {
+    if (this.disabled) return;
+    formArea.style.display = 'none';
+    thanksArea.style.display = 'flex';
+  });
+})();
+</script>
+</body>
+</html>

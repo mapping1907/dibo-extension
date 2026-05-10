@@ -1,0 +1,975 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- ================================================
+   DIBO F10 · 시간대 카드 예약 폼 · 치과 버전
+   class prefix : dibo-f10-
+   아임웹 코드위젯 즉시 적용
+   ================================================ -->
+<style>
+  /* ── 기본 ── */
+  .dibo-f10-wrap {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f8fcff;
+    border-radius: 20px;
+    padding: 28px 20px 32px;
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: 0 4px 32px rgba(14,165,233,0.10);
+  }
+
+  /* ── 헤더 ── */
+  .dibo-f10-badge {
+    display: inline-block;
+    background: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+    letter-spacing: 0.2px;
+  }
+
+  .dibo-f10-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #0c1a2e;
+    margin: 0 0 4px;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+  }
+
+  .dibo-f10-subtitle {
+    font-size: 12px;
+    color: #94a3b8;
+    margin: 0 0 24px;
+    line-height: 1.6;
+  }
+
+  /* ── 스텝 표시 ── */
+  .dibo-f10-steps {
+    display: flex;
+    gap: 0;
+    margin-bottom: 24px;
+  }
+
+  .dibo-f10-step {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+  }
+
+  .dibo-f10-step::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+    margin-left: 6px;
+  }
+
+  .dibo-f10-step:last-child::after { display: none; }
+
+  .dibo-f10-step-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .dibo-f10-step.is-done .dibo-f10-step-dot {
+    background: #0ea5e9;
+    color: #fff;
+  }
+
+  .dibo-f10-step.is-active .dibo-f10-step-dot {
+    background: #0ea5e9;
+    color: #fff;
+    box-shadow: 0 0 0 3px rgba(14,165,233,0.2);
+  }
+
+  .dibo-f10-step-label {
+    font-size: 10px;
+    color: #94a3b8;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .dibo-f10-step.is-active .dibo-f10-step-label,
+  .dibo-f10-step.is-done .dibo-f10-step-label {
+    color: #0ea5e9;
+  }
+
+  /* ── 섹션 제목 ── */
+  .dibo-f10-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dibo-f10-section-num {
+    width: 20px;
+    height: 20px;
+    background: #0ea5e9;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* ── 의사 카드 ── */
+  .dibo-f10-doctors {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .dibo-f10-doctor-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  }
+
+  .dibo-f10-doctor-card:hover {
+    border-color: #bae6fd;
+    box-shadow: 0 2px 12px rgba(14,165,233,0.12);
+  }
+
+  .dibo-f10-doctor-card.is-selected {
+    border-color: #0ea5e9;
+    box-shadow: 0 2px 16px rgba(14,165,233,0.2);
+    background: #f0f9ff;
+  }
+
+  .dibo-f10-doctor-card.is-selected .dibo-f10-doc-check {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .dibo-f10-doc-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    border: 2px solid #e0f2fe;
+  }
+
+  .dibo-f10-doctor-card.is-selected .dibo-f10-doc-avatar {
+    border-color: #7dd3fc;
+  }
+
+  .dibo-f10-doc-info { flex: 1; min-width: 0; }
+
+  .dibo-f10-doc-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0c1a2e;
+    margin: 0 0 2px;
+  }
+
+  .dibo-f10-doc-spec {
+    font-size: 11px;
+    color: #64748b;
+    margin: 0 0 4px;
+  }
+
+  .dibo-f10-doc-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .dibo-f10-doc-tag {
+    font-size: 10px;
+    color: #0ea5e9;
+    background: #e0f2fe;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+
+  .dibo-f10-doc-check {
+    width: 22px;
+    height: 22px;
+    background: #0ea5e9;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  /* ── 날짜 탭 ── */
+  .dibo-f10-date-section { margin-bottom: 24px; }
+
+  .dibo-f10-dates {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .dibo-f10-dates::-webkit-scrollbar { display: none; }
+
+  .dibo-f10-date-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 10px 14px;
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    flex-shrink: 0;
+    min-width: 52px;
+  }
+
+  .dibo-f10-date-tab:hover { border-color: #bae6fd; }
+
+  .dibo-f10-date-tab.is-selected {
+    border-color: #0ea5e9;
+    background: #0ea5e9;
+  }
+
+  .dibo-f10-date-tab.is-today .dibo-f10-date-day {
+    color: #0ea5e9;
+  }
+
+  .dibo-f10-date-tab.is-selected .dibo-f10-date-day,
+  .dibo-f10-date-tab.is-selected .dibo-f10-date-num {
+    color: #fff;
+  }
+
+  .dibo-f10-date-tab.is-selected.is-today .dibo-f10-date-day { color: #fff; }
+
+  .dibo-f10-date-tab.is-past {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .dibo-f10-date-day {
+    font-size: 10px;
+    font-weight: 600;
+    color: #94a3b8;
+  }
+
+  .dibo-f10-date-num {
+    font-size: 17px;
+    font-weight: 800;
+    color: #0c1a2e;
+  }
+
+  /* ── 시간대 그리드 ── */
+  .dibo-f10-time-section { margin-bottom: 24px; }
+
+  .dibo-f10-time-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .dibo-f10-time-slot {
+    padding: 10px 6px;
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    font-family: inherit;
+  }
+
+  .dibo-f10-time-slot:hover:not(.is-unavailable) {
+    border-color: #bae6fd;
+    transform: translateY(-1px);
+  }
+
+  .dibo-f10-time-slot.is-selected {
+    border-color: #0ea5e9;
+    background: #0ea5e9;
+  }
+
+  .dibo-f10-time-slot.is-unavailable {
+    background: #f8fafc;
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .dibo-f10-slot-time {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0c1a2e;
+    display: block;
+  }
+
+  .dibo-f10-time-slot.is-selected .dibo-f10-slot-time { color: #fff; }
+  .dibo-f10-time-slot.is-unavailable .dibo-f10-slot-time { text-decoration: line-through; color: #cbd5e1; }
+
+  .dibo-f10-slot-status {
+    font-size: 10px;
+    color: #94a3b8;
+    display: block;
+    margin-top: 2px;
+  }
+
+  .dibo-f10-time-slot.is-selected .dibo-f10-slot-status { color: rgba(255,255,255,0.85); }
+  .dibo-f10-time-slot.is-unavailable .dibo-f10-slot-status { color: #cbd5e1; }
+
+  /* ── 연락처 폼 ── */
+  .dibo-f10-contact-section {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.45s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .dibo-f10-contact-section.is-open { max-height: 400px; }
+
+  .dibo-f10-contact-inner {
+    padding-top: 4px;
+  }
+
+  .dibo-f10-summary {
+    background: #e0f2fe;
+    border: 1px solid #bae6fd;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .dibo-f10-summary-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #0284c7;
+    margin-bottom: 4px;
+  }
+
+  .dibo-f10-summary-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #0c1a2e;
+  }
+
+  .dibo-f10-summary-label {
+    color: #64748b;
+    font-weight: 600;
+    min-width: 40px;
+  }
+
+  .dibo-f10-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .dibo-f10-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  .dibo-f10-input {
+    height: 46px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 14px;
+    color: #0c1a2e;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+    width: 100%;
+  }
+
+  .dibo-f10-input:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14,165,233,0.12);
+  }
+
+  .dibo-f10-input::placeholder { color: #cbd5e1; }
+
+  .dibo-f10-agree {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+
+  .dibo-f10-checkbox {
+    width: 15px;
+    height: 15px;
+    accent-color: #0ea5e9;
+    margin-top: 2px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .dibo-f10-agree-text { font-size: 11px; color: #94a3b8; line-height: 1.55; }
+  .dibo-f10-agree-link { color: #0ea5e9; text-decoration: underline; cursor: pointer; }
+
+  .dibo-f10-submit {
+    width: 100%;
+    height: 52px;
+    background: #0ea5e9;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .dibo-f10-submit:hover  { background: #0284c7; }
+  .dibo-f10-submit:active { transform: scale(0.98); }
+  .dibo-f10-submit:disabled {
+    background: #bae6fd;
+    cursor: default;
+    transform: none;
+  }
+
+  /* ── 선택 안내 메시지 ── */
+  .dibo-f10-hint {
+    text-align: center;
+    font-size: 12px;
+    color: #94a3b8;
+    padding: 16px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  /* ── 완료 ── */
+  .dibo-f10-thanks {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 16px 0 8px;
+    gap: 10px;
+  }
+
+  .dibo-f10-thanks-icon {
+    width: 64px;
+    height: 64px;
+    background: #e0f2fe;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 4px;
+  }
+
+  .dibo-f10-thanks-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #0c1a2e;
+    letter-spacing: -0.4px;
+  }
+
+  .dibo-f10-thanks-msg {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.7;
+  }
+
+  .dibo-f10-thanks-card {
+    background: #fff;
+    border: 1.5px solid #bae6fd;
+    border-radius: 14px;
+    padding: 14px 20px;
+    width: 100%;
+    text-align: left;
+    margin-top: 4px;
+  }
+
+  .dibo-f10-thanks-card-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #0ea5e9;
+    margin-bottom: 8px;
+  }
+
+  .dibo-f10-thanks-card-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #334155;
+    padding: 3px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .dibo-f10-thanks-card-row:last-child { border-bottom: none; }
+  .dibo-f10-thanks-card-row span:first-child { color: #94a3b8; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="dibo-f10-wrap" id="diboF10Wrap">
+
+  <!-- 헤더 -->
+  <div class="dibo-f10-badge">🦷 치과 온라인 예약</div>
+  <p class="dibo-f10-title">편하게 예약하고<br>믿을 수 있는 의사와 만나세요</p>
+  <p class="dibo-f10-subtitle">담당 의사 선택 → 날짜 → 시간 → 3단계로 완료</p>
+
+  <!-- 스텝 -->
+  <div class="dibo-f10-steps">
+    <div class="dibo-f10-step is-active" id="diboF10Step1">
+      <div class="dibo-f10-step-dot">1</div>
+      <span class="dibo-f10-step-label">의사</span>
+    </div>
+    <div class="dibo-f10-step" id="diboF10Step2">
+      <div class="dibo-f10-step-dot">2</div>
+      <span class="dibo-f10-step-label">날짜</span>
+    </div>
+    <div class="dibo-f10-step" id="diboF10Step3">
+      <div class="dibo-f10-step-dot">3</div>
+      <span class="dibo-f10-step-label">시간</span>
+    </div>
+    <div class="dibo-f10-step" id="diboF10Step4">
+      <div class="dibo-f10-step-dot">4</div>
+      <span class="dibo-f10-step-label">연락처</span>
+    </div>
+  </div>
+
+  <!-- 본문 -->
+  <div id="diboF10FormArea">
+
+    <!-- 1. 의사 선택 -->
+    <div class="dibo-f10-section-title">
+      <span class="dibo-f10-section-num">1</span>
+      담당 의사를 선택해주세요
+    </div>
+    <div class="dibo-f10-doctors" id="diboF10Doctors">
+      <div class="dibo-f10-doctor-card" data-doctor="김민준" data-spec="일반치과·임플란트">
+        <div class="dibo-f10-doc-avatar">👨‍⚕️</div>
+        <div class="dibo-f10-doc-info">
+          <p class="dibo-f10-doc-name">김민준 원장</p>
+          <p class="dibo-f10-doc-spec">일반치과 · 임플란트 전문</p>
+          <div class="dibo-f10-doc-tags">
+            <span class="dibo-f10-doc-tag">임플란트</span>
+            <span class="dibo-f10-doc-tag">사랑니</span>
+            <span class="dibo-f10-doc-tag">충치</span>
+          </div>
+        </div>
+        <div class="dibo-f10-doc-check">
+          <svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="dibo-f10-doctor-card" data-doctor="이수연" data-spec="교정·심미치과">
+        <div class="dibo-f10-doc-avatar">👩‍⚕️</div>
+        <div class="dibo-f10-doc-info">
+          <p class="dibo-f10-doc-name">이수연 원장</p>
+          <p class="dibo-f10-doc-spec">교정 · 심미치과 전문</p>
+          <div class="dibo-f10-doc-tags">
+            <span class="dibo-f10-doc-tag">교정</span>
+            <span class="dibo-f10-doc-tag">라미네이트</span>
+            <span class="dibo-f10-doc-tag">미백</span>
+          </div>
+        </div>
+        <div class="dibo-f10-doc-check">
+          <svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="dibo-f10-doctor-card" data-doctor="박성호" data-spec="소아치과·예방">
+        <div class="dibo-f10-doc-avatar">👨‍⚕️</div>
+        <div class="dibo-f10-doc-info">
+          <p class="dibo-f10-doc-name">박성호 원장</p>
+          <p class="dibo-f10-doc-spec">소아치과 · 예방치과 전문</p>
+          <div class="dibo-f10-doc-tags">
+            <span class="dibo-f10-doc-tag">소아</span>
+            <span class="dibo-f10-doc-tag">스케일링</span>
+            <span class="dibo-f10-doc-tag">불소</span>
+          </div>
+        </div>
+        <div class="dibo-f10-doc-check">
+          <svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 날짜 선택 -->
+    <div class="dibo-f10-date-section" id="diboF10DateSection" style="display:none">
+      <div class="dibo-f10-section-title">
+        <span class="dibo-f10-section-num">2</span>
+        날짜를 선택해주세요
+      </div>
+      <div class="dibo-f10-dates" id="diboF10Dates"></div>
+    </div>
+
+    <!-- 3. 시간 선택 -->
+    <div class="dibo-f10-time-section" id="diboF10TimeSection" style="display:none">
+      <div class="dibo-f10-section-title">
+        <span class="dibo-f10-section-num">3</span>
+        원하시는 시간을 선택해주세요
+      </div>
+      <div class="dibo-f10-time-grid" id="diboF10TimeGrid"></div>
+    </div>
+
+    <!-- 4. 연락처 -->
+    <div class="dibo-f10-contact-section" id="diboF10ContactSection">
+      <div class="dibo-f10-contact-inner">
+        <div class="dibo-f10-section-title">
+          <span class="dibo-f10-section-num">4</span>
+          연락처를 입력해주세요
+        </div>
+
+        <div class="dibo-f10-summary" id="diboF10Summary"></div>
+
+        <div class="dibo-f10-field">
+          <span class="dibo-f10-label">이름</span>
+          <input class="dibo-f10-input" type="text" id="diboF10Name" placeholder="홍길동" maxlength="20" />
+        </div>
+        <div class="dibo-f10-field">
+          <span class="dibo-f10-label">연락처</span>
+          <input class="dibo-f10-input" type="tel" id="diboF10Tel" placeholder="010-0000-0000" maxlength="13" />
+        </div>
+
+        <label class="dibo-f10-agree">
+          <input class="dibo-f10-checkbox" type="checkbox" id="diboF10Agree" />
+          <span class="dibo-f10-agree-text">
+            <span class="dibo-f10-agree-link">[필수] 개인정보 수집·이용 동의</span>에 동의합니다.
+          </span>
+        </label>
+
+        <button class="dibo-f10-submit" id="diboF10Submit" disabled>예약 신청하기</button>
+      </div>
+    </div>
+
+    <!-- 진행 힌트 -->
+    <div class="dibo-f10-hint" id="diboF10Hint">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#cbd5e1" stroke-width="1.5"/><path d="M7 6v4M7 4.5v.5" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round"/></svg>
+      의사를 먼저 선택해주세요
+    </div>
+
+  </div>
+
+  <!-- 완료 화면 -->
+  <div class="dibo-f10-thanks" id="diboF10Thanks">
+    <div class="dibo-f10-thanks-icon">✅</div>
+    <p class="dibo-f10-thanks-title">예약 신청 완료!</p>
+    <p class="dibo-f10-thanks-msg">확인 후 예약 전날까지 연락드리겠습니다.<br>궁금한 점은 전화로 문의해 주세요.</p>
+    <div class="dibo-f10-thanks-card" id="diboF10ThanksCard"></div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var DAYS = ['일','월','화','수','목','금','토'];
+
+  /* ── 상태 ── */
+  var sel = { doctor: null, date: null, time: null };
+
+  /* ── 엘리먼트 ── */
+  var doctorCards   = document.querySelectorAll('.dibo-f10-doctor-card');
+  var dateSection   = document.getElementById('diboF10DateSection');
+  var datesWrap     = document.getElementById('diboF10Dates');
+  var timeSection   = document.getElementById('diboF10TimeSection');
+  var timeGrid      = document.getElementById('diboF10TimeGrid');
+  var contactSection= document.getElementById('diboF10ContactSection');
+  var summaryEl     = document.getElementById('diboF10Summary');
+  var nameEl        = document.getElementById('diboF10Name');
+  var telEl         = document.getElementById('diboF10Tel');
+  var agreeEl       = document.getElementById('diboF10Agree');
+  var submitEl      = document.getElementById('diboF10Submit');
+  var hintEl        = document.getElementById('diboF10Hint');
+  var formArea      = document.getElementById('diboF10FormArea');
+  var thanksArea    = document.getElementById('diboF10Thanks');
+  var thanksCard    = document.getElementById('diboF10ThanksCard');
+
+  /* ── 시간대 데이터 (요일별 일부 unavailable) ── */
+  var SLOTS = {
+    0: [ /* 일 */
+      {t:'09:00', avail:false},
+      {t:'09:30', avail:false},
+      {t:'10:00', avail:true },
+      {t:'10:30', avail:true },
+      {t:'11:00', avail:false},
+      {t:'11:30', avail:true },
+      {t:'14:00', avail:true },
+      {t:'14:30', avail:false},
+      {t:'15:00', avail:true }
+    ],
+    1: [ /* 월 */
+      {t:'09:00', avail:true },
+      {t:'09:30', avail:false},
+      {t:'10:00', avail:true },
+      {t:'10:30', avail:true },
+      {t:'11:00', avail:true },
+      {t:'11:30', avail:false},
+      {t:'14:00', avail:false},
+      {t:'14:30', avail:true },
+      {t:'15:00', avail:true }
+    ],
+    2: [ /* 화 */
+      {t:'09:00', avail:true },
+      {t:'09:30', avail:true },
+      {t:'10:00', avail:false},
+      {t:'10:30', avail:true },
+      {t:'11:00', avail:false},
+      {t:'11:30', avail:true },
+      {t:'14:00', avail:true },
+      {t:'14:30', avail:true },
+      {t:'15:00', avail:false}
+    ],
+    3: [ /* 수 */
+      {t:'09:00', avail:false},
+      {t:'09:30', avail:true },
+      {t:'10:00', avail:true },
+      {t:'10:30', avail:false},
+      {t:'11:00', avail:true },
+      {t:'11:30', avail:true },
+      {t:'14:00', avail:false},
+      {t:'14:30', avail:true },
+      {t:'15:00', avail:true }
+    ],
+    4: [ /* 목 */
+      {t:'09:00', avail:true },
+      {t:'09:30', avail:true },
+      {t:'10:00', avail:true },
+      {t:'10:30', avail:false},
+      {t:'11:00', avail:false},
+      {t:'11:30', avail:true },
+      {t:'14:00', avail:true },
+      {t:'14:30', avail:false},
+      {t:'15:00', avail:true }
+    ],
+    5: [ /* 금 */
+      {t:'09:00', avail:true },
+      {t:'09:30', avail:false},
+      {t:'10:00', avail:true },
+      {t:'10:30', avail:true },
+      {t:'11:00', avail:true },
+      {t:'11:30', avail:false},
+      {t:'14:00', avail:true },
+      {t:'14:30', avail:true },
+      {t:'15:00', avail:false}
+    ],
+    6: [ /* 토 */
+      {t:'09:00', avail:true },
+      {t:'09:30', avail:true },
+      {t:'10:00', avail:false},
+      {t:'10:30', avail:false},
+      {t:'11:00', avail:true },
+      {t:'11:30', avail:true },
+      {t:'13:00', avail:true },
+      {t:'13:30', avail:true },
+      {t:'14:00', avail:false}
+    ]
+  };
+
+  /* ── 스텝 업데이트 ── */
+  function updateSteps(activeNum) {
+    for (var i = 1; i <= 4; i++) {
+      var el = document.getElementById('diboF10Step' + i);
+      el.classList.remove('is-active','is-done');
+      if (i < activeNum) el.classList.add('is-done');
+      else if (i === activeNum) el.classList.add('is-active');
+    }
+  }
+
+  /* ── 날짜 탭 생성 (이번 주 월~일) ── */
+  function buildDates() {
+    datesWrap.innerHTML = '';
+    var today = new Date();
+    /* 이번 주 월요일부터 */
+    var monday = new Date(today);
+    var dow = today.getDay(); /* 0=일 */
+    var diff = dow === 0 ? -6 : 1 - dow;
+    monday.setDate(today.getDate() + diff);
+
+    var todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      var dMidnight = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      var isPast = dMidnight < todayMidnight;
+      var tab = document.createElement('button');
+      tab.className = 'dibo-f10-date-tab';
+      if (d.toDateString() === today.toDateString()) tab.classList.add('is-today');
+      if (isPast) tab.classList.add('is-past');
+      var dayName = DAYS[d.getDay()];
+      var dateNum = d.getDate();
+      tab.innerHTML = '<span class="dibo-f10-date-day">' + dayName + '</span><span class="dibo-f10-date-num">' + dateNum + '</span>';
+      tab.dataset.date = d.toLocaleDateString('ko-KR', {month:'long',day:'numeric'}) + ' (' + dayName + ')';
+      tab.dataset.dow  = d.getDay();
+      if (!isPast) tab.addEventListener('click', onDateClick);
+      datesWrap.appendChild(tab);
+    }
+  }
+
+  /* ── 시간 그리드 생성 ── */
+  function buildSlots(dow) {
+    timeGrid.innerHTML = '';
+    var slots = SLOTS[dow] || SLOTS[1];
+    slots.forEach(function (s) {
+      var btn = document.createElement('button');
+      btn.className = 'dibo-f10-time-slot' + (s.avail ? '' : ' is-unavailable');
+      btn.dataset.time = s.t;
+      var availCount = s.avail ? Math.floor(Math.random() * 3) + 1 : 0;
+      btn.innerHTML =
+        '<span class="dibo-f10-slot-time">' + s.t + '</span>' +
+        '<span class="dibo-f10-slot-status">' + (s.avail ? '잔여 ' + availCount + '자리' : '마감') + '</span>';
+      if (s.avail) btn.addEventListener('click', onTimeClick);
+      timeGrid.appendChild(btn);
+    });
+  }
+
+  /* ── 요약 카드 ── */
+  function updateSummary() {
+    summaryEl.innerHTML =
+      '<p class="dibo-f10-summary-title">📋 예약 정보 확인</p>' +
+      '<div class="dibo-f10-summary-row"><span class="dibo-f10-summary-label">의사</span><span>' + sel.doctor + ' 원장</span></div>' +
+      '<div class="dibo-f10-summary-row"><span class="dibo-f10-summary-label">날짜</span><span>' + sel.date + '</span></div>' +
+      '<div class="dibo-f10-summary-row"><span class="dibo-f10-summary-label">시간</span><span>' + sel.time + '</span></div>';
+  }
+
+  /* ── 의사 선택 ── */
+  doctorCards.forEach(function (card) {
+    card.addEventListener('click', function () {
+      doctorCards.forEach(function (c) { c.classList.remove('is-selected'); });
+      card.classList.add('is-selected');
+      sel.doctor = card.dataset.doctor;
+
+      /* 날짜 섹션 표시 */
+      dateSection.style.display = 'block';
+      buildDates();
+      hintEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#cbd5e1" stroke-width="1.5"/><path d="M7 6v4M7 4.5v.5" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round"/></svg> 날짜를 선택해주세요';
+
+      /* 이후 단계 초기화 */
+      sel.date = null;
+      sel.time = null;
+      timeSection.style.display = 'none';
+      contactSection.classList.remove('is-open');
+      updateSteps(2);
+    });
+  });
+
+  /* ── 날짜 선택 ── */
+  function onDateClick() {
+    var tabs = datesWrap.querySelectorAll('.dibo-f10-date-tab');
+    tabs.forEach(function (t) { t.classList.remove('is-selected'); });
+    this.classList.add('is-selected');
+    sel.date = this.dataset.date;
+    var dow = parseInt(this.dataset.dow);
+
+    /* 시간 섹션 표시 */
+    timeSection.style.display = 'block';
+    buildSlots(dow);
+    hintEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#cbd5e1" stroke-width="1.5"/><path d="M7 6v4M7 4.5v.5" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round"/></svg> 시간을 선택해주세요';
+
+    sel.time = null;
+    contactSection.classList.remove('is-open');
+    updateSteps(3);
+  }
+
+  /* ── 시간 선택 ── */
+  function onTimeClick() {
+    var slots = timeGrid.querySelectorAll('.dibo-f10-time-slot:not(.is-unavailable)');
+    slots.forEach(function (s) { s.classList.remove('is-selected'); });
+    this.classList.add('is-selected');
+    sel.time = this.dataset.time;
+
+    /* 연락처 폼 슬라이드다운 */
+    updateSummary();
+    contactSection.classList.add('is-open');
+    hintEl.style.display = 'none';
+    updateSteps(4);
+
+    setTimeout(function () {
+      contactSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+  }
+
+  /* ── 전화번호 포맷 ── */
+  telEl.addEventListener('input', function () {
+    var v = telEl.value.replace(/\D/g,'');
+    if (v.length <= 3)      telEl.value = v;
+    else if (v.length <= 7) telEl.value = v.slice(0,3)+'-'+v.slice(3);
+    else                    telEl.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+    validateContact();
+  });
+
+  nameEl.addEventListener('input', validateContact);
+  agreeEl.addEventListener('change', validateContact);
+
+  function validateContact() {
+    submitEl.disabled = !(
+      nameEl.value.trim().length >= 2 &&
+      telEl.value.replace(/\D/g,'').length >= 10 &&
+      agreeEl.checked
+    );
+  }
+
+  /* ── 제출 ── */
+  submitEl.addEventListener('click', function () {
+    if (this.disabled) return;
+    formArea.style.display = 'none';
+    thanksArea.style.display = 'flex';
+    thanksCard.innerHTML =
+      '<p class="dibo-f10-thanks-card-title">📋 예약 내역</p>' +
+      '<div class="dibo-f10-thanks-card-row"><span>담당 의사</span><span>' + sel.doctor + ' 원장</span></div>' +
+      '<div class="dibo-f10-thanks-card-row"><span>예약 날짜</span><span>' + sel.date + '</span></div>' +
+      '<div class="dibo-f10-thanks-card-row"><span>예약 시간</span><span>' + sel.time + '</span></div>' +
+      '<div class="dibo-f10-thanks-card-row"><span>예약자</span><span>' + nameEl.value.trim() + '</span></div>';
+  });
+
+})();
+</script>
+</body>
+</html>

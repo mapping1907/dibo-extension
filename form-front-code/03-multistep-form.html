@@ -1,0 +1,775 @@
+﻿<!DOCTYPE html>
+<!--
+  ================================================================
+  ✦ 디보(dibo) 익스텐션 | 단계별 멀티스텝 견적 신청 폼 – 인테리어·리모델링·시공
+  ================================================================
+
+  【페이지 개요】
+  공간·예산·스타일·연락처를 단계별로 수집하는 프로그레스 바 기반 멀티스텝 폼입니다.
+  복잡한 견적 정보를 한 화면에 몰아 넣지 않고 단계별로 분리해 사용자 이탈을
+  최소화하며 리드 데이터 품질을 높입니다. 다크 골드 테마로 고급 인테리어 브랜드
+  이미지를 전달하며, 인테리어·리모델링·시공업체 랜딩 페이지에 최적화되어 있습니다.
+
+  【SEO 키워드】
+  인테리어 무료 견적 신청, 리모델링 상담 신청 폼, 멀티스텝 입력 폼,
+  단계별 견적 요청 폼, 시공 무료 견적 문의
+
+  【사용 전 필수 설정】
+  1. 단계별 선택 옵션 수정
+     → 각 step의 버튼 텍스트 (공간·예산·스타일 선택지)
+
+  2. 프로그레스 레이블 수정
+     → 상단 스텝 레이블 배열 (현재: '공간', '예산', '스타일', '연락처')
+
+  3. 폼 제목·설명 수정
+     → 헤더의 배지·제목·부제목 HTML 텍스트 수정
+
+  4. 테마 컬러 수정
+     → CSS에서 #e8c07a (골드) 값을 브랜드 컬러로 일괄 변경
+
+  5. 폼 제출 처리 연동  ★ [수정 필수]
+     → handleSubmit 함수 내부에 실제 API 엔드포인트 연동 코드 추가
+
+  【멀티스텝 폼 조작 방법】
+  - 각 단계에서 옵션 버튼 클릭 후 [다음] 버튼으로 진행합니다
+  - 상단 프로그레스 바로 현재 단계 및 진행률을 확인할 수 있습니다
+  - [이전] 버튼으로 이전 단계로 돌아가 수정이 가능합니다
+  ================================================================
+-->
+<html lang="ko">
+<head>
+<!-- ================================================
+   DIBO F03 · 단계별 입력폼 (멀티스텝) · 인테리어 버전
+   class prefix : dibo-f03-
+   아임웹 코드위젯 즉시 적용
+   모달에 넣고 사용학세요 (권장 너비 480px)
+   ================================================ -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  .dibo-f03-wrap {
+    max-width: 520px;
+    margin: 0 auto;
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #1a1a1a;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.5);
+  }
+
+  /* ── 헤더 ── */
+  .dibo-f03-header {
+    padding: 28px 28px 0;
+  }
+
+  .dibo-f03-badge {
+    display: inline-block;
+    background: rgba(232,192,122,0.15);
+    border: 1px solid rgba(232,192,122,0.3);
+    color: #e8c07a;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    letter-spacing: 0.3px;
+  }
+
+  .dibo-f03-header h2 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+  }
+
+  .dibo-f03-header p {
+    margin: 0 0 20px;
+    font-size: 13px;
+    color: #888;
+  }
+
+  /* ── 프로그레스 바 ── */
+  .dibo-f03-progress-wrap {
+    padding: 0 28px 20px;
+  }
+
+  .dibo-f03-progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .dibo-f03-prog-label {
+    font-size: 10px;
+    color: #555;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    transition: color 0.3s;
+  }
+
+  .dibo-f03-prog-label.active { color: #e8c07a; }
+  .dibo-f03-prog-label.done   { color: #777; }
+
+  .dibo-f03-progress-bar {
+    height: 4px;
+    background: #333;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .dibo-f03-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e8c07a, #f0d090);
+    border-radius: 4px;
+    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+    width: 0%;
+  }
+
+  /* ── 단계 패널 ── */
+  .dibo-f03-panel {
+    display: none;
+    padding: 0 28px 28px;
+  }
+
+  .dibo-f03-panel.active { display: block; }
+
+  .dibo-f03-step-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 6px;
+    letter-spacing: -0.4px;
+  }
+
+  .dibo-f03-step-sub {
+    font-size: 12px;
+    color: #777;
+    margin: 0 0 18px;
+  }
+
+  /* ── 카드 선택 ── */
+  .dibo-f03-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .dibo-f03-cards.col3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .dibo-f03-card {
+    background: #2a2a2a;
+    border: 1.5px solid #3a3a3a;
+    border-radius: 12px;
+    padding: 16px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .dibo-f03-card:hover {
+    border-color: #e8c07a;
+    background: #252018;
+  }
+
+  .dibo-f03-card.selected {
+    border-color: #e8c07a;
+    background: rgba(232,192,122,0.1);
+  }
+
+  .dibo-f03-card-icon {
+    font-size: 26px;
+    margin-bottom: 8px;
+    line-height: 1;
+  }
+
+  .dibo-f03-card-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #ddd;
+    letter-spacing: -0.2px;
+  }
+
+  .dibo-f03-card.selected .dibo-f03-card-name {
+    color: #e8c07a;
+  }
+
+  .dibo-f03-card-sub {
+    font-size: 11px;
+    color: #666;
+    margin-top: 3px;
+  }
+
+  /* ── 슬라이더 ── */
+  .dibo-f03-slider-wrap {
+    margin-bottom: 8px;
+  }
+
+  .dibo-f03-slider-display {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 800;
+    color: #e8c07a;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+  }
+
+  .dibo-f03-slider-sub {
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    margin-top: -12px;
+    margin-bottom: 16px;
+  }
+
+  .dibo-f03-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 6px;
+    background: #333;
+    outline: none;
+    margin-bottom: 12px;
+  }
+
+  .dibo-f03-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    background: #e8c07a;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(232,192,122,0.4);
+  }
+
+  .dibo-f03-slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #555;
+  }
+
+  .dibo-f03-budget-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .dibo-f03-budget-card {
+    background: #2a2a2a;
+    border: 1.5px solid #3a3a3a;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .dibo-f03-budget-card:hover {
+    border-color: #e8c07a;
+  }
+
+  .dibo-f03-budget-card.selected {
+    border-color: #e8c07a;
+    background: rgba(232,192,122,0.1);
+  }
+
+  .dibo-f03-budget-price {
+    font-size: 14px;
+    font-weight: 700;
+    color: #ddd;
+  }
+
+  .dibo-f03-budget-card.selected .dibo-f03-budget-price { color: #e8c07a; }
+  .dibo-f03-budget-range { font-size: 11px; color: #666; margin-top: 2px; }
+
+  /* ── 연락처 ── */
+  .dibo-f03-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 12px;
+  }
+
+  .dibo-f03-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #777;
+    letter-spacing: 0.2px;
+  }
+
+  .dibo-f03-input {
+    height: 46px;
+    border: 1.5px solid #333;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 14px;
+    color: #fff;
+    background: #2a2a2a;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+
+  .dibo-f03-input:focus { border-color: #e8c07a; }
+  .dibo-f03-input::placeholder { color: #555; }
+
+  .dibo-f03-summary-box {
+    background: #252018;
+    border: 1px solid rgba(232,192,122,0.3);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: #aaa;
+    line-height: 1.8;
+  }
+
+  .dibo-f03-summary-box strong { color: #e8c07a; }
+
+  .dibo-f03-agree {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+
+  .dibo-f03-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #e8c07a;
+    margin-top: 2px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .dibo-f03-agree-text {
+    font-size: 11px;
+    color: #666;
+    line-height: 1.5;
+  }
+
+  .dibo-f03-agree-link {
+    color: #e8c07a;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  /* ── 버튼 ── */
+  .dibo-f03-btn-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .dibo-f03-back {
+    flex: 0 0 80px;
+    height: 50px;
+    background: transparent;
+    border: 1.5px solid #444;
+    border-radius: 12px;
+    color: #888;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .dibo-f03-back:hover { border-color: #666; color: #bbb; }
+
+  .dibo-f03-next {
+    flex: 1;
+    height: 50px;
+    background: #e8c07a;
+    color: #1a1a1a;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .dibo-f03-next:hover { background: #f0d090; }
+  .dibo-f03-next:active { transform: scale(0.98); }
+  .dibo-f03-next:disabled { background: #4a3f28; color: #7a6a50; cursor: default; transform: none; }
+
+  /* ── 완료 ── */
+  .dibo-f03-thanks {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 28px;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .dibo-f03-thanks-icon { font-size: 48px; }
+
+  .dibo-f03-thanks-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+
+  .dibo-f03-thanks-msg {
+    font-size: 13px;
+    color: #777;
+    line-height: 1.7;
+  }
+
+  .dibo-f03-thanks-card {
+    background: #252018;
+    border: 1px solid rgba(232,192,122,0.3);
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 13px;
+    color: #ccc;
+    line-height: 1.9;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .dibo-f03-thanks-card strong { color: #e8c07a; }
+</style>
+</head>
+<body>
+<div class="dibo-f03-wrap">
+
+  <div class="dibo-f03-header">
+    <div class="dibo-f03-badge">🏠 무료 인테리어 견적</div>
+    <h2>우리 집 인테리어<br>얼마나 들까요?</h2>
+    <p>4가지 선택만 하면 맞춤 견적 안내드립니다</p>
+  </div>
+
+  <div class="dibo-f03-progress-wrap">
+    <div class="dibo-f03-progress-labels">
+      <span class="dibo-f03-prog-label active" id="diboF03L1">공간</span>
+      <span class="dibo-f03-prog-label" id="diboF03L2">예산</span>
+      <span class="dibo-f03-prog-label" id="diboF03L3">스타일</span>
+      <span class="dibo-f03-prog-label" id="diboF03L4">연락처</span>
+    </div>
+    <div class="dibo-f03-progress-bar">
+      <div class="dibo-f03-progress-fill" id="diboF03Fill"></div>
+    </div>
+  </div>
+
+  <!-- STEP 1 : 공간 유형 -->
+  <div class="dibo-f03-panel active" id="diboF03P1">
+    <p class="dibo-f03-step-title">어떤 공간을 인테리어 하실 건가요?</p>
+    <p class="dibo-f03-step-sub">해당하는 공간을 모두 선택해 주세요 (복수 선택 가능)</p>
+
+    <div class="dibo-f03-cards" id="diboF03SpaceCards">
+      <div class="dibo-f03-card" data-v="거실">
+        <div class="dibo-f03-card-icon">🛋️</div>
+        <div class="dibo-f03-card-name">거실</div>
+      </div>
+      <div class="dibo-f03-card" data-v="주방">
+        <div class="dibo-f03-card-icon">🍳</div>
+        <div class="dibo-f03-card-name">주방</div>
+      </div>
+      <div class="dibo-f03-card" data-v="침실">
+        <div class="dibo-f03-card-icon">🛏️</div>
+        <div class="dibo-f03-card-name">침실</div>
+      </div>
+      <div class="dibo-f03-card" data-v="욕실">
+        <div class="dibo-f03-card-icon">🚿</div>
+        <div class="dibo-f03-card-name">욕실</div>
+      </div>
+      <div class="dibo-f03-card" data-v="전체 리모델링">
+        <div class="dibo-f03-card-icon">🏗️</div>
+        <div class="dibo-f03-card-name">전체 리모델링</div>
+      </div>
+      <div class="dibo-f03-card" data-v="기타">
+        <div class="dibo-f03-card-icon">📦</div>
+        <div class="dibo-f03-card-name">기타</div>
+      </div>
+    </div>
+
+    <div class="dibo-f03-btn-row" style="margin-top:16px;">
+      <button class="dibo-f03-next" id="diboF03N1" disabled>다음 단계 →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 : 예산 -->
+  <div class="dibo-f03-panel" id="diboF03P2">
+    <p class="dibo-f03-step-title">예상 예산 범위를 선택해 주세요</p>
+    <p class="dibo-f03-step-sub">대략적인 범위도 괜찮습니다</p>
+
+    <div class="dibo-f03-budget-cards" id="diboF03BudgetCards">
+      <div class="dibo-f03-budget-card" data-v="500만원 미만">
+        <div class="dibo-f03-budget-price">~500만원</div>
+        <div class="dibo-f03-budget-range">부분 시공</div>
+      </div>
+      <div class="dibo-f03-budget-card" data-v="500~1000만원">
+        <div class="dibo-f03-budget-price">500~1천만원</div>
+        <div class="dibo-f03-budget-range">1~2룸 기준</div>
+      </div>
+      <div class="dibo-f03-budget-card" data-v="1000~2000만원">
+        <div class="dibo-f03-budget-price">1~2천만원</div>
+        <div class="dibo-f03-budget-range">30평 기준</div>
+      </div>
+      <div class="dibo-f03-budget-card" data-v="2000만원 이상">
+        <div class="dibo-f03-budget-price">2천만원~</div>
+        <div class="dibo-f03-budget-range">프리미엄 시공</div>
+      </div>
+    </div>
+
+    <div class="dibo-f03-btn-row">
+      <button class="dibo-f03-back" id="diboF03B2">이전</button>
+      <button class="dibo-f03-next" id="diboF03N2" disabled>다음 단계 →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 : 스타일 -->
+  <div class="dibo-f03-panel" id="diboF03P3">
+    <p class="dibo-f03-step-title">선호하는 인테리어 스타일은?</p>
+    <p class="dibo-f03-step-sub">가장 마음에 드는 스타일을 골라주세요</p>
+
+    <div class="dibo-f03-cards col3" id="diboF03StyleCards">
+      <div class="dibo-f03-card" data-v="모던">
+        <div class="dibo-f03-card-icon">⬜</div>
+        <div class="dibo-f03-card-name">모던</div>
+      </div>
+      <div class="dibo-f03-card" data-v="북유럽">
+        <div class="dibo-f03-card-icon">🌿</div>
+        <div class="dibo-f03-card-name">북유럽</div>
+      </div>
+      <div class="dibo-f03-card" data-v="클래식">
+        <div class="dibo-f03-card-icon">🏛️</div>
+        <div class="dibo-f03-card-name">클래식</div>
+      </div>
+      <div class="dibo-f03-card" data-v="인더스트리얼">
+        <div class="dibo-f03-card-icon">🔩</div>
+        <div class="dibo-f03-card-name">인더스트리얼</div>
+      </div>
+      <div class="dibo-f03-card" data-v="내추럴">
+        <div class="dibo-f03-card-icon">🪵</div>
+        <div class="dibo-f03-card-name">내추럴</div>
+      </div>
+      <div class="dibo-f03-card" data-v="미정">
+        <div class="dibo-f03-card-icon">💭</div>
+        <div class="dibo-f03-card-name">미정</div>
+      </div>
+    </div>
+
+    <div class="dibo-f03-btn-row" style="margin-top:16px;">
+      <button class="dibo-f03-back" id="diboF03B3">이전</button>
+      <button class="dibo-f03-next" id="diboF03N3" disabled>다음 단계 →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 : 연락처 -->
+  <div class="dibo-f03-panel" id="diboF03P4">
+    <p class="dibo-f03-step-title">마지막으로 연락처를 남겨주세요</p>
+    <p class="dibo-f03-step-sub">견적 결과를 빠르게 안내드리겠습니다</p>
+
+    <div class="dibo-f03-summary-box" id="diboF03Summary"></div>
+
+    <div class="dibo-f03-field">
+      <span class="dibo-f03-label">이름</span>
+      <input class="dibo-f03-input" type="text" id="diboF03Name" placeholder="홍길동" maxlength="20" />
+    </div>
+    <div class="dibo-f03-field">
+      <span class="dibo-f03-label">연락처</span>
+      <input class="dibo-f03-input" type="tel" id="diboF03Tel" placeholder="010-0000-0000" maxlength="13" />
+    </div>
+
+    <label class="dibo-f03-agree">
+      <input class="dibo-f03-checkbox" type="checkbox" id="diboF03Agree" />
+      <span class="dibo-f03-agree-text">
+        <span class="dibo-f03-agree-link">[필수] 개인정보 수집·이용 동의</span>에 동의합니다.
+      </span>
+    </label>
+
+    <div class="dibo-f03-btn-row">
+      <button class="dibo-f03-back" id="diboF03B4">이전</button>
+      <button class="dibo-f03-next" id="diboF03N4" disabled>견적 신청하기</button>
+    </div>
+  </div>
+
+  <!-- 완료 -->
+  <div class="dibo-f03-thanks" id="diboF03Thanks">
+    <div class="dibo-f03-thanks-icon">🏆</div>
+    <p class="dibo-f03-thanks-title">견적 신청 완료!</p>
+    <div class="dibo-f03-thanks-card" id="diboF03ThanksCard"></div>
+    <p class="dibo-f03-thanks-msg">담당 디자이너가 24시간 내로 연락드립니다.<br>포트폴리오 미리 보고 싶으신가요? 문자로 링크 발송해 드립니다.</p>
+  </div>
+
+</div>
+
+<script>
+/* ── Dibo Edit API ── */
+var diboF03EditId = null;
+(async function () {
+  try {
+    var res = await axios.get('https://api.di-bo.me/edit-set?config_id=copy_config_id', {
+      headers: { 'access-token': diboLoginManager.access_token }
+    });
+    diboF03EditId = res.data[0]?.id || null;
+  } catch (e) { console.error('[F03] Edit Set 조회 실패:', e); }
+})();
+
+async function diboF03PostEdit(name, tel, spaces, budget, style) {
+  if (!diboF03EditId) return;
+  const fd = new FormData();
+  fd.append('req_body', JSON.stringify({ config_id: 'copy_config_id' }));
+  fd.append('column_01', name);    // 이름
+  fd.append('column_02', tel);     // 연락처
+  fd.append('column_03', spaces);  // 공간 (복수선택, 쉼표 구분)
+  fd.append('column_04', budget);  // 예산
+  fd.append('column_05', style);   // 스타일
+  fd.append('column_06', ''); fd.append('column_07', ''); fd.append('column_08', '');
+  fd.append('column_09', ''); fd.append('column_10', '');
+  try {
+    await axios.post(
+      'https://api.di-bo.me/edit-set/' + diboF03EditId + '/rows',
+      fd,
+      { headers: { 'access-token': diboLoginManager?.access_token } }
+    );
+  } catch (e) { console.error('[F03] 데이터 제출 실패:', e); }
+}
+
+(function () {
+  var state = { spaces: [], budget: '', style: '' };
+  var step = 1;
+  var FILLS = ['0%', '25%', '50%', '75%', '100%'];
+
+  var panels  = [null,
+    document.getElementById('diboF03P1'),
+    document.getElementById('diboF03P2'),
+    document.getElementById('diboF03P3'),
+    document.getElementById('diboF03P4'),
+  ];
+  var labels  = [null,
+    document.getElementById('diboF03L1'),
+    document.getElementById('diboF03L2'),
+    document.getElementById('diboF03L3'),
+    document.getElementById('diboF03L4'),
+  ];
+  var fill    = document.getElementById('diboF03Fill');
+  var nameEl  = document.getElementById('diboF03Name');
+  var telEl   = document.getElementById('diboF03Tel');
+  var agreeEl = document.getElementById('diboF03Agree');
+  var summaryEl = document.getElementById('diboF03Summary');
+  var thanksEl  = document.getElementById('diboF03Thanks');
+  var thanksCard= document.getElementById('diboF03ThanksCard');
+
+  function goTo(n) {
+    panels[step].classList.remove('active');
+    labels[step].classList.remove('active');
+    labels[step].classList.add('done');
+
+    if (n < step) {
+      labels[step].classList.remove('done');
+    }
+
+    step = n;
+    panels[step].classList.add('active');
+    labels[step].classList.remove('done');
+    labels[step].classList.add('active');
+
+    fill.style.width = FILLS[step];
+
+    if (step === 4) buildSummary();
+  }
+
+  function buildSummary() {
+    summaryEl.innerHTML =
+      '🏠 공간: <strong>' + state.spaces.join(', ') + '</strong><br>' +
+      '💰 예산: <strong>' + state.budget + '</strong><br>' +
+      '🎨 스타일: <strong>' + state.style + '</strong>';
+  }
+
+  /* ── Step 1: 공간 (복수선택) ── */
+  document.getElementById('diboF03SpaceCards').querySelectorAll('.dibo-f03-card').forEach(function (el) {
+    el.addEventListener('click', function () {
+      this.classList.toggle('selected');
+      state.spaces = Array.from(
+        document.getElementById('diboF03SpaceCards').querySelectorAll('.dibo-f03-card.selected')
+      ).map(function(c){ return c.dataset.v; });
+      document.getElementById('diboF03N1').disabled = state.spaces.length === 0;
+    });
+  });
+  document.getElementById('diboF03N1').addEventListener('click', function () { goTo(2); });
+
+  /* ── Step 2: 예산 (단일) ── */
+  document.getElementById('diboF03BudgetCards').querySelectorAll('.dibo-f03-budget-card').forEach(function (el) {
+    el.addEventListener('click', function () {
+      document.getElementById('diboF03BudgetCards').querySelectorAll('.dibo-f03-budget-card').forEach(function(c){ c.classList.remove('selected'); });
+      this.classList.add('selected');
+      state.budget = this.dataset.v;
+      document.getElementById('diboF03N2').disabled = false;
+    });
+  });
+  document.getElementById('diboF03B2').addEventListener('click', function () { goTo(1); });
+  document.getElementById('diboF03N2').addEventListener('click', function () { goTo(3); });
+
+  /* ── Step 3: 스타일 (단일) ── */
+  document.getElementById('diboF03StyleCards').querySelectorAll('.dibo-f03-card').forEach(function (el) {
+    el.addEventListener('click', function () {
+      document.getElementById('diboF03StyleCards').querySelectorAll('.dibo-f03-card').forEach(function(c){ c.classList.remove('selected'); });
+      this.classList.add('selected');
+      state.style = this.dataset.v;
+      document.getElementById('diboF03N3').disabled = false;
+    });
+  });
+  document.getElementById('diboF03B3').addEventListener('click', function () { goTo(2); });
+  document.getElementById('diboF03N3').addEventListener('click', function () { goTo(4); });
+
+  /* ── Step 4: 연락처 ── */
+  document.getElementById('diboF03B4').addEventListener('click', function () { goTo(3); });
+
+  telEl.addEventListener('input', function () {
+    var v = telEl.value.replace(/\D/g,'');
+    if (v.length <= 3)      telEl.value = v;
+    else if (v.length <= 7) telEl.value = v.slice(0,3)+'-'+v.slice(3);
+    else                    telEl.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+    validateStep4();
+  });
+  nameEl.addEventListener('input', validateStep4);
+  agreeEl.addEventListener('change', validateStep4);
+
+  function validateStep4() {
+    var ok = nameEl.value.trim().length >= 2 &&
+             telEl.value.replace(/\D/g,'').length >= 10 &&
+             agreeEl.checked;
+    document.getElementById('diboF03N4').disabled = !ok;
+  }
+
+  document.getElementById('diboF03N4').addEventListener('click', function () {
+    if (this.disabled) return;
+    diboF03PostEdit(
+      nameEl.value.trim(),
+      telEl.value,
+      state.spaces.join(', '),
+      state.budget,
+      state.style
+    );
+    thanksCard.innerHTML =
+      '🏠 공간: <strong>' + state.spaces.join(', ') + '</strong><br>' +
+      '💰 예산: <strong>' + state.budget + '</strong><br>' +
+      '🎨 스타일: <strong>' + state.style + '</strong><br>' +
+      '👤 신청자: <strong>' + nameEl.value + '</strong>';
+
+    panels[4].style.display = 'none';
+    thanksEl.style.display  = 'flex';
+    fill.style.width = '100%';
+  });
+
+  fill.style.width = FILLS[1];
+})();
+</script>
+</body>
+</html>

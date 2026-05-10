@@ -1,0 +1,581 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- ================================================
+   DIBO F20 · 탭 전환형 과목 선택 폼 · 과외 버전
+   class prefix : dibo-f20-
+   아임웹 코드위젯 즉시 적용
+   ================================================ -->
+<style>
+  .dibo-f20-wrap {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f5f7ff;
+    border-radius: 20px;
+    padding: 28px 20px 32px;
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: 0 4px 32px rgba(67,97,238,0.10);
+  }
+
+  .dibo-f20-badge {
+    display: inline-block;
+    background: #e8ecff;
+    color: #4361ee;
+    border: 1px solid #b8c4ff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+
+  .dibo-f20-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #0a1230;
+    margin: 0 0 4px;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+  }
+
+  .dibo-f20-subtitle {
+    font-size: 12px;
+    color: #7080b0;
+    margin: 0 0 20px;
+    line-height: 1.6;
+  }
+
+  /* ── 과목 탭 ── */
+  .dibo-f20-tabs {
+    display: flex;
+    gap: 0;
+    background: #e8ecff;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .dibo-f20-tabs::-webkit-scrollbar { display: none; }
+
+  .dibo-f20-tab {
+    flex: 1;
+    min-width: 52px;
+    padding: 8px 4px;
+    background: transparent;
+    border: none;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #7080b0;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    font-family: inherit;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .dibo-f20-tab.is-active {
+    background: #fff;
+    color: #4361ee;
+    box-shadow: 0 2px 8px rgba(67,97,238,0.12);
+  }
+
+  /* ── 탭 패널 ── */
+  .dibo-f20-panel { display: none; }
+  .dibo-f20-panel.is-active { display: block; }
+
+  .dibo-f20-panel-info {
+    background: #fff;
+    border: 1.5px solid #e0e6ff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .dibo-f20-panel-icon { font-size: 28px; flex-shrink: 0; }
+
+  .dibo-f20-panel-desc { flex: 1; }
+  .dibo-f20-panel-name { font-size: 14px; font-weight: 700; color: #0a1230; margin: 0 0 3px; }
+  .dibo-f20-panel-text { font-size: 12px; color: #7080b0; margin: 0; line-height: 1.5; }
+
+  /* ── 학년 선택 ── */
+  .dibo-f20-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #4361ee;
+    margin: 0 0 10px;
+  }
+
+  .dibo-f20-grade-select {
+    width: 100%;
+    height: 46px;
+    border: 1.5px solid #e0e6ff;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 14px;
+    color: #0a1230;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+    margin-bottom: 16px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 7L11 1' stroke='%234361ee' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+  }
+
+  .dibo-f20-grade-select:focus { border-color: #4361ee; }
+
+  /* ── 시간 칩 ── */
+  .dibo-f20-time-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 16px;
+  }
+
+  .dibo-f20-time-chip {
+    padding: 7px 12px;
+    background: #fff;
+    border: 1.5px solid #e0e6ff;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #5060a0;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    font-family: inherit;
+  }
+
+  .dibo-f20-time-chip:hover { border-color: #a0b0ff; }
+
+  .dibo-f20-time-chip.is-active {
+    background: #4361ee;
+    border-color: #4361ee;
+    color: #fff;
+  }
+
+  /* ── 선택 요약 ── */
+  .dibo-f20-summary {
+    background: #e8ecff;
+    border: 1px solid #b8c4ff;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: #2030a0;
+    line-height: 1.7;
+    display: none;
+  }
+
+  .dibo-f20-summary strong { color: #4361ee; font-weight: 700; }
+
+  /* ── 연락처 ── */
+  .dibo-f20-contact {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .dibo-f20-contact.is-open { max-height: 300px; }
+
+  .dibo-f20-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .dibo-f20-label { font-size: 11px; font-weight: 600; color: #7080b0; }
+
+  .dibo-f20-input {
+    height: 46px;
+    border: 1.5px solid #e0e6ff;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 14px;
+    color: #0a1230;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+    width: 100%;
+  }
+
+  .dibo-f20-input:focus {
+    border-color: #4361ee;
+    box-shadow: 0 0 0 3px rgba(67,97,238,0.10);
+  }
+
+  .dibo-f20-input::placeholder { color: #c0caff; }
+
+  .dibo-f20-agree {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+
+  .dibo-f20-checkbox {
+    width: 15px;
+    height: 15px;
+    accent-color: #4361ee;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .dibo-f20-agree-text { font-size: 11px; color: #7080b0; line-height: 1.55; }
+  .dibo-f20-agree-link { color: #4361ee; text-decoration: underline; cursor: pointer; }
+
+  .dibo-f20-submit {
+    width: 100%;
+    height: 52px;
+    background: #4361ee;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .dibo-f20-submit:hover { background: #3451d1; }
+  .dibo-f20-submit:active { transform: scale(0.98); }
+  .dibo-f20-submit:disabled { background: #b8c4ff; cursor: default; transform: none; }
+
+  /* ── 완료 ── */
+  .dibo-f20-thanks {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px 0 8px;
+    gap: 10px;
+  }
+
+  .dibo-f20-thanks-icon { font-size: 44px; }
+  .dibo-f20-thanks-title { font-size: 18px; font-weight: 800; color: #0a1230; letter-spacing: -0.4px; }
+  .dibo-f20-thanks-msg { font-size: 12px; color: #7080b0; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="dibo-f20-wrap">
+  <div class="dibo-f20-badge">📖 수업 상담 신청</div>
+  <p class="dibo-f20-title">원하는 과목과 일정을 선택하고<br>수업 상담을 신청하세요</p>
+  <p class="dibo-f20-subtitle">탭으로 과목을 전환하며 원하는 조건을 설정해보세요</p>
+
+  <div id="diboF20FormArea">
+    <!-- 과목 탭 -->
+    <div class="dibo-f20-tabs" id="diboF20Tabs">
+      <button class="dibo-f20-tab is-active" data-tab="math">수학</button>
+      <button class="dibo-f20-tab" data-tab="english">영어</button>
+      <button class="dibo-f20-tab" data-tab="korean">국어</button>
+      <button class="dibo-f20-tab" data-tab="science">과학</button>
+      <button class="dibo-f20-tab" data-tab="social">사회</button>
+    </div>
+
+    <!-- 수학 패널 -->
+    <div class="dibo-f20-panel is-active" id="diboF20Panel-math">
+      <div class="dibo-f20-panel-info">
+        <span class="dibo-f20-panel-icon">📐</span>
+        <div class="dibo-f20-panel-desc">
+          <p class="dibo-f20-panel-name">수학 과외</p>
+          <p class="dibo-f20-panel-text">개념부터 심화까지 단계별 커리큘럼. 수능·내신 모두 대비 가능</p>
+        </div>
+      </div>
+      <p class="dibo-f20-section-title">학년 선택</p>
+      <select class="dibo-f20-grade-select" data-subject="수학" id="diboF20Grade-math">
+        <option value="">학년을 선택해주세요</option>
+        <option>중학교 1학년</option>
+        <option>중학교 2학년</option>
+        <option>중학교 3학년</option>
+        <option>고등학교 1학년</option>
+        <option>고등학교 2학년</option>
+        <option>고등학교 3학년</option>
+      </select>
+      <p class="dibo-f20-section-title">선호 수업 시간대 (복수 선택)</p>
+      <div class="dibo-f20-time-chips" data-subject="수학">
+        <button class="dibo-f20-time-chip">평일 오후 3~5시</button>
+        <button class="dibo-f20-time-chip">평일 오후 5~7시</button>
+        <button class="dibo-f20-time-chip">평일 저녁 7~9시</button>
+        <button class="dibo-f20-time-chip">주말 오전</button>
+        <button class="dibo-f20-time-chip">주말 오후</button>
+      </div>
+    </div>
+
+    <!-- 영어 패널 -->
+    <div class="dibo-f20-panel" id="diboF20Panel-english">
+      <div class="dibo-f20-panel-info">
+        <span class="dibo-f20-panel-icon">🌍</span>
+        <div class="dibo-f20-panel-desc">
+          <p class="dibo-f20-panel-name">영어 과외</p>
+          <p class="dibo-f20-panel-text">회화·문법·독해·수능 영어 전 영역 지도 가능. 영어 포기자 환영</p>
+        </div>
+      </div>
+      <p class="dibo-f20-section-title">학년 선택</p>
+      <select class="dibo-f20-grade-select" data-subject="영어" id="diboF20Grade-english">
+        <option value="">학년을 선택해주세요</option>
+        <option>초등학교 4~6학년</option>
+        <option>중학교 1학년</option>
+        <option>중학교 2학년</option>
+        <option>중학교 3학년</option>
+        <option>고등학교 1학년</option>
+        <option>고등학교 2학년</option>
+        <option>고등학교 3학년</option>
+      </select>
+      <p class="dibo-f20-section-title">선호 수업 시간대 (복수 선택)</p>
+      <div class="dibo-f20-time-chips" data-subject="영어">
+        <button class="dibo-f20-time-chip">평일 오후 3~5시</button>
+        <button class="dibo-f20-time-chip">평일 오후 5~7시</button>
+        <button class="dibo-f20-time-chip">평일 저녁 7~9시</button>
+        <button class="dibo-f20-time-chip">주말 오전</button>
+        <button class="dibo-f20-time-chip">주말 오후</button>
+      </div>
+    </div>
+
+    <!-- 국어 패널 -->
+    <div class="dibo-f20-panel" id="diboF20Panel-korean">
+      <div class="dibo-f20-panel-info">
+        <span class="dibo-f20-panel-icon">📝</span>
+        <div class="dibo-f20-panel-desc">
+          <p class="dibo-f20-panel-name">국어 과외</p>
+          <p class="dibo-f20-panel-text">문학·비문학·화법·작문 전 영역. 논술 특화 커리큘럼 운영</p>
+        </div>
+      </div>
+      <p class="dibo-f20-section-title">학년 선택</p>
+      <select class="dibo-f20-grade-select" data-subject="국어" id="diboF20Grade-korean">
+        <option value="">학년을 선택해주세요</option>
+        <option>중학교 1학년</option>
+        <option>중학교 2학년</option>
+        <option>중학교 3학년</option>
+        <option>고등학교 1학년</option>
+        <option>고등학교 2학년</option>
+        <option>고등학교 3학년</option>
+      </select>
+      <p class="dibo-f20-section-title">선호 수업 시간대 (복수 선택)</p>
+      <div class="dibo-f20-time-chips" data-subject="국어">
+        <button class="dibo-f20-time-chip">평일 오후 3~5시</button>
+        <button class="dibo-f20-time-chip">평일 오후 5~7시</button>
+        <button class="dibo-f20-time-chip">평일 저녁 7~9시</button>
+        <button class="dibo-f20-time-chip">주말 오전</button>
+        <button class="dibo-f20-time-chip">주말 오후</button>
+      </div>
+    </div>
+
+    <!-- 과학 패널 -->
+    <div class="dibo-f20-panel" id="diboF20Panel-science">
+      <div class="dibo-f20-panel-info">
+        <span class="dibo-f20-panel-icon">🔬</span>
+        <div class="dibo-f20-panel-desc">
+          <p class="dibo-f20-panel-name">과학 과외</p>
+          <p class="dibo-f20-panel-text">물리·화학·생물·지구과학 전 과목. 실험·개념·문제 풀이 통합 지도</p>
+        </div>
+      </div>
+      <p class="dibo-f20-section-title">학년 선택</p>
+      <select class="dibo-f20-grade-select" data-subject="과학" id="diboF20Grade-science">
+        <option value="">학년을 선택해주세요</option>
+        <option>중학교 1학년</option>
+        <option>중학교 2학년</option>
+        <option>중학교 3학년</option>
+        <option>고등학교 1학년</option>
+        <option>고등학교 2학년</option>
+        <option>고등학교 3학년</option>
+      </select>
+      <p class="dibo-f20-section-title">선호 수업 시간대 (복수 선택)</p>
+      <div class="dibo-f20-time-chips" data-subject="과학">
+        <button class="dibo-f20-time-chip">평일 오후 3~5시</button>
+        <button class="dibo-f20-time-chip">평일 오후 5~7시</button>
+        <button class="dibo-f20-time-chip">평일 저녁 7~9시</button>
+        <button class="dibo-f20-time-chip">주말 오전</button>
+        <button class="dibo-f20-time-chip">주말 오후</button>
+      </div>
+    </div>
+
+    <!-- 사회 패널 -->
+    <div class="dibo-f20-panel" id="diboF20Panel-social">
+      <div class="dibo-f20-panel-info">
+        <span class="dibo-f20-panel-icon">🗺️</span>
+        <div class="dibo-f20-panel-desc">
+          <p class="dibo-f20-panel-name">사회 과외</p>
+          <p class="dibo-f20-panel-text">역사·지리·경제·사회·윤리 전 과목. 암기법 + 개념 이해 중심</p>
+        </div>
+      </div>
+      <p class="dibo-f20-section-title">학년 선택</p>
+      <select class="dibo-f20-grade-select" data-subject="사회" id="diboF20Grade-social">
+        <option value="">학년을 선택해주세요</option>
+        <option>중학교 1학년</option>
+        <option>중학교 2학년</option>
+        <option>중학교 3학년</option>
+        <option>고등학교 1학년</option>
+        <option>고등학교 2학년</option>
+        <option>고등학교 3학년</option>
+      </select>
+      <p class="dibo-f20-section-title">선호 수업 시간대 (복수 선택)</p>
+      <div class="dibo-f20-time-chips" data-subject="사회">
+        <button class="dibo-f20-time-chip">평일 오후 3~5시</button>
+        <button class="dibo-f20-time-chip">평일 오후 5~7시</button>
+        <button class="dibo-f20-time-chip">평일 저녁 7~9시</button>
+        <button class="dibo-f20-time-chip">주말 오전</button>
+        <button class="dibo-f20-time-chip">주말 오후</button>
+      </div>
+    </div>
+
+    <!-- 선택 요약 -->
+    <div class="dibo-f20-summary" id="diboF20Summary"></div>
+
+    <!-- 연락처 -->
+    <div class="dibo-f20-contact" id="diboF20Contact">
+      <div>
+        <div class="dibo-f20-field">
+          <span class="dibo-f20-label">학부모 성함</span>
+          <input class="dibo-f20-input" type="text" id="diboF20Name" placeholder="홍길동" maxlength="20" />
+        </div>
+        <div class="dibo-f20-field">
+          <span class="dibo-f20-label">연락처</span>
+          <input class="dibo-f20-input" type="tel" id="diboF20Tel" placeholder="010-0000-0000" maxlength="13" />
+        </div>
+        <label class="dibo-f20-agree">
+          <input class="dibo-f20-checkbox" type="checkbox" id="diboF20Agree" />
+          <span class="dibo-f20-agree-text">
+            <span class="dibo-f20-agree-link">[필수] 개인정보 수집·이용 동의</span>에 동의합니다.
+          </span>
+        </label>
+        <button class="dibo-f20-submit" id="diboF20Submit" disabled>수업 상담 신청하기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dibo-f20-thanks" id="diboF20Thanks">
+    <div class="dibo-f20-thanks-icon">🎓</div>
+    <p class="dibo-f20-thanks-title">상담 신청 완료!</p>
+    <p class="dibo-f20-thanks-msg">선택하신 과목·시간대로 담당 선생님이<br>영업일 기준 1일 내 연락드리겠습니다.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  var tabs      = document.querySelectorAll('.dibo-f20-tab');
+  var panels    = document.querySelectorAll('.dibo-f20-panel');
+  var summaryEl = document.getElementById('diboF20Summary');
+  var contactEl = document.getElementById('diboF20Contact');
+  var nameEl    = document.getElementById('diboF20Name');
+  var telEl     = document.getElementById('diboF20Tel');
+  var agreeEl   = document.getElementById('diboF20Agree');
+  var submitEl  = document.getElementById('diboF20Submit');
+  var formArea  = document.getElementById('diboF20FormArea');
+  var thanksArea= document.getElementById('diboF20Thanks');
+
+  var curTab = 'math';
+
+  /* ── 탭 전환 ── */
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      curTab = tab.dataset.tab;
+      tabs.forEach(function (t) { t.classList.remove('is-active'); });
+      panels.forEach(function (p) { p.classList.remove('is-active'); });
+      tab.classList.add('is-active');
+      document.getElementById('diboF20Panel-' + curTab).classList.add('is-active');
+      updateSummary();
+    });
+  });
+
+  /* ── 학년 선택 ── */
+  document.querySelectorAll('.dibo-f20-grade-select').forEach(function (sel) {
+    sel.addEventListener('change', function () {
+      updateSummary();
+      validate();
+    });
+  });
+
+  /* ── 시간 칩 ── */
+  document.querySelectorAll('.dibo-f20-time-chips').forEach(function (wrap) {
+    wrap.querySelectorAll('.dibo-f20-time-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        chip.classList.toggle('is-active');
+        updateSummary();
+        validate();
+      });
+    });
+  });
+
+  function getActivePanel() {
+    return document.getElementById('diboF20Panel-' + curTab);
+  }
+
+  function updateSummary() {
+    var panel   = getActivePanel();
+    var subject = panel.querySelector('.dibo-f20-grade-select').dataset.subject;
+    var grade   = panel.querySelector('.dibo-f20-grade-select').value;
+    var times   = [];
+    panel.querySelectorAll('.dibo-f20-time-chip.is-active').forEach(function (c) {
+      times.push(c.textContent);
+    });
+
+    if (!grade && !times.length) {
+      summaryEl.style.display = 'none';
+      contactEl.classList.remove('is-open');
+      return;
+    }
+
+    summaryEl.style.display = 'block';
+    summaryEl.innerHTML =
+      '과목: <strong>' + subject + '</strong>' +
+      (grade ? ' &nbsp;|&nbsp; 학년: <strong>' + grade + '</strong>' : '') +
+      (times.length ? '<br>희망 시간: <strong>' + times.join(', ') + '</strong>' : '');
+
+    if (grade && times.length) {
+      contactEl.classList.add('is-open');
+    }
+  }
+
+  /* ── 전화번호 포맷 ── */
+  telEl.addEventListener('input', function () {
+    var v = telEl.value.replace(/\D/g,'');
+    if (v.length <= 3)      telEl.value = v;
+    else if (v.length <= 7) telEl.value = v.slice(0,3)+'-'+v.slice(3);
+    else                    telEl.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+    validate();
+  });
+
+  nameEl.addEventListener('input', validate);
+  agreeEl.addEventListener('change', validate);
+
+  function validate() {
+    var panel = getActivePanel();
+    var grade = panel.querySelector('.dibo-f20-grade-select').value;
+    var times = panel.querySelectorAll('.dibo-f20-time-chip.is-active').length;
+    submitEl.disabled = !(
+      grade &&
+      times >= 1 &&
+      nameEl.value.trim().length >= 2 &&
+      telEl.value.replace(/\D/g,'').length >= 10 &&
+      agreeEl.checked
+    );
+  }
+
+  submitEl.addEventListener('click', function () {
+    if (this.disabled) return;
+    formArea.style.display = 'none';
+    thanksArea.style.display = 'flex';
+  });
+})();
+</script>
+</body>
+</html>

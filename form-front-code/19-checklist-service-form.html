@@ -1,0 +1,571 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- ================================================
+   DIBO F19 · 체크리스트 서비스 선택 폼 · 호텔 버전
+   class prefix : dibo-f19-
+   아임웹 코드위젯 즉시 적용
+   ================================================ -->
+<style>
+  .dibo-f19-wrap {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0f0f0f;
+    border-radius: 20px;
+    padding: 28px 20px 32px;
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: 0 8px 40px rgba(212,168,67,0.12);
+    border: 1px solid #1e1e1e;
+  }
+
+  .dibo-f19-badge {
+    display: inline-block;
+    background: rgba(212,168,67,0.1);
+    color: #d4a843;
+    border: 1px solid rgba(212,168,67,0.25);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+
+  .dibo-f19-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #f5f0e0;
+    margin: 0 0 4px;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+  }
+
+  .dibo-f19-subtitle {
+    font-size: 12px;
+    color: #666;
+    margin: 0 0 20px;
+    line-height: 1.6;
+  }
+
+  /* ── 서비스 카드 그리드 ── */
+  .dibo-f19-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #d4a843;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin: 0 0 12px;
+  }
+
+  .dibo-f19-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 360px) {
+    .dibo-f19-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .dibo-f19-service-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 8px;
+    background: #191919;
+    border: 1.5px solid #2a2a2a;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    position: relative;
+  }
+
+  .dibo-f19-service-card:hover {
+    border-color: rgba(212,168,67,0.4);
+    transform: translateY(-1px);
+  }
+
+  .dibo-f19-service-card.is-checked {
+    border-color: #d4a843;
+    background: rgba(212,168,67,0.08);
+  }
+
+  .dibo-f19-card-check {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 16px;
+    height: 16px;
+    background: #d4a843;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .dibo-f19-service-card.is-checked .dibo-f19-card-check {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .dibo-f19-card-icon { font-size: 24px; }
+
+  .dibo-f19-card-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: #ccc;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .dibo-f19-service-card.is-checked .dibo-f19-card-name { color: #d4a843; }
+
+  /* ── 추천 결과 ── */
+  .dibo-f19-result {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1);
+    margin-bottom: 0;
+  }
+
+  .dibo-f19-result.is-open {
+    max-height: 400px;
+    margin-bottom: 20px;
+  }
+
+  .dibo-f19-result-inner { padding-top: 4px; }
+
+  .dibo-f19-result-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #d4a843;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .dibo-f19-result-card {
+    background: linear-gradient(135deg, #1a1400, #2a2000);
+    border: 1.5px solid rgba(212,168,67,0.3);
+    border-radius: 14px;
+    padding: 18px;
+  }
+
+  .dibo-f19-result-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .dibo-f19-result-icon-wrap {
+    width: 48px;
+    height: 48px;
+    background: rgba(212,168,67,0.15);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .dibo-f19-result-info { flex: 1; }
+
+  .dibo-f19-result-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #d4a843;
+    background: rgba(212,168,67,0.12);
+    padding: 2px 8px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+
+  .dibo-f19-result-name {
+    font-size: 16px;
+    font-weight: 800;
+    color: #f5f0e0;
+    margin: 0 0 2px;
+    letter-spacing: -0.3px;
+  }
+
+  .dibo-f19-result-price {
+    font-size: 13px;
+    font-weight: 700;
+    color: #d4a843;
+  }
+
+  .dibo-f19-result-desc {
+    font-size: 12px;
+    color: #888;
+    line-height: 1.6;
+    border-top: 1px solid rgba(212,168,67,0.15);
+    padding-top: 10px;
+    margin-top: 0;
+  }
+
+  .dibo-f19-result-includes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
+  }
+
+  .dibo-f19-result-include {
+    font-size: 10px;
+    font-weight: 700;
+    color: #d4a843;
+    background: rgba(212,168,67,0.1);
+    border: 1px solid rgba(212,168,67,0.2);
+    padding: 3px 9px;
+    border-radius: 20px;
+  }
+
+  /* ── 연락처 ── */
+  .dibo-f19-contact {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .dibo-f19-contact.is-open { max-height: 300px; }
+
+  .dibo-f19-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .dibo-f19-label { font-size: 11px; font-weight: 600; color: #666; }
+
+  .dibo-f19-input {
+    height: 46px;
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 14px;
+    color: #f5f0e0;
+    background: #191919;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+    width: 100%;
+  }
+
+  .dibo-f19-input:focus {
+    border-color: #d4a843;
+    box-shadow: 0 0 0 3px rgba(212,168,67,0.10);
+  }
+
+  .dibo-f19-input::placeholder { color: #3a3a3a; }
+
+  .dibo-f19-agree {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+
+  .dibo-f19-checkbox {
+    width: 15px;
+    height: 15px;
+    accent-color: #d4a843;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .dibo-f19-agree-text { font-size: 11px; color: #555; line-height: 1.55; }
+  .dibo-f19-agree-link { color: #d4a843; text-decoration: underline; cursor: pointer; }
+
+  .dibo-f19-inquiry-btn {
+    width: 100%;
+    height: 52px;
+    background: #d4a843;
+    color: #0f0f0f;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+    margin-bottom: 8px;
+  }
+
+  .dibo-f19-inquiry-btn:hover { background: #c49830; }
+  .dibo-f19-inquiry-btn:active { transform: scale(0.98); }
+
+  .dibo-f19-submit {
+    width: 100%;
+    height: 52px;
+    background: #d4a843;
+    color: #0f0f0f;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .dibo-f19-submit:hover { background: #c49830; }
+  .dibo-f19-submit:active { transform: scale(0.98); }
+  .dibo-f19-submit:disabled { background: #3a2a10; color: #5a4a20; cursor: default; transform: none; }
+
+  /* ── 완료 ── */
+  .dibo-f19-thanks {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px 0 8px;
+    gap: 10px;
+  }
+
+  .dibo-f19-thanks-icon { font-size: 44px; }
+  .dibo-f19-thanks-title { font-size: 18px; font-weight: 800; color: #d4a843; letter-spacing: -0.4px; }
+  .dibo-f19-thanks-msg { font-size: 12px; color: #666; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="dibo-f19-wrap">
+  <div class="dibo-f19-badge">✨ 맞춤 패키지 추천</div>
+  <p class="dibo-f19-title">원하는 서비스를 체크하면<br>최적 패키지를 추천해드립니다</p>
+  <p class="dibo-f19-subtitle">선택한 조합에 가장 잘 맞는 패키지가 자동으로 추천됩니다</p>
+
+  <div id="diboF19FormArea">
+    <p class="dibo-f19-section-title">원하는 서비스를 선택해주세요</p>
+    <div class="dibo-f19-grid" id="diboF19Grid">
+      <div class="dibo-f19-service-card" data-service="breakfast" data-score="10">
+        <div class="dibo-f19-card-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="#0f0f0f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="dibo-f19-card-icon">🍳</span>
+        <span class="dibo-f19-card-name">조식 포함</span>
+      </div>
+      <div class="dibo-f19-service-card" data-service="spa" data-score="8">
+        <div class="dibo-f19-card-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="#0f0f0f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="dibo-f19-card-icon">🧖</span>
+        <span class="dibo-f19-card-name">스파·마사지</span>
+      </div>
+      <div class="dibo-f19-service-card" data-service="pool" data-score="6">
+        <div class="dibo-f19-card-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="#0f0f0f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="dibo-f19-card-icon">🏊</span>
+        <span class="dibo-f19-card-name">수영장</span>
+      </div>
+      <div class="dibo-f19-service-card" data-service="pickup" data-score="4">
+        <div class="dibo-f19-card-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="#0f0f0f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="dibo-f19-card-icon">🚗</span>
+        <span class="dibo-f19-card-name">공항 픽업</span>
+      </div>
+      <div class="dibo-f19-service-card" data-service="dining" data-score="7">
+        <div class="dibo-f19-card-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="#0f0f0f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="dibo-f19-card-icon">🍽️</span>
+        <span class="dibo-f19-card-name">파인 다이닝</span>
+      </div>
+      <div class="dibo-f19-service-card" data-service="view" data-score="5">
+        <div class="dibo-f19-card-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="#0f0f0f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="dibo-f19-card-icon">🌅</span>
+        <span class="dibo-f19-card-name">오션뷰 룸</span>
+      </div>
+      <div class="dibo-f19-service-card" data-service="welcome" data-score="3">
+        <div class="dibo-f19-card-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="#0f0f0f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="dibo-f19-card-icon">🍾</span>
+        <span class="dibo-f19-card-name">웰컴 드링크</span>
+      </div>
+      <div class="dibo-f19-service-card" data-service="late" data-score="2">
+        <div class="dibo-f19-card-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="#0f0f0f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="dibo-f19-card-icon">🕐</span>
+        <span class="dibo-f19-card-name">레이트 체크아웃</span>
+      </div>
+      <div class="dibo-f19-service-card" data-service="pet" data-score="1">
+        <div class="dibo-f19-card-check"><svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="#0f0f0f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="dibo-f19-card-icon">🐾</span>
+        <span class="dibo-f19-card-name">반려동물 동반</span>
+      </div>
+    </div>
+
+    <!-- 추천 결과 -->
+    <div class="dibo-f19-result" id="diboF19Result">
+      <div class="dibo-f19-result-inner">
+        <p class="dibo-f19-result-title">추천 패키지</p>
+        <div class="dibo-f19-result-card" id="diboF19ResultCard"></div>
+      </div>
+    </div>
+
+    <!-- 예약 문의 버튼 -->
+    <button class="dibo-f19-inquiry-btn" id="diboF19InquiryBtn" style="display:none">이 패키지로 예약 문의하기</button>
+
+    <!-- 연락처 -->
+    <div class="dibo-f19-contact" id="diboF19Contact">
+      <div>
+        <div class="dibo-f19-field">
+          <span class="dibo-f19-label">성함</span>
+          <input class="dibo-f19-input" type="text" id="diboF19Name" placeholder="홍길동" maxlength="20" />
+        </div>
+        <div class="dibo-f19-field">
+          <span class="dibo-f19-label">연락처</span>
+          <input class="dibo-f19-input" type="tel" id="diboF19Tel" placeholder="010-0000-0000" maxlength="13" />
+        </div>
+        <label class="dibo-f19-agree">
+          <input class="dibo-f19-checkbox" type="checkbox" id="diboF19Agree" />
+          <span class="dibo-f19-agree-text">
+            <span class="dibo-f19-agree-link">[필수] 개인정보 수집·이용 동의</span>에 동의합니다.
+          </span>
+        </label>
+        <button class="dibo-f19-submit" id="diboF19Submit" disabled>예약 문의 신청</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dibo-f19-thanks" id="diboF19Thanks">
+    <div class="dibo-f19-thanks-icon">🥂</div>
+    <p class="dibo-f19-thanks-title">예약 문의 완료!</p>
+    <p class="dibo-f19-thanks-msg">추천 패키지 상세 안내와 함께<br>당일 내 연락드리겠습니다.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  /* ── 패키지 추천 로직 ── */
+  var PACKAGES = [
+    {
+      minScore: 30, icon: '👑', label: '프리미엄',
+      name: '로열 올인클루시브',
+      price: '1박 990,000원~',
+      desc: '조식·스파·파인다이닝·공항픽업·오션뷰·웰컴드링크까지 모든 것이 포함된 최상위 패키지',
+      includes: ['조식', '스파', '파인다이닝', '공항픽업', '오션뷰', '웰컴드링크', '레이트체크아웃']
+    },
+    {
+      minScore: 18, icon: '💎', label: '럭셔리',
+      name: '딜럭스 웰니스 패키지',
+      price: '1박 590,000원~',
+      desc: '스파와 다이닝이 포함된 럭셔리 웰니스 경험. 조식과 오션뷰룸이 기본 제공됩니다',
+      includes: ['조식', '스파', '파인다이닝', '오션뷰']
+    },
+    {
+      minScore: 10, icon: '🌟', label: '스탠다드',
+      name: '베스트 스테이 패키지',
+      price: '1박 320,000원~',
+      desc: '조식과 편의시설이 포함된 합리적인 스탠다드 패키지',
+      includes: ['조식', '수영장', '웰컴드링크']
+    },
+    {
+      minScore: 0, icon: '🏨', label: '에센셜',
+      name: '에센셜 룸 패키지',
+      price: '1박 180,000원~',
+      desc: '가장 합리적인 가격으로 깔끔한 숙박을 제공하는 기본 패키지',
+      includes: ['조식', '레이트체크아웃']
+    }
+  ];
+
+  var serviceCards = document.querySelectorAll('.dibo-f19-service-card');
+  var resultEl    = document.getElementById('diboF19Result');
+  var resultCard  = document.getElementById('diboF19ResultCard');
+  var inquiryBtn  = document.getElementById('diboF19InquiryBtn');
+  var contactEl   = document.getElementById('diboF19Contact');
+  var nameEl      = document.getElementById('diboF19Name');
+  var telEl       = document.getElementById('diboF19Tel');
+  var agreeEl     = document.getElementById('diboF19Agree');
+  var submitEl    = document.getElementById('diboF19Submit');
+  var formArea    = document.getElementById('diboF19FormArea');
+  var thanksArea  = document.getElementById('diboF19Thanks');
+
+  serviceCards.forEach(function (card) {
+    card.addEventListener('click', function () {
+      card.classList.toggle('is-checked');
+      updateResult();
+    });
+  });
+
+  function updateResult() {
+    var score = 0;
+    var checked = 0;
+    serviceCards.forEach(function (card) {
+      if (card.classList.contains('is-checked')) {
+        score += parseInt(card.dataset.score);
+        checked++;
+      }
+    });
+
+    if (checked === 0) {
+      resultEl.classList.remove('is-open');
+      inquiryBtn.style.display = 'none';
+      return;
+    }
+
+    var pkg = PACKAGES[PACKAGES.length - 1];
+    for (var i = 0; i < PACKAGES.length; i++) {
+      if (score >= PACKAGES[i].minScore) { pkg = PACKAGES[i]; break; }
+    }
+
+    resultCard.innerHTML =
+      '<div class="dibo-f19-result-header">' +
+        '<div class="dibo-f19-result-icon-wrap">' + pkg.icon + '</div>' +
+        '<div class="dibo-f19-result-info">' +
+          '<span class="dibo-f19-result-label">' + pkg.label + '</span>' +
+          '<p class="dibo-f19-result-name">' + pkg.name + '</p>' +
+          '<p class="dibo-f19-result-price">' + pkg.price + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<p class="dibo-f19-result-desc">' + pkg.desc + '</p>' +
+      '<div class="dibo-f19-result-includes">' +
+        pkg.includes.map(function (i) {
+          return '<span class="dibo-f19-result-include">✓ ' + i + '</span>';
+        }).join('') +
+      '</div>';
+
+    resultEl.classList.add('is-open');
+    inquiryBtn.style.display = 'block';
+  }
+
+  inquiryBtn.addEventListener('click', function () {
+    contactEl.classList.add('is-open');
+    inquiryBtn.style.display = 'none';
+    setTimeout(function () {
+      contactEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+  });
+
+  telEl.addEventListener('input', function () {
+    var v = telEl.value.replace(/\D/g,'');
+    if (v.length <= 3)      telEl.value = v;
+    else if (v.length <= 7) telEl.value = v.slice(0,3)+'-'+v.slice(3);
+    else                    telEl.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+    validate();
+  });
+
+  nameEl.addEventListener('input', validate);
+  agreeEl.addEventListener('change', validate);
+
+  function validate() {
+    submitEl.disabled = !(
+      nameEl.value.trim().length >= 2 &&
+      telEl.value.replace(/\D/g,'').length >= 10 &&
+      agreeEl.checked
+    );
+  }
+
+  submitEl.addEventListener('click', function () {
+    if (this.disabled) return;
+    formArea.style.display = 'none';
+    thanksArea.style.display = 'flex';
+  });
+})();
+</script>
+</body>
+</html>

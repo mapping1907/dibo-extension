@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>게시글 — DIBO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #f5f5f7;
+      --white:  #ffffff;
+      --dark:   #1d1d1f;
+      --mid:    #6e6e73;
+      --border: #d2d2d7;
+      --blue:   #0071e3;
+      --blue-light: rgba(0,113,227,.08);
+      --red:    #ff3b30;
+      --green:  #34c759;
+      --ease:   cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: 'Noto Sans KR', 'Poppins', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: var(--bg);
+      min-height: 100vh;
+      padding: 48px 24px 80px;
+    }
+
+    .wrap { max-width: 800px; margin: 0 auto; }
+
+    /* ── 상단 내비 ── */
+    .top-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px; flex-wrap: wrap; gap: 10px;
+    }
+    .btn-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 100px;
+      background: var(--white); color: var(--mid);
+      font-size: 13px; font-weight: 600;
+      text-decoration: none; border: 1.5px solid var(--border);
+      transition: all .18s;
+    }
+    .btn-back:hover { border-color: var(--dark); color: var(--dark); }
+
+    .top-actions { display: flex; gap: 8px; }
+    .btn {
+      padding: 9px 20px; border-radius: 100px;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 13px; font-weight: 700;
+      border: none; cursor: pointer;
+      transition: all .18s var(--ease);
+    }
+    .btn-edit   { background: var(--dark); color: #fff; }
+    .btn-edit:hover { background: var(--blue); }
+    .btn-delete { background: rgba(255,59,48,.1); color: var(--red); }
+    .btn-delete:hover { background: var(--red); color: #fff; }
+    .btn-save   { background: var(--blue); color: #fff; }
+    .btn-save:hover { filter: brightness(1.1); }
+    .btn-cancel { background: var(--bg); color: var(--mid); border: 1.5px solid var(--border); }
+    .btn-cancel:hover { border-color: var(--dark); color: var(--dark); }
+
+    /* ── 404 ── */
+    .not-found {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 16px; padding: 100px 24px; text-align: center;
+    }
+    .not-found h2 { font-size: 20px; color: var(--dark); }
+    .not-found p  { font-size: 14px; color: var(--mid); }
+
+    /* ── 뷰 카드 ── */
+    .view-card {
+      background: var(--white); border-radius: 20px; overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.07);
+    }
+
+    /* 뷰 모드 */
+    .view-thumbnail { width: 100%; aspect-ratio: 16/6; object-fit: cover; display: block; }
+    .view-head {
+      padding: 32px 36px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .view-meta-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .cat-badge { display: inline-block; padding: 4px 11px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+    .cat-공지   { background: rgba(255, 59, 48, .1); color: #ff3b30; }
+    .cat-이벤트 { background: rgba(255,149,  0, .1); color: #ff9500; }
+    .cat-일반   { background: rgba( 52,199, 89, .1); color: #34c759; }
+    .cat-질문   { background: rgba( 88, 86,214, .1); color: #5856d6; }
+    .view-title {
+      font-family: 'Poppins', 'Noto Sans KR', sans-serif;
+      font-size: 26px; font-weight: 800;
+      color: var(--dark); letter-spacing: -.04em;
+      line-height: 1.3; word-break: keep-all;
+    }
+    .view-info { display: flex; align-items: center; gap: 16px; margin-top: 16px; font-size: 13px; color: var(--mid); flex-wrap: wrap; }
+    .view-info-item { display: flex; align-items: center; gap: 5px; }
+    .view-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 12px; }
+    .view-tag { font-size: 11px; color: var(--mid); background: var(--bg); padding: 3px 9px; border-radius: 6px; font-weight: 500; }
+    .view-body { padding: 32px 36px; border-bottom: 1px solid var(--border); }
+    .view-content {
+      font-size: 15px; color: var(--dark);
+      line-height: 1.85; word-break: keep-all;
+    }
+    .view-content p { margin-bottom: .75em; }
+    .view-content p:last-child { margin-bottom: 0; }
+    .view-content h1 { font-size: 2em; font-weight: 800; margin-bottom: .5em; }
+    .view-content h2 { font-size: 1.5em; font-weight: 700; margin-bottom: .5em; }
+    .view-content h3 { font-size: 1.2em; font-weight: 700; margin-bottom: .5em; }
+    .view-content ul, .view-content ol { padding-left: 1.4em; margin-bottom: .75em; }
+    .view-content blockquote { border-left: 3px solid var(--blue); padding-left: 16px; color: var(--mid); margin: 12px 0; }
+    .view-content pre { background: #1d1d1f; color: #f5f5f7; border-radius: 10px; padding: 16px 18px; font-size: 13px; overflow-x: auto; margin-bottom: .75em; }
+    .view-content code { background: rgba(0,0,0,.06); border-radius: 4px; padding: 2px 5px; font-size: .88em; }
+    .view-content pre code { background: none; padding: 0; }
+    .view-content a { color: var(--blue); text-decoration: underline; }
+    .view-content img { max-width: 100%; border-radius: 8px; display: block; }
+    .view-content table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    .view-content td, .view-content th { border: 1.5px solid var(--border); padding: 8px 12px; }
+    .view-content th { background: var(--bg); font-weight: 700; }
+
+    /* ── 편집 폼 ── */
+    .edit-form { display: none; }
+    .edit-form.active { display: block; }
+    .view-mode.hidden { display: none; }
+
+    .edit-head {
+      padding: 24px 36px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,113,227,.02);
+    }
+    .edit-label-row { display: flex; align-items: center; gap: 8px; }
+    .edit-badge { padding: 4px 12px; border-radius: 100px; background: rgba(0,113,227,.1); color: var(--blue); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
+    .edit-hint { font-size: 12px; color: var(--mid); }
+
+    .edit-field { margin-bottom: 18px; }
+    .edit-field:last-child { margin-bottom: 0; }
+    .edit-field-label { font-size: 12px; font-weight: 700; color: var(--mid); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 7px; }
+    .edit-input, .edit-select {
+      width: 100%; padding: 11px 14px; border-radius: 10px;
+      border: 1.5px solid var(--border);
+      font-family: 'Noto Sans KR', sans-serif; font-size: 14px; color: var(--dark);
+      outline: none; background: var(--white); transition: border-color .18s;
+    }
+    .edit-input:focus, .edit-select:focus { border-color: var(--blue); }
+    .edit-select {
+      appearance: none; cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236e6e73' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+    }
+    .edit-body { padding: 24px 36px 28px; }
+    .edit-actions {
+      display: flex; justify-content: flex-end; gap: 8px;
+      margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);
+    }
+
+    /* ══════════════════════════════
+       EDITOR (edit form)
+    ══════════════════════════════ */
+    .editor-wrap { border: 1.5px solid var(--border); border-radius: 12px; overflow: visible; transition: border-color .18s; position: relative; }
+    .editor-wrap:focus-within { border-color: var(--blue); }
+
+    .toolbar {
+      display: flex; align-items: center;
+      background: var(--bg); border-bottom: 1px solid var(--border);
+      border-radius: 10px 10px 0 0;
+      position: sticky; top: 0; z-index: 50; overflow: hidden;
+    }
+    .tb-fixed { display: flex; align-items: center; gap: 1px; padding: 6px 6px 6px 10px; flex-shrink: 0; border-right: 1px solid var(--border); }
+    .tb-scroll { display: flex; align-items: center; gap: 1px; padding: 6px 10px 6px 6px; overflow-x: auto; overflow-y: hidden; flex: 1; min-width: 0; scrollbar-width: none; }
+    .tb-scroll::-webkit-scrollbar { display: none; }
+    .tb-sep { width: 1px; height: 18px; background: var(--border); margin: 0 4px; flex-shrink: 0; }
+    .tb-group { display: flex; align-items: center; gap: 1px; flex-shrink: 0; }
+    .tb-btn {
+      width: 26px; height: 26px; border: none; background: transparent; border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--dark); transition: background .14s, color .14s;
+      flex-shrink: 0; padding: 0;
+    }
+    .tb-btn:hover { background: var(--blue-light); color: var(--blue); }
+    .tb-btn.active { background: rgba(0,113,227,.14); color: var(--blue); }
+    .tb-btn:disabled { opacity: .35; cursor: default; }
+    .tb-btn svg { width: 14px; height: 14px; pointer-events: none; }
+    .tb-select {
+      height: 26px; padding: 0 22px 0 7px; border: 1.5px solid var(--border); border-radius: 5px;
+      background: var(--white); font-family: 'Noto Sans KR', sans-serif; font-size: 12px; color: var(--dark);
+      cursor: pointer; outline: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236e6e73' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 6px center; transition: border-color .15s;
+    }
+    .tb-select:focus, .tb-select:hover { border-color: var(--blue); }
+    .tb-color { position: relative; width: 26px; height: 26px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .14s; }
+    .tb-color:hover { background: var(--blue-light); }
+    .tb-color input[type=color] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; padding: 0; border: none; }
+    .tb-color svg { width: 14px; height: 14px; pointer-events: none; }
+    .color-bar { position: absolute; bottom: 3px; left: 4px; right: 4px; height: 3px; border-radius: 2px; pointer-events: none; }
+
+    .link-dialog {
+      display: none; position: absolute; top: calc(100% + 6px); left: 0;
+      background: var(--white); border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 14px; box-shadow: 0 8px 28px rgba(0,0,0,.12); z-index: 200;
+      width: 320px; flex-direction: column; gap: 10px;
+    }
+    .link-dialog.show { display: flex; }
+    .link-dialog-title { font-size: 12px; font-weight: 700; color: var(--mid); letter-spacing: .06em; text-transform: uppercase; }
+    .link-dialog input { padding: 9px 12px; border-radius: 8px; border: 1.5px solid var(--border); font-family: 'Noto Sans KR', sans-serif; font-size: 13px; color: var(--dark); outline: none; transition: border-color .15s; }
+    .link-dialog input:focus { border-color: var(--blue); }
+    .link-dialog-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .link-btn { padding: 7px 16px; border-radius: 100px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
+    .link-btn-ok { background: var(--blue); color: #fff; }
+    .link-btn-cancel { background: var(--bg); color: var(--mid); }
+
+    .table-picker {
+      display: none; position: absolute; top: calc(100% + 6px); left: 0;
+      background: var(--white); border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 12px; box-shadow: 0 8px 28px rgba(0,0,0,.12); z-index: 200;
+    }
+    .table-picker.show { display: block; }
+    .table-grid { display: grid; grid-template-columns: repeat(8,18px); gap: 3px; margin-bottom: 8px; }
+    .tg-cell { width: 18px; height: 18px; border-radius: 3px; border: 1.5px solid var(--border); cursor: pointer; transition: all .1s; }
+    .tg-cell.hover { background: rgba(0,113,227,.2); border-color: var(--blue); }
+    .table-size-label { font-size: 11px; color: var(--mid); text-align: center; font-weight: 600; }
+
+    #editEditorContent {
+      min-height: 360px; padding: 24px 28px;
+      font-family: 'Noto Sans KR', sans-serif; font-size: 15px; line-height: 1.85;
+      color: var(--dark); outline: none; cursor: text;
+    }
+    #editEditorContent .ProseMirror { outline: none; min-height: 320px; }
+    #editEditorContent .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: var(--mid); pointer-events: none; float: left; height: 0; }
+    #editEditorContent .ProseMirror > * + * { margin-top: .75em; }
+    #editEditorContent .ProseMirror h1 { font-size: 2em; font-weight: 800; letter-spacing: -.04em; line-height: 1.2; }
+    #editEditorContent .ProseMirror h2 { font-size: 1.5em; font-weight: 700; letter-spacing: -.03em; line-height: 1.25; }
+    #editEditorContent .ProseMirror h3 { font-size: 1.2em; font-weight: 700; letter-spacing: -.02em; }
+    #editEditorContent .ProseMirror ul { padding-left: 1.4em; }
+    #editEditorContent .ProseMirror ol { padding-left: 1.4em; }
+    #editEditorContent .ProseMirror li > p { margin: 0; }
+    #editEditorContent .ProseMirror blockquote { border-left: 3px solid var(--blue); padding-left: 16px; color: var(--mid); margin: 12px 0; }
+    #editEditorContent .ProseMirror pre { background: #1d1d1f; color: #f5f5f7; border-radius: 10px; padding: 16px 18px; font-size: 13px; overflow-x: auto; }
+    #editEditorContent .ProseMirror code { background: rgba(0,0,0,.06); border-radius: 4px; padding: 2px 5px; font-size: .88em; }
+    #editEditorContent .ProseMirror pre code { background: none; padding: 0; }
+    #editEditorContent .ProseMirror a { color: var(--blue); text-decoration: underline; }
+    #editEditorContent .ProseMirror img { max-width: 100%; border-radius: 8px; display: block; cursor: pointer; transition: outline .15s; }
+    #editEditorContent .ProseMirror hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+    #editEditorContent .ProseMirror table { border-collapse: collapse; width: 100%; margin: 12px 0; table-layout: fixed; }
+    #editEditorContent .ProseMirror td, #editEditorContent .ProseMirror th { border: 1.5px solid var(--border); padding: 8px 12px; min-width: 80px; vertical-align: top; position: relative; }
+    #editEditorContent .ProseMirror th { background: var(--bg); font-weight: 700; font-size: 13px; }
+    #editEditorContent .ProseMirror .selectedCell::after { content: ''; position: absolute; inset: 0; background: rgba(0,113,227,.08); pointer-events: none; }
+
+    .img-resize-overlay { position: absolute; pointer-events: none; z-index: 30; border: 2px solid var(--blue); border-radius: 2px; }
+    .img-resize-handle { position: absolute; width: 10px; height: 10px; background: var(--white); border: 2px solid var(--blue); border-radius: 2px; pointer-events: all; cursor: nwse-resize; }
+    .img-resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+    .img-resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+    .img-resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+    .img-resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+
+    .editor-footer { display: flex; justify-content: flex-end; padding: 6px 14px 7px; background: var(--bg); border-top: 1px solid var(--border); border-radius: 0 0 10px 10px; }
+    .char-count { font-size: 11px; color: var(--mid); }
+
+    /* ── 이전/다음 글 ── */
+    .post-nav { margin-top: 16px; background: var(--white); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.06); }
+    .post-nav-item { display: flex; align-items: center; gap: 14px; padding: 16px 24px; text-decoration: none; color: inherit; border-bottom: 1px solid var(--border); transition: background .15s; }
+    .post-nav-item:last-child { border-bottom: none; }
+    .post-nav-item:hover { background: #f0f6ff; }
+    .nav-label { font-size: 11px; font-weight: 700; color: var(--mid); letter-spacing: .08em; text-transform: uppercase; flex-shrink: 0; width: 36px; }
+    .nav-title { font-size: 14px; font-weight: 600; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; transition: color .15s; }
+    .post-nav-item:hover .nav-title { color: var(--blue); }
+    .nav-date { font-size: 12px; color: var(--mid); flex-shrink: 0; }
+
+    /* ── 토스트 ── */
+    .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--dark); color: #fff; padding: 12px 24px; border-radius: 100px; font-size: 14px; font-weight: 600; pointer-events: none; opacity: 0; transition: all .3s var(--ease); white-space: nowrap; z-index: 999; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* ── 확인 다이얼로그 ── */
+    .dialog-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.4); backdrop-filter: blur(8px); z-index: 900; display: flex; align-items: center; justify-content: center; padding: 24px; opacity: 0; pointer-events: none; transition: opacity .2s; }
+    .dialog-backdrop.show { opacity: 1; pointer-events: auto; }
+    .dialog-box { background: var(--white); border-radius: 16px; padding: 28px; max-width: 360px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,.2); transform: scale(.95); transition: transform .2s var(--ease); }
+    .dialog-backdrop.show .dialog-box { transform: scale(1); }
+    .dialog-title { font-size: 17px; font-weight: 800; color: var(--dark); margin-bottom: 8px; }
+    .dialog-desc  { font-size: 14px; color: var(--mid); line-height: 1.6; margin-bottom: 24px; }
+    .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    @media (max-width: 600px) {
+      .view-head, .view-body, .edit-head, .edit-body { padding-left: 20px; padding-right: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- 상단 내비 -->
+    <div class="top-nav">
+      <a href="list.html" class="btn-back">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        목록으로
+      </a>
+      <div class="top-actions" id="topActions"></div>
+    </div>
+
+    <!-- 404 영역 -->
+    <div id="notFound" style="display:none">
+      <div class="not-found">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <rect x="8" y="6" width="32" height="38" rx="5" stroke="#6e6e73" stroke-width="2"/>
+          <path d="M17 20h14M17 27h14M17 34h8" stroke="#6e6e73" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <h2>게시글을 찾을 수 없습니다</h2>
+        <p>삭제되었거나 잘못된 주소입니다.</p>
+        <a href="list.html" class="btn btn-edit" style="text-decoration:none;margin-top:8px">목록으로 돌아가기</a>
+      </div>
+    </div>
+
+    <!-- 메인 카드 (뷰 + 편집 폼) -->
+    <div class="view-card" id="mainCard" style="display:none">
+
+      <!-- 뷰 모드 -->
+      <div id="viewMode" class="view-mode"></div>
+
+      <!-- 편집 폼 (정적 HTML, TipTap 에디터 포함) -->
+      <div id="editForm" class="edit-form">
+        <div class="edit-head">
+          <div class="edit-label-row">
+            <span class="edit-badge">EDIT MODE</span>
+            <span class="edit-hint">내용을 수정하고 저장 버튼을 누르세요.</span>
+          </div>
+        </div>
+        <div class="edit-body">
+          <div class="edit-field">
+            <div class="edit-field-label">분류</div>
+            <select class="edit-select" id="editCategory">
+              <option value="공지">공지</option>
+              <option value="이벤트">이벤트</option>
+              <option value="일반">일반</option>
+              <option value="질문">질문</option>
+            </select>
+          </div>
+          <div class="edit-field">
+            <div class="edit-field-label">제목</div>
+            <input type="text" class="edit-input" id="editTitle" maxlength="100" />
+          </div>
+          <div class="edit-field">
+            <div class="edit-field-label">내용</div>
+            <div class="editor-wrap" id="editEditorWrap">
+
+              <!-- 툴바 -->
+              <div class="toolbar" id="editToolbar">
+                <!-- 고정 영역 -->
+                <div class="tb-fixed">
+                  <div class="tb-group">
+                    <button class="tb-btn" id="btnUndo" title="실행 취소 (Ctrl+Z)">
+                      <svg viewBox="0 0 16 16" fill="none"><path d="M3 6h7a4 4 0 010 8H7M3 6l3-3M3 6l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <button class="tb-btn" id="btnRedo" title="다시 실행 (Ctrl+Y)">
+                      <svg viewBox="0 0 16 16" fill="none"><path d="M13 6H6a4 4 0 000 8h3M13 6l-3-3M13 6l-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                  </div>
+                  <div class="tb-sep"></div>
+                  <div class="tb-group">
+                    <select class="tb-select" id="headingSelect" style="width:72px" title="단락 스타일">
+                      <option value="0">본문</option>
+                      <option value="1">제목 1</option>
+                      <option value="2">제목 2</option>
+                      <option value="3">제목 3</option>
+                    </select>
+                  </div>
+                  <div class="tb-group" style="margin-left:2px">
+                    <select class="tb-select" id="fontSizeSelect" style="width:52px" title="글자 크기">
+                      <option value="10">10</option>
+                      <option value="12">12</option>
+                      <option value="14">14</option>
+                      <option value="16" selected>16</option>
+                      <option value="18">18</option>
+                      <option value="20">20</option>
+                      <option value="24">24</option>
+                      <option value="28">28</option>
+                      <option value="32">32</option>
+                      <option value="36">36</option>
+                      <option value="48">48</option>
+                    </select>
+                  </div>
+                  <div class="tb-group" style="margin-left:2px">
+                    <select class="tb-select" id="lineHeightSelect" style="width:58px" title="행간">
+                      <option value="1">1.0</option>
+                      <option value="1.2">1.2</option>
+                      <option value="1.5">1.5</option>
+                      <option value="1.75" selected>1.75</option>
+                      <option value="2">2.0</option>
+                      <option value="2.5">2.5</option>
+                      <option value="3">3.0</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- 횡스크롤 영역 -->
+                <div class="tb-scroll">
+                  <div class="tb-group">
+                    <button class="tb-btn" data-cmd="bold" title="굵게 (Ctrl+B)">
+                      <svg viewBox="0 0 16 16" fill="none"><path d="M4 3h5a3 3 0 010 6H4V3zM4 9h6a3 3 0 010 6H4V9z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <button class="tb-btn" data-cmd="italic" title="기울임 (Ctrl+I)">
+                      <svg viewBox="0 0 16 16" fill="none"><line x1="10" y1="3" x2="6" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="7" y1="3" x2="13" y2="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="13" x2="9" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    </button>
+                    <button class="tb-btn" data-cmd="underline" title="밑줄 (Ctrl+U)">
+                      <svg viewBox="0 0 16 16" fill="none"><path d="M4 3v5a4 4 0 008 0V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="14" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    </button>
+                    <button class="tb-btn" data-cmd="strike" title="취소선">
+                      <svg viewBox="0 0 16 16" fill="none"><line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 5a2.5 2.5 0 015 0c0 1.5-1 2-2.5 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    </button>
+                  </div>
+                  <div class="tb-sep"></div>
+                  <div class="tb-group">
+                    <label class="tb-color" title="글자 색상">
+                      <svg viewBox="0 0 16 16" fill="none"><path d="M8 2L3 13M8 2l5 11M5.5 9.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                      <div class="color-bar" id="colorTextBar" style="background:#1d1d1f"></div>
+                      <input type="color" id="colorText" value="#1d1d1f" />
+                    </label>
+                    <label class="tb-color" title="배경 색상 (형광펜)">
+                      <svg viewBox="0 0 16 16" fill="none"><path d="M10.5 3l2.5 2.5-6 6H4.5V9L10.5 3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><line x1="2" y1="14" x2="14" y2="14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                      <div class="color-bar" id="colorBgBar" style="background:#ffd60a"></div>
+                      <input type="color" id="colorBg" value="#ffd60a" />
+                    </label>
+                  </div>
+                  <div class="tb-sep"></div>
+                  <div class="tb-group">
+                    <button class="tb-btn" data-cmd="align" data-val="" title="왼쪽 정렬">
+                      <svg viewBox="0 0 16 16" fill="none"><line x1="2" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="2" y1="7" x2="10" y2="7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="2" y1="10" x2="14" y2="10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="2" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                    <button class="tb-btn" data-cmd="align" data-val="center" title="가운데 정렬">
+                      <svg viewBox="0 0 16 16" fill="none"><line x1="2" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="4" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="2" y1="10" x2="14" y2="10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="5" y1="13" x2="11" y2="13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                    <button class="tb-btn" data-cmd="align" data-val="right" title="오른쪽 정렬">
+                      <svg viewBox="0 0 16 16" fill="none"><line x1="2" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="6" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="2" y1="10" x2="14" y2="10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="8" y1="13" x2="14" y2="13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                    <button class="tb-btn" data-cmd="align" data-val="justify" title="양쪽 정렬">
+                      <svg viewBox="0 0 16 16" fill="none"><line x1="2" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="2" y1="10" x2="14" y2="10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="2" y1="13" x2="14" y2="13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                  </div>
+                  <div class="tb-sep"></div>
+                  <div class="tb-group">
+                    <button class="tb-btn" data-cmd="bulletList" title="글머리 기호">
+                      <svg viewBox="0 0 16 16" fill="none"><circle cx="3" cy="5" r="1.3" fill="currentColor"/><circle cx="3" cy="9" r="1.3" fill="currentColor"/><circle cx="3" cy="13" r="1.3" fill="currentColor"/><line x1="6" y1="5" x2="14" y2="5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="6" y1="9" x2="14" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="6" y1="13" x2="14" y2="13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                    <button class="tb-btn" data-cmd="orderedList" title="번호 목록">
+                      <svg viewBox="0 0 16 16" fill="none"><text x="1" y="6.5" font-size="5" fill="currentColor" font-family="monospace">1.</text><text x="1" y="10.5" font-size="5" fill="currentColor" font-family="monospace">2.</text><text x="1" y="14.5" font-size="5" fill="currentColor" font-family="monospace">3.</text><line x1="7" y1="5" x2="14" y2="5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="7" y1="9" x2="14" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="7" y1="13" x2="14" y2="13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                  </div>
+                  <div class="tb-sep"></div>
+                  <div class="tb-group">
+                    <button class="tb-btn" data-cmd="blockquote" title="인용문">
+                      <svg viewBox="0 0 16 16" fill="none"><path d="M3 5h4v4H5a2 2 0 01-2-2V5zM9 5h4v4h-2a2 2 0 01-2-2V5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M5 9v2M11 9v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    </button>
+                    <button class="tb-btn" data-cmd="codeBlock" title="코드 블록">
+                      <svg viewBox="0 0 16 16" fill="none"><path d="M5 5L2 8l3 3M11 5l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="9" y1="3" x2="7" y2="13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    </button>
+                  </div>
+                  <div class="tb-sep"></div>
+                  <div class="tb-group" style="position:relative">
+                    <button class="tb-btn" data-cmd="link" title="링크 삽입">
+                      <svg viewBox="0 0 16 16" fill="none"><path d="M6.5 9.5a3.5 3.5 0 005 0l2-2a3.5 3.5 0 00-5-5l-1 1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M9.5 6.5a3.5 3.5 0 00-5 0l-2 2a3.5 3.5 0 005 5l1-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                    <div class="link-dialog" id="linkDialog">
+                      <div class="link-dialog-title">링크 삽입</div>
+                      <input type="url" id="linkUrl" placeholder="https://example.com" />
+                      <div class="link-dialog-actions">
+                        <button class="link-btn link-btn-cancel" id="linkCancel">취소</button>
+                        <button class="link-btn link-btn-ok" id="linkOk">적용</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tb-group" style="position:relative">
+                    <button class="tb-btn" id="btnImage" title="이미지 삽입">
+                      <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.4"/><circle cx="5.5" cy="6.5" r="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M2 10l3.5-3 3 3 2-2 3.5 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                  </div>
+                  <div class="tb-group" style="position:relative">
+                    <button class="tb-btn" id="btnTable" title="표 삽입">
+                      <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><line x1="2" y1="6" x2="14" y2="6" stroke="currentColor" stroke-width="1.2"/><line x1="2" y1="10" x2="14" y2="10" stroke="currentColor" stroke-width="1.2"/><line x1="7" y1="2" x2="7" y2="14" stroke="currentColor" stroke-width="1.2"/></svg>
+                    </button>
+                    <div class="table-picker" id="tablePicker">
+                      <div class="table-grid" id="tableGrid"></div>
+                      <div class="table-size-label" id="tableSizeLabel">표 크기를 선택하세요</div>
+                    </div>
+                  </div>
+                  <div class="tb-sep"></div>
+                  <div class="tb-group">
+                    <button class="tb-btn" data-cmd="clearFormat" title="서식 지우기">
+                      <svg viewBox="0 0 16 16" fill="none"><path d="M3 13l4-4M9 3l4 4-5 5H5l-2-2 4-4 3-3z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                  </div>
+                </div><!-- /tb-scroll -->
+              </div><!-- /toolbar -->
+
+              <!-- 에디터 콘텐츠 -->
+              <div id="editEditorContent"></div>
+
+              <!-- 이미지 리사이즈 오버레이 -->
+              <div class="img-resize-overlay" id="imgResizeOverlay" style="display:none">
+                <div class="img-resize-handle nw" data-dir="nw"></div>
+                <div class="img-resize-handle ne" data-dir="ne"></div>
+                <div class="img-resize-handle sw" data-dir="sw"></div>
+                <div class="img-resize-handle se" data-dir="se"></div>
+              </div>
+
+              <div class="editor-footer">
+                <span class="char-count" id="charCount">0자</span>
+              </div>
+            </div><!-- /editor-wrap -->
+          </div>
+
+          <div class="edit-actions">
+            <button class="btn btn-cancel" onclick="cancelEdit()">취소</button>
+            <button class="btn btn-save" onclick="saveEdit()">저장하기</button>
+          </div>
+        </div>
+      </div><!-- /editForm -->
+    </div><!-- /mainCard -->
+
+    <!-- 이전/다음 글 -->
+    <div class="post-nav" id="postNav" style="display:none"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="dialog-backdrop" id="dialogBackdrop">
+    <div class="dialog-box">
+      <div class="dialog-title">게시글을 삭제할까요?</div>
+      <div class="dialog-desc">삭제된 게시글은 복구할 수 없습니다.<br>정말 삭제하시겠습니까?</div>
+      <div class="dialog-actions">
+        <button class="btn btn-cancel" onclick="closeDialog()">취소</button>
+        <button class="btn btn-delete" onclick="confirmDelete()">삭제</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const postId = parseInt(params.get('id'));
+    const post   = BOARD_DATA.find(p => p.id === postId);
+
+    let isEditMode = false;
+
+    if (!post) {
+      document.getElementById('notFound').style.display = 'block';
+    } else {
+      document.getElementById('mainCard').style.display = 'block';
+      renderView();
+      renderNav();
+      renderTopActions();
+    }
+
+    /* ── 뷰 렌더 ── */
+    function renderView() {
+      const catClass = `cat-${post.category}`;
+      const tags = (post.tags || []).map(t => `<span class="view-tag">${t}</span>`).join('');
+      const thumb = post.thumbnail
+        ? `<img class="view-thumbnail" src="${post.thumbnail}" alt="${escHtml(post.title)}" />`
+        : '';
+
+      document.getElementById('viewMode').innerHTML = `
+        ${thumb}
+        <div class="view-head">
+          <div class="view-meta-top">
+            <span class="cat-badge ${catClass}">${post.category}</span>
+          </div>
+          <h1 class="view-title">${escHtml(post.title)}</h1>
+          <div class="view-info">
+            <span class="view-info-item">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="4.5" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 11c0-2.21 2.24-4 5-4s5 1.79 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              ${escHtml(post.author)}
+            </span>
+            <span class="view-info-item">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1.5" y="2.5" width="10" height="9" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 1v3M8.5 1v3M1.5 6h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              ${post.date}
+            </span>
+            <span class="view-info-item">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 6.5C1 6.5 3 2 6.5 2S12 6.5 12 6.5 10 11 6.5 11 1 6.5 1 6.5z" stroke="currentColor" stroke-width="1.3"/><circle cx="6.5" cy="6.5" r="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+              조회 ${post.views.toLocaleString()}
+            </span>
+          </div>
+          <div class="view-tags">${tags}</div>
+        </div>
+        <div class="view-body">
+          <div class="view-content" id="viewContent"></div>
+        </div>`;
+
+      // 본문 렌더 (HTML / plain text 모두 처리)
+      document.getElementById('viewContent').innerHTML = formatContent(post.content);
+    }
+
+    function formatContent(content) {
+      if (!content) return '';
+      // TipTap이 출력한 HTML이면 그대로
+      if (/<[a-z][\s\S]*>/i.test(content)) return content;
+      // 평문이면 단락 변환
+      return content.split(/\n\n+/).map(p =>
+        `<p>${escHtml(p).replace(/\n/g, '<br>')}</p>`
+      ).join('');
+    }
+
+    /* ── 이전/다음 글 ── */
+    function renderNav() {
+      const sorted = [...BOARD_DATA].sort((a,b) => b.id - a.id);
+      const sidx = sorted.findIndex(p => p.id === postId);
+      const prev = sorted[sidx - 1];
+      const next = sorted[sidx + 1];
+      if (!prev && !next) return;
+      const navEl = document.getElementById('postNav');
+      navEl.style.display = 'block';
+      navEl.innerHTML = [
+        prev ? `<a class="post-nav-item" href="view.html?id=${prev.id}">
+          <span class="nav-label">이전</span>
+          <span class="nav-title">${escHtml(prev.title)}</span>
+          <span class="nav-date">${prev.date.slice(5)}</span>
+        </a>` : '',
+        next ? `<a class="post-nav-item" href="view.html?id=${next.id}">
+          <span class="nav-label">다음</span>
+          <span class="nav-title">${escHtml(next.title)}</span>
+          <span class="nav-date">${next.date.slice(5)}</span>
+        </a>` : ''
+      ].join('');
+    }
+
+    /* ── 상단 버튼 ── */
+    function renderTopActions() {
+      const el = document.getElementById('topActions');
+      if (isEditMode) {
+        el.innerHTML = `
+          <button class="btn btn-cancel" onclick="cancelEdit()">취소</button>
+          <button class="btn btn-save"   onclick="saveEdit()">저장하기</button>`;
+      } else {
+        el.innerHTML = `
+          <button class="btn btn-delete" onclick="openDialog()">삭제</button>
+          <button class="btn btn-edit"   onclick="enterEdit()">수정</button>`;
+      }
+    }
+
+    /* ── 편집 모드 진입 ── */
+    function enterEdit() {
+      isEditMode = true;
+      document.getElementById('viewMode').classList.add('hidden');
+      document.getElementById('editForm').classList.add('active');
+      renderTopActions();
+
+      // 필드 채우기
+      document.getElementById('editCategory').value = post.category;
+      document.getElementById('editTitle').value    = post.title;
+
+      // 에디터 내용 설정 (TipTap 로드 후 실행)
+      const trySetContent = () => {
+        if (window._editEditor) {
+          window._editEditor.commands.setContent(formatContent(post.content), false);
+          window._editEditor.commands.focus();
+        } else {
+          setTimeout(trySetContent, 50);
+        }
+      };
+      trySetContent();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function cancelEdit() {
+      isEditMode = false;
+      document.getElementById('viewMode').classList.remove('hidden');
+      document.getElementById('editForm').classList.remove('active');
+      renderTopActions();
+    }
+
+    /* ── 저장 ── */
+    function saveEdit() {
+      const category = document.getElementById('editCategory').value;
+      const title    = document.getElementById('editTitle').value.trim();
+      const editor   = window._editEditor;
+
+      if (!title) { showToast('제목을 입력해주세요.'); return; }
+
+      let contentHtml = '<p></p>';
+      let contentText = '';
+      if (editor) {
+        contentHtml = editor.getHTML();
+        contentText = editor.getText().trim();
+      }
+      if (!contentText) { showToast('내용을 입력해주세요.'); return; }
+
+      // 로컬 데이터 업데이트 (API 연동 전)
+      post.category = category;
+      post.title    = title;
+      post.content  = contentHtml;
+
+      const payload = { id: post.id, category, title, content_html: contentHtml };
+      console.log('[수정 데이터]', payload);
+      // TODO: API 연동 시 fetch PUT/PATCH 로 교체
+
+      cancelEdit();
+      renderView();
+      renderTopActions();
+      showToast('게시글이 수정되었습니다! (API 연동 전 콘솔 확인)');
+    }
+
+    /* ── 삭제 ── */
+    function openDialog()  { document.getElementById('dialogBackdrop').classList.add('show'); }
+    function closeDialog() { document.getElementById('dialogBackdrop').classList.remove('show'); }
+    function confirmDelete() {
+      closeDialog();
+      console.log('[삭제 요청] id:', post.id);
+      showToast('게시글이 삭제되었습니다.');
+      setTimeout(() => { window.location.href = 'list.html'; }, 1500);
+    }
+
+    /* ── 유틸 ── */
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+    window.showToast = showToast;
+  </script>
+
+  <!-- TipTap via esm.sh — MIT License -->
+  <script type="module">
+    import { Editor, Extension } from 'https://esm.sh/@tiptap/core@2.2.4'
+    import StarterKit             from 'https://esm.sh/@tiptap/starter-kit@2.2.4'
+    import Underline              from 'https://esm.sh/@tiptap/extension-underline@2.2.4'
+    import TextAlign              from 'https://esm.sh/@tiptap/extension-text-align@2.2.4'
+    import TiptapImage            from 'https://esm.sh/@tiptap/extension-image@2.2.4'
+    import Link                   from 'https://esm.sh/@tiptap/extension-link@2.2.4'
+    import Color                  from 'https://esm.sh/@tiptap/extension-color@2.2.4'
+    import TextStyle              from 'https://esm.sh/@tiptap/extension-text-style@2.2.4'
+    import Highlight              from 'https://esm.sh/@tiptap/extension-highlight@2.2.4'
+    import Table                  from 'https://esm.sh/@tiptap/extension-table@2.2.4'
+    import TableRow               from 'https://esm.sh/@tiptap/extension-table-row@2.2.4'
+    import TableHeader            from 'https://esm.sh/@tiptap/extension-table-header@2.2.4'
+    import TableCell              from 'https://esm.sh/@tiptap/extension-table-cell@2.2.4'
+    import Placeholder            from 'https://esm.sh/@tiptap/extension-placeholder@2.2.4'
+
+    /* ── Custom LineHeight ── */
+    const LineHeight = Extension.create({
+      name: 'lineHeight',
+      addGlobalAttributes() {
+        return [{ types: ['paragraph','heading'], attributes: { lineHeight: {
+          default: null,
+          parseHTML: el => el.style.lineHeight || null,
+          renderHTML: a => a.lineHeight ? { style: `line-height:${a.lineHeight}` } : {}
+        }}}]
+      },
+      addCommands() {
+        return {
+          setLineHeight: value => ({ commands }) =>
+            ['paragraph','heading'].every(t => commands.updateAttributes(t, { lineHeight: value })),
+          unsetLineHeight: () => ({ commands }) =>
+            ['paragraph','heading'].every(t => commands.updateAttributes(t, { lineHeight: null })),
+        }
+      }
+    })
+
+    /* ── Custom FontSize ── */
+    const FontSize = Extension.create({
+      name: 'fontSize',
+      addGlobalAttributes() {
+        return [{ types: ['textStyle'], attributes: { fontSize: {
+          default: null,
+          parseHTML: el => el.style.fontSize || null,
+          renderHTML: a => a.fontSize ? { style: `font-size:${a.fontSize}` } : {}
+        }}}]
+      },
+      addCommands() {
+        return {
+          setFontSize: size => ({ chain }) => chain().setMark('textStyle', { fontSize: size ? size+'px' : null }).run()
+        }
+      }
+    })
+
+    /* ── Editor init ── */
+    const editor = new Editor({
+      element: document.getElementById('editEditorContent'),
+      extensions: [
+        StarterKit,
+        Underline,
+        TextAlign.configure({ types: ['heading','paragraph'] }),
+        TiptapImage.configure({ inline: false, allowBase64: true }),
+        Link.configure({ openOnClick: false, autolink: true }),
+        TextStyle, Color, FontSize,
+        Highlight.configure({ multicolor: true }),
+        LineHeight,
+        Table.configure({ resizable: false }),
+        TableRow, TableHeader, TableCell,
+        Placeholder.configure({ placeholder: '내용을 입력하세요.' }),
+      ],
+      content: '<p></p>',
+      onUpdate: () => { syncToolbar(); updateCharCount(); },
+      onSelectionUpdate: () => syncToolbar(),
+    })
+    window._editEditor = editor
+
+    /* ── Sync toolbar ── */
+    function syncToolbar() {
+      const e = editor
+      ;['bold','italic','underline','strike','bulletList','orderedList','blockquote','codeBlock'].forEach(cmd => {
+        const btn = document.querySelector(`#editToolbar [data-cmd="${cmd}"]`)
+        if (btn) btn.classList.toggle('active', e.isActive(cmd))
+      })
+      document.querySelectorAll('#editToolbar [data-cmd="align"]').forEach(btn => {
+        const val = btn.dataset.val
+        const active = val === '' ? (!e.isActive({ textAlign:'center' }) && !e.isActive({ textAlign:'right' }) && !e.isActive({ textAlign:'justify' })) : e.isActive({ textAlign: val })
+        btn.classList.toggle('active', active)
+      })
+      const linkBtn = document.querySelector('#editToolbar [data-cmd="link"]')
+      if (linkBtn) linkBtn.classList.toggle('active', e.isActive('link'))
+      const hs = document.getElementById('headingSelect')
+      if (e.isActive('heading',{level:1})) hs.value = '1'
+      else if (e.isActive('heading',{level:2})) hs.value = '2'
+      else if (e.isActive('heading',{level:3})) hs.value = '3'
+      else hs.value = '0'
+      const attrs = e.getAttributes('textStyle')
+      const fs = document.getElementById('fontSizeSelect')
+      const size = attrs.fontSize ? attrs.fontSize.replace('px','') : '16'
+      if ([...fs.options].some(o => o.value === size)) fs.value = size
+      const lhAttrs = e.getAttributes('paragraph') || {}
+      const lhSel = document.getElementById('lineHeightSelect')
+      const lh = lhAttrs.lineHeight || '1.75'
+      if ([...lhSel.options].some(o => o.value === lh)) lhSel.value = lh
+      document.getElementById('btnUndo').disabled = !e.can().undo()
+      document.getElementById('btnRedo').disabled = !e.can().redo()
+    }
+    function updateCharCount() {
+      document.getElementById('charCount').textContent = `${editor.getText().trim().length.toLocaleString()}자`
+    }
+
+    /* ── Toolbar clicks ── */
+    document.getElementById('editToolbar').addEventListener('click', e => {
+      const btn = e.target.closest('[data-cmd]')
+      if (!btn) return
+      e.preventDefault()
+      const cmd = btn.dataset.cmd, val = btn.dataset.val, ed = editor.chain().focus()
+      switch(cmd) {
+        case 'bold':        ed.toggleBold().run(); break
+        case 'italic':      ed.toggleItalic().run(); break
+        case 'underline':   ed.toggleUnderline().run(); break
+        case 'strike':      ed.toggleStrike().run(); break
+        case 'bulletList':  ed.toggleBulletList().run(); break
+        case 'orderedList': ed.toggleOrderedList().run(); break
+        case 'blockquote':  ed.toggleBlockquote().run(); break
+        case 'codeBlock':   ed.toggleCodeBlock().run(); break
+        case 'align':       ed.setTextAlign(val || 'left').run(); break
+        case 'link':        openLinkDialog(); return
+        case 'clearFormat': editor.chain().focus().clearNodes().unsetAllMarks().run(); break
+      }
+      syncToolbar()
+    })
+
+    document.getElementById('btnUndo').addEventListener('click', () => { editor.chain().focus().undo().run(); syncToolbar() })
+    document.getElementById('btnRedo').addEventListener('click', () => { editor.chain().focus().redo().run(); syncToolbar() })
+
+    document.getElementById('headingSelect').addEventListener('change', function() {
+      const v = this.value
+      if (v === '0') editor.chain().focus().setParagraph().run()
+      else editor.chain().focus().toggleHeading({ level: parseInt(v) }).run()
+      syncToolbar()
+    })
+    document.getElementById('fontSizeSelect').addEventListener('change', function() {
+      editor.chain().focus().setFontSize(this.value).run()
+      syncToolbar()
+    })
+    document.getElementById('lineHeightSelect').addEventListener('change', function() {
+      editor.chain().focus().setLineHeight(this.value).run()
+      syncToolbar()
+    })
+    document.getElementById('colorText').addEventListener('input', function() {
+      editor.chain().focus().setColor(this.value).run()
+      document.getElementById('colorTextBar').style.background = this.value
+    })
+    document.getElementById('colorBg').addEventListener('input', function() {
+      editor.chain().focus().setHighlight({ color: this.value }).run()
+      document.getElementById('colorBgBar').style.background = this.value
+    })
+
+    /* ── 횡스크롤 마우스 휠 ── */
+    document.querySelector('#editToolbar .tb-scroll').addEventListener('wheel', e => {
+      e.preventDefault()
+      e.currentTarget.scrollLeft += e.deltaY || e.deltaX
+    }, { passive: false })
+
+    /* ── 이미지 삽입 ── */
+    document.getElementById('btnImage').addEventListener('click', () => {
+      const input = document.createElement('input')
+      input.type = 'file'; input.accept = 'image/*'
+      input.onchange = () => {
+        const file = input.files[0]; if (!file) return
+        if (file.size > 10*1024*1024) { window.showToast('이미지 크기는 10MB 이하여야 합니다.'); return }
+        const r = new FileReader()
+        r.onload = e => editor.chain().focus().setImage({ src: e.target.result }).run()
+        r.readAsDataURL(file)
+      }
+      input.click()
+    })
+
+    /* ── 링크 다이얼로그 ── */
+    const linkDialog = document.getElementById('linkDialog')
+    function openLinkDialog() {
+      document.getElementById('linkUrl').value = editor.getAttributes('link').href || ''
+      linkDialog.classList.add('show')
+      document.getElementById('linkUrl').focus()
+    }
+    document.getElementById('linkOk').addEventListener('click', () => {
+      const url = document.getElementById('linkUrl').value.trim()
+      if (!url) editor.chain().focus().extendMarkRange('link').unsetLink().run()
+      else editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+      linkDialog.classList.remove('show')
+    })
+    document.getElementById('linkCancel').addEventListener('click', () => {
+      linkDialog.classList.remove('show'); editor.commands.focus()
+    })
+    document.getElementById('linkUrl').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('linkOk').click()
+      if (e.key === 'Escape') document.getElementById('linkCancel').click()
+    })
+    document.addEventListener('click', e => {
+      if (!linkDialog.contains(e.target) && !e.target.closest('[data-cmd="link"]')) linkDialog.classList.remove('show')
+    })
+
+    /* ── 표 피커 ── */
+    const tablePicker = document.getElementById('tablePicker')
+    const tableGrid   = document.getElementById('tableGrid')
+    for (let r = 1; r <= 8; r++) {
+      for (let c = 1; c <= 8; c++) {
+        const cell = document.createElement('div')
+        cell.className = 'tg-cell'; cell.dataset.r = r; cell.dataset.c = c
+        cell.addEventListener('mouseover', () => {
+          tableGrid.querySelectorAll('.tg-cell').forEach(cl => cl.classList.toggle('hover', +cl.dataset.r <= r && +cl.dataset.c <= c))
+          document.getElementById('tableSizeLabel').textContent = `${r} × ${c}`
+        })
+        cell.addEventListener('click', () => {
+          editor.chain().focus().insertTable({ rows: r, cols: c, withHeaderRow: true }).run()
+          tablePicker.classList.remove('show')
+        })
+        tableGrid.appendChild(cell)
+      }
+    }
+    document.getElementById('btnTable').addEventListener('click', e => { e.stopPropagation(); tablePicker.classList.toggle('show') })
+    document.addEventListener('click', e => { if (!tablePicker.contains(e.target) && e.target.id !== 'btnTable') tablePicker.classList.remove('show') })
+
+    /* ── 이미지 리사이즈 오버레이 ── */
+    const editorEl   = document.getElementById('editEditorContent')
+    const editorWrap = document.getElementById('editEditorWrap')
+    const overlay    = document.getElementById('imgResizeOverlay')
+    let resizeImg    = null
+
+    editorEl.addEventListener('click', e => {
+      if (e.target.tagName === 'IMG') selectImg(e.target)
+      else if (!overlay.contains(e.target)) deselectImg()
+    })
+    function selectImg(img) {
+      deselectImg(); resizeImg = img
+      img.style.outline = '2px solid #0071e3'
+      positionOverlay(); overlay.style.display = 'block'
+    }
+    function deselectImg() {
+      if (resizeImg) resizeImg.style.outline = ''
+      resizeImg = null; overlay.style.display = 'none'
+    }
+    function positionOverlay() {
+      if (!resizeImg) return
+      const wr = editorWrap.getBoundingClientRect(), ir = resizeImg.getBoundingClientRect()
+      overlay.style.left   = (ir.left - wr.left) + 'px'
+      overlay.style.top    = (ir.top  - wr.top)  + 'px'
+      overlay.style.width  = ir.width  + 'px'
+      overlay.style.height = ir.height + 'px'
+    }
+    overlay.querySelectorAll('.img-resize-handle').forEach(h => {
+      h.addEventListener('mousedown', e => {
+        e.preventDefault(); e.stopPropagation()
+        const dir = h.dataset.dir
+        const startX = e.clientX
+        const startW = resizeImg.offsetWidth, startH = resizeImg.offsetHeight
+        const ratio = startW / startH
+        const onMove = e => {
+          const dx = e.clientX - startX
+          let w = startW
+          if (dir === 'se' || dir === 'ne') w = Math.max(80, startW + dx)
+          if (dir === 'sw' || dir === 'nw') w = Math.max(80, startW - dx)
+          resizeImg.style.width = w + 'px'
+          resizeImg.style.height = (w / ratio) + 'px'
+          positionOverlay()
+        }
+        const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp) }
+        document.addEventListener('mousemove', onMove)
+        document.addEventListener('mouseup', onUp)
+      })
+    })
+    window.addEventListener('scroll', () => { if (resizeImg) positionOverlay() })
+  </script>
+</body>
+</html>

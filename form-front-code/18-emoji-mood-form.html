@@ -1,0 +1,540 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- ================================================
+   DIBO F18 · 이모지 감정 선택 폼 · 요가 버전
+   class prefix : dibo-f18-
+   아임웹 코드위젯 즉시 적용
+   ================================================ -->
+<style>
+  .dibo-f18-wrap {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #fafaf8;
+    border-radius: 20px;
+    padding: 28px 20px 32px;
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: 0 4px 32px rgba(107,158,107,0.12);
+  }
+
+  .dibo-f18-badge {
+    display: inline-block;
+    background: #edf5ed;
+    color: #4a8a4a;
+    border: 1px solid #c0dcc0;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+
+  .dibo-f18-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1a2a1a;
+    margin: 0 0 4px;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+  }
+
+  .dibo-f18-subtitle {
+    font-size: 12px;
+    color: #7a9a7a;
+    margin: 0 0 24px;
+    line-height: 1.6;
+  }
+
+  /* ── 스텝 ── */
+  .dibo-f18-step-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #4a8a4a;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dibo-f18-step-num {
+    width: 20px;
+    height: 20px;
+    background: #6b9e6b;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* ── 이모지 그리드 ── */
+  .dibo-f18-emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+
+  .dibo-f18-emoji-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 12px 6px;
+    background: #fff;
+    border: 2px solid #e5ede5;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    font-family: inherit;
+  }
+
+  .dibo-f18-emoji-btn:hover {
+    border-color: #a0c8a0;
+    transform: translateY(-2px);
+  }
+
+  .dibo-f18-emoji-btn.is-selected {
+    border-color: #6b9e6b;
+    background: #edf5ed;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(107,158,107,0.2);
+  }
+
+  .dibo-f18-emoji-icon { font-size: 26px; line-height: 1; }
+  .dibo-f18-emoji-label { font-size: 10px; color: #6a8a6a; font-weight: 600; text-align: center; line-height: 1.3; }
+  .dibo-f18-emoji-btn.is-selected .dibo-f18-emoji-label { color: #4a7a4a; }
+
+  /* ── 신체 부위 ── */
+  .dibo-f18-body-section {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+    margin-bottom: 0;
+  }
+
+  .dibo-f18-body-section.is-open {
+    max-height: 200px;
+    margin-bottom: 20px;
+  }
+
+  .dibo-f18-body-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .dibo-f18-body-chip {
+    padding: 7px 13px;
+    background: #fff;
+    border: 1.5px solid #e5ede5;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #5a7a5a;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    font-family: inherit;
+  }
+
+  .dibo-f18-body-chip:hover { border-color: #a0c8a0; }
+
+  .dibo-f18-body-chip.is-active {
+    background: #6b9e6b;
+    border-color: #6b9e6b;
+    color: #fff;
+  }
+
+  /* ── 추천 결과 ── */
+  .dibo-f18-result-section {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1);
+    margin-bottom: 0;
+  }
+
+  .dibo-f18-result-section.is-open {
+    max-height: 400px;
+    margin-bottom: 20px;
+  }
+
+  .dibo-f18-result-card {
+    background: #fff;
+    border: 2px solid #c0dcc0;
+    border-radius: 16px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dibo-f18-result-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dibo-f18-result-icon {
+    font-size: 32px;
+    width: 52px;
+    height: 52px;
+    background: #edf5ed;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .dibo-f18-result-info { flex: 1; }
+
+  .dibo-f18-result-tag {
+    font-size: 10px;
+    font-weight: 700;
+    color: #4a8a4a;
+    background: #edf5ed;
+    border: 1px solid #c0dcc0;
+    padding: 2px 8px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+
+  .dibo-f18-result-name {
+    font-size: 17px;
+    font-weight: 800;
+    color: #1a2a1a;
+    margin: 0 0 2px;
+    letter-spacing: -0.3px;
+  }
+
+  .dibo-f18-result-desc {
+    font-size: 12px;
+    color: #5a7a5a;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .dibo-f18-result-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 4px;
+    border-top: 1px solid #e5ede5;
+  }
+
+  .dibo-f18-result-feature {
+    font-size: 11px;
+    color: #4a8a4a;
+    background: #edf5ed;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+
+  /* ── 연락처 ── */
+  .dibo-f18-contact {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .dibo-f18-contact.is-open { max-height: 320px; }
+
+  .dibo-f18-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .dibo-f18-label { font-size: 11px; font-weight: 600; color: #7a9a7a; }
+
+  .dibo-f18-input {
+    height: 46px;
+    border: 1.5px solid #e5ede5;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 14px;
+    color: #1a2a1a;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+    width: 100%;
+  }
+
+  .dibo-f18-input:focus {
+    border-color: #6b9e6b;
+    box-shadow: 0 0 0 3px rgba(107,158,107,0.12);
+  }
+
+  .dibo-f18-input::placeholder { color: #c0d8c0; }
+
+  .dibo-f18-agree {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+
+  .dibo-f18-checkbox {
+    width: 15px;
+    height: 15px;
+    accent-color: #6b9e6b;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .dibo-f18-agree-text { font-size: 11px; color: #7a9a7a; line-height: 1.55; }
+  .dibo-f18-agree-link { color: #6b9e6b; text-decoration: underline; cursor: pointer; }
+
+  .dibo-f18-submit {
+    width: 100%;
+    height: 52px;
+    background: #6b9e6b;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .dibo-f18-submit:hover { background: #5a8a5a; }
+  .dibo-f18-submit:active { transform: scale(0.98); }
+  .dibo-f18-submit:disabled { background: #c0dcc0; cursor: default; transform: none; }
+
+  /* ── 완료 ── */
+  .dibo-f18-thanks {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px 0 8px;
+    gap: 10px;
+  }
+
+  .dibo-f18-thanks-icon { font-size: 44px; }
+  .dibo-f18-thanks-title { font-size: 18px; font-weight: 800; color: #1a2a1a; letter-spacing: -0.4px; }
+  .dibo-f18-thanks-msg { font-size: 12px; color: #7a9a7a; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="dibo-f18-wrap">
+  <div class="dibo-f18-badge">🧘 맞춤 클래스 추천</div>
+  <p class="dibo-f18-title">지금 몸 상태를 알려주면<br>딱 맞는 요가 클래스를 추천해요</p>
+  <p class="dibo-f18-subtitle">이모지 두 번 클릭으로 체험 신청까지 완료</p>
+
+  <div id="diboF18FormArea">
+
+    <!-- Step 1: 컨디션 -->
+    <div class="dibo-f18-step-label">
+      <span class="dibo-f18-step-num">1</span>
+      지금 기분 / 몸 상태를 골라주세요
+    </div>
+    <div class="dibo-f18-emoji-grid" id="diboF18MoodGrid">
+      <button class="dibo-f18-emoji-btn" data-mood="relaxed">
+        <span class="dibo-f18-emoji-icon">😌</span>
+        <span class="dibo-f18-emoji-label">편안함</span>
+      </button>
+      <button class="dibo-f18-emoji-btn" data-mood="tired">
+        <span class="dibo-f18-emoji-icon">😫</span>
+        <span class="dibo-f18-emoji-label">피곤함</span>
+      </button>
+      <button class="dibo-f18-emoji-btn" data-mood="stressed">
+        <span class="dibo-f18-emoji-icon">😤</span>
+        <span class="dibo-f18-emoji-label">스트레스</span>
+      </button>
+      <button class="dibo-f18-emoji-btn" data-mood="energetic">
+        <span class="dibo-f18-emoji-icon">⚡</span>
+        <span class="dibo-f18-emoji-label">활기참</span>
+      </button>
+      <button class="dibo-f18-emoji-btn" data-mood="stiff">
+        <span class="dibo-f18-emoji-icon">🦴</span>
+        <span class="dibo-f18-emoji-label">뻐근함</span>
+      </button>
+      <button class="dibo-f18-emoji-btn" data-mood="anxious">
+        <span class="dibo-f18-emoji-icon">😰</span>
+        <span class="dibo-f18-emoji-label">불안함</span>
+      </button>
+      <button class="dibo-f18-emoji-btn" data-mood="focused">
+        <span class="dibo-f18-emoji-icon">🎯</span>
+        <span class="dibo-f18-emoji-label">집중필요</span>
+      </button>
+      <button class="dibo-f18-emoji-btn" data-mood="pain">
+        <span class="dibo-f18-emoji-icon">😣</span>
+        <span class="dibo-f18-emoji-label">통증있음</span>
+      </button>
+    </div>
+
+    <!-- Step 2: 신체 부위 -->
+    <div class="dibo-f18-body-section" id="diboF18BodySection">
+      <div class="dibo-f18-step-label">
+        <span class="dibo-f18-step-num">2</span>
+        집중하고 싶은 신체 부위 (복수 선택)
+      </div>
+      <div class="dibo-f18-body-chips" id="diboF18BodyChips">
+        <button class="dibo-f18-body-chip" data-part="목·어깨">목·어깨</button>
+        <button class="dibo-f18-body-chip" data-part="허리">허리</button>
+        <button class="dibo-f18-body-chip" data-part="골반·엉덩이">골반·엉덩이</button>
+        <button class="dibo-f18-body-chip" data-part="다리·종아리">다리·종아리</button>
+        <button class="dibo-f18-body-chip" data-part="코어·복부">코어·복부</button>
+        <button class="dibo-f18-body-chip" data-part="전신">전신</button>
+      </div>
+    </div>
+
+    <!-- Step 3: 추천 결과 -->
+    <div class="dibo-f18-result-section" id="diboF18ResultSection">
+      <div class="dibo-f18-step-label">
+        <span class="dibo-f18-step-num">3</span>
+        추천 클래스
+      </div>
+      <div class="dibo-f18-result-card" id="diboF18ResultCard"></div>
+    </div>
+
+    <!-- Step 4: 연락처 -->
+    <div class="dibo-f18-contact" id="diboF18Contact">
+      <div>
+        <div class="dibo-f18-step-label" style="margin-bottom:12px;">
+          <span class="dibo-f18-step-num">4</span>
+          체험 신청 연락처
+        </div>
+        <div class="dibo-f18-field">
+          <span class="dibo-f18-label">성함</span>
+          <input class="dibo-f18-input" type="text" id="diboF18Name" placeholder="홍길동" maxlength="20" />
+        </div>
+        <div class="dibo-f18-field">
+          <span class="dibo-f18-label">연락처</span>
+          <input class="dibo-f18-input" type="tel" id="diboF18Tel" placeholder="010-0000-0000" maxlength="13" />
+        </div>
+        <label class="dibo-f18-agree">
+          <input class="dibo-f18-checkbox" type="checkbox" id="diboF18Agree" />
+          <span class="dibo-f18-agree-text">
+            <span class="dibo-f18-agree-link">[필수] 개인정보 수집·이용 동의</span>에 동의합니다.
+          </span>
+        </label>
+        <button class="dibo-f18-submit" id="diboF18Submit" disabled>체험 신청하기</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dibo-f18-thanks" id="diboF18Thanks">
+    <div class="dibo-f18-thanks-icon">🌿</div>
+    <p class="dibo-f18-thanks-title">체험 신청 완료!</p>
+    <p class="dibo-f18-thanks-msg">추천 클래스 일정과 함께<br>담당 강사가 연락드리겠습니다.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  /* ── 추천 매핑 (컨디션 → 클래스) ── */
+  var CLASSES = {
+    relaxed:  { icon:'🌊', tag:'릴렉싱', name:'플로우 요가', desc:'부드러운 흐름으로 몸과 마음을 이완시키는 클래스', features:['60분','초급~중급','이완·호흡'] },
+    tired:    { icon:'🌙', tag:'회복', name:'리스토러티브 요가', desc:'지친 몸을 깊이 쉬게 하는 회복 중심 클래스', features:['75분','전 레벨','도구 사용'] },
+    stressed: { icon:'🧠', tag:'마음챙김', name:'명상 요가', desc:'호흡과 마음챙김으로 스트레스를 해소하는 클래스', features:['60분','전 레벨','명상 포함'] },
+    energetic:{ icon:'🔥', tag:'활력', name:'빈야사 요가', desc:'역동적인 흐름으로 에너지를 마음껏 발산하는 클래스', features:['60분','중급','심박수 UP'] },
+    stiff:    { icon:'🤸', tag:'유연성', name:'스트레칭 요가', desc:'뭉친 근육과 관절을 풀어주는 스트레칭 중심 클래스', features:['60분','전 레벨','근육 이완'] },
+    anxious:  { icon:'☮️', tag:'안정', name:'음 요가', desc:'천천히 깊은 호흡으로 불안을 다스리는 클래스', features:['75분','전 레벨','장시간 유지'] },
+    focused:  { icon:'🎯', tag:'집중력', name:'아이옌가 요가', desc:'정확한 자세로 집중력과 균형감을 키우는 클래스', features:['60분','초급~중급','도구 사용'] },
+    pain:     { icon:'💚', tag:'치유', name:'테라퓨틱 요가', desc:'통증 완화에 특화된 치료 목적의 요가 클래스', features:['60분','전 레벨','강사 1:1 케어'] }
+  };
+
+  var moodBtns   = document.querySelectorAll('.dibo-f18-emoji-btn');
+  var bodySection= document.getElementById('diboF18BodySection');
+  var bodyChips  = document.querySelectorAll('.dibo-f18-body-chip');
+  var resultSec  = document.getElementById('diboF18ResultSection');
+  var resultCard = document.getElementById('diboF18ResultCard');
+  var contactEl  = document.getElementById('diboF18Contact');
+  var nameEl     = document.getElementById('diboF18Name');
+  var telEl      = document.getElementById('diboF18Tel');
+  var agreeEl    = document.getElementById('diboF18Agree');
+  var submitEl   = document.getElementById('diboF18Submit');
+  var formArea   = document.getElementById('diboF18FormArea');
+  var thanksArea = document.getElementById('diboF18Thanks');
+
+  var selMood = null;
+
+  /* ── 컨디션 선택 ── */
+  moodBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      moodBtns.forEach(function (b) { b.classList.remove('is-selected'); });
+      btn.classList.add('is-selected');
+      selMood = btn.dataset.mood;
+      bodySection.classList.add('is-open');
+      showResult();
+    });
+  });
+
+  /* ── 신체 부위 칩 ── */
+  bodyChips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chip.classList.toggle('is-active');
+      showResult();
+    });
+  });
+
+  function showResult() {
+    if (!selMood) return;
+    var cls = CLASSES[selMood];
+    resultCard.innerHTML =
+      '<div class="dibo-f18-result-header">' +
+        '<div class="dibo-f18-result-icon">' + cls.icon + '</div>' +
+        '<div class="dibo-f18-result-info">' +
+          '<span class="dibo-f18-result-tag">' + cls.tag + '</span>' +
+          '<p class="dibo-f18-result-name">' + cls.name + '</p>' +
+          '<p class="dibo-f18-result-desc">' + cls.desc + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<div class="dibo-f18-result-features">' +
+        cls.features.map(function (f) {
+          return '<span class="dibo-f18-result-feature">' + f + '</span>';
+        }).join('') +
+      '</div>' +
+      '<button onclick="document.getElementById(\'diboF18Contact\').classList.add(\'is-open\');document.getElementById(\'diboF18ResultSection\').scrollIntoView({behavior:\'smooth\',block:\'nearest\'});" style="width:100%;height:44px;background:#6b9e6b;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-top:4px;font-family:inherit;">이 클래스 체험 신청하기</button>';
+
+    resultSec.classList.add('is-open');
+  }
+
+  /* ── 전화번호 포맷 ── */
+  telEl.addEventListener('input', function () {
+    var v = telEl.value.replace(/\D/g,'');
+    if (v.length <= 3)      telEl.value = v;
+    else if (v.length <= 7) telEl.value = v.slice(0,3)+'-'+v.slice(3);
+    else                    telEl.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+    validate();
+  });
+
+  nameEl.addEventListener('input', validate);
+  agreeEl.addEventListener('change', validate);
+
+  function validate() {
+    submitEl.disabled = !(
+      nameEl.value.trim().length >= 2 &&
+      telEl.value.replace(/\D/g,'').length >= 10 &&
+      agreeEl.checked
+    );
+  }
+
+  submitEl.addEventListener('click', function () {
+    if (this.disabled) return;
+    formArea.style.display = 'none';
+    thanksArea.style.display = 'flex';
+  });
+})();
+</script>
+</body>
+</html>

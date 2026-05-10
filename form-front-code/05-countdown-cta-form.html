@@ -1,0 +1,538 @@
+﻿<!DOCTYPE html>
+<!--
+  ================================================================
+  ✦ 디보(dibo) 익스텐션 | 카운트다운 긴급 CTA 상담 신청 폼 – 성형외과·피부과·미용
+  ================================================================
+
+  【페이지 개요】
+  실시간 카운트다운 타이머와 잔여 자리 수 표시로 긴박감을 조성하는 긴급 CTA 폼입니다.
+  한정 이벤트·특가 프로모션·선착순 모집 등 FOMO(기회 손실 두려움) 마케팅에 최적화되어
+  있습니다. 방문·전화·온라인 상담 유형 선택 기능을 제공하며, 성형외과·피부과·미용
+  시술 이벤트 랜딩 페이지에 적합합니다.
+
+  【SEO 키워드】
+  성형외과 이벤트 상담 신청, 카운트다운 긴급 CTA 폼, 선착순 예약 폼,
+  한정 할인 상담 신청, 미용 시술 이벤트 신청
+
+  【사용 전 필수 설정】
+  1. 잔여 자리 수 설정
+     → slots 변수 (현재: 3자리), maxSlots 변수 (현재: 10자리)
+
+  2. 상담 유형 수정
+     → 선택 버튼 텍스트 (현재: '방문 상담', '전화 상담', '온라인')
+
+  3. 이벤트 제목·할인율 수정
+     → 헤더의 배지·제목·부제목 HTML 텍스트 수정
+
+  4. 카운트다운 기준 시각 수정
+     → targetDate 변수 (현재: 당일 자정 00:00:00 기준으로 매일 자동 리셋)
+
+  5. 폼 제출 처리 연동  ★ [수정 필수]
+     → handleSubmit 함수 내부에 실제 API 엔드포인트 연동 코드 추가
+
+  【긴급 CTA 폼 조작 방법】
+  - 상담 유형(방문/전화/온라인) 선택 → 이름·연락처 입력 → 개인정보 동의 후 제출
+  - 카운트다운은 자정(00:00:00) 기준으로 매일 자동 초기화됩니다
+  - 잔여 자리가 0이 되면 신청 불가 상태로 자동 전환됩니다
+  ================================================================
+-->
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- ================================================
+   DIBO F05 · 카운트다운 긴급 CTA 폼 · 성형외과 버전
+   class prefix : dibo-f05-
+   아임웹 코드위젯 즉시 적용
+   ================================================ -->
+<style>
+  .dibo-f05-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0d0d0d;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 12px 48px rgba(255,77,77,0.2);
+  }
+
+  /* ── 헤더 ── */
+  .dibo-f05-header {
+    background: linear-gradient(135deg, #1a0a0a 0%, #0d0d0d 100%);
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid rgba(255,77,77,0.15);
+  }
+
+  .dibo-f05-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,77,77,0.12);
+    border: 1px solid rgba(255,77,77,0.3);
+    color: #ff4d4d;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+    letter-spacing: 0.3px;
+  }
+
+  .dibo-f05-badge-dot {
+    width: 6px;
+    height: 6px;
+    background: #ff4d4d;
+    border-radius: 50%;
+    animation: dibo-f05-blink 1.2s ease-in-out infinite;
+  }
+
+  @keyframes dibo-f05-blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.2; }
+  }
+
+  .dibo-f05-header h2 {
+    margin: 0 0 6px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+  }
+
+  .dibo-f05-header p {
+    margin: 0;
+    font-size: 12px;
+    color: #666;
+  }
+
+  /* ── 카운트다운 ── */
+  .dibo-f05-timer-wrap {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .dibo-f05-timer-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #ff4d4d;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .dibo-f05-timer {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .dibo-f05-unit {
+    flex: 1;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    padding: 12px 6px 8px;
+    text-align: center;
+  }
+
+  .dibo-f05-num {
+    display: block;
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -1px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dibo-f05-unit-label {
+    display: block;
+    font-size: 10px;
+    color: #555;
+    font-weight: 600;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .dibo-f05-colon {
+    font-size: 22px;
+    font-weight: 800;
+    color: #333;
+    flex: 0;
+    margin-bottom: 12px;
+  }
+
+  /* ── 잔여 슬롯 ── */
+  .dibo-f05-slots-wrap {
+    padding: 16px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .dibo-f05-slots-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .dibo-f05-slots-text {
+    font-size: 12px;
+    color: #888;
+  }
+
+  .dibo-f05-slots-count {
+    font-size: 13px;
+    font-weight: 700;
+    color: #ff4d4d;
+  }
+
+  .dibo-f05-progress-track {
+    height: 6px;
+    background: #1a1a1a;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .dibo-f05-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff4d4d, #ff8080);
+    border-radius: 6px;
+    transition: width 0.6s ease;
+  }
+
+  /* ── 폼 ── */
+  .dibo-f05-form {
+    padding: 20px 24px 24px;
+  }
+
+  .dibo-f05-type-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 8px;
+    letter-spacing: 0.2px;
+  }
+
+  .dibo-f05-type-btns {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .dibo-f05-type-btn {
+    flex: 1;
+    height: 40px;
+    border: 1.5px solid #2a2a2a;
+    border-radius: 8px;
+    background: #1a1a1a;
+    color: #666;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .dibo-f05-type-btn:hover { border-color: #ff4d4d; color: #ff4d4d; }
+  .dibo-f05-type-btn.selected { background: rgba(255,77,77,0.1); border-color: #ff4d4d; color: #ff4d4d; }
+
+  .dibo-f05-fields {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .dibo-f05-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .dibo-f05-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+  }
+
+  .dibo-f05-input {
+    height: 44px;
+    border: 1.5px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 14px;
+    color: #fff;
+    background: #1a1a1a;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+    width: 100%;
+  }
+
+  .dibo-f05-input:focus { border-color: #ff4d4d; }
+  .dibo-f05-input::placeholder { color: #444; }
+
+  .dibo-f05-agree {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+
+  .dibo-f05-checkbox {
+    width: 15px;
+    height: 15px;
+    accent-color: #ff4d4d;
+    margin-top: 2px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .dibo-f05-agree-text {
+    font-size: 11px;
+    color: #555;
+    line-height: 1.55;
+  }
+
+  .dibo-f05-agree-link { color: #ff4d4d; text-decoration: underline; cursor: pointer; }
+
+  .dibo-f05-submit {
+    width: 100%;
+    height: 50px;
+    background: #ff4d4d;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .dibo-f05-submit:hover  { background: #e63e3e; }
+  .dibo-f05-submit:active { transform: scale(0.98); }
+  .dibo-f05-submit:disabled { background: #4a2020; color: #7a4040; cursor: default; transform: none; }
+
+  /* ── 완료 ── */
+  .dibo-f05-thanks {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 44px 24px;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .dibo-f05-thanks-icon  { font-size: 44px; }
+  .dibo-f05-thanks-title { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+  .dibo-f05-thanks-msg   { font-size: 13px; color: #666; line-height: 1.7; }
+  .dibo-f05-thanks-slot  {
+    background: rgba(255,77,77,0.1);
+    border: 1px solid rgba(255,77,77,0.3);
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 12px;
+    color: #ff4d4d;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="dibo-f05-wrap">
+
+  <div class="dibo-f05-header">
+    <div class="dibo-f05-badge">
+      <span class="dibo-f05-badge-dot"></span>
+      오늘 마감 특가 이벤트
+    </div>
+    <h2>지금 신청하면<br>무료 상담 + 10% 할인</h2>
+    <p>자정까지 마감 · 잔여 자리 소진 시 자동 종료</p>
+  </div>
+
+  <!-- 카운트다운 -->
+  <div class="dibo-f05-timer-wrap">
+    <div class="dibo-f05-timer-label">⏱ 마감까지 남은 시간</div>
+    <div class="dibo-f05-timer">
+      <div class="dibo-f05-unit">
+        <span class="dibo-f05-num" id="diboF05H">00</span>
+        <span class="dibo-f05-unit-label">시간</span>
+      </div>
+      <span class="dibo-f05-colon">:</span>
+      <div class="dibo-f05-unit">
+        <span class="dibo-f05-num" id="diboF05M">00</span>
+        <span class="dibo-f05-unit-label">분</span>
+      </div>
+      <span class="dibo-f05-colon">:</span>
+      <div class="dibo-f05-unit">
+        <span class="dibo-f05-num" id="diboF05S">00</span>
+        <span class="dibo-f05-unit-label">초</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 잔여 슬롯 -->
+  <div class="dibo-f05-slots-wrap">
+    <div class="dibo-f05-slots-row">
+      <span class="dibo-f05-slots-text">오늘 무료 상담 잔여 자리</span>
+      <span class="dibo-f05-slots-count" id="diboF05SlotTxt">3자리 남음</span>
+    </div>
+    <div class="dibo-f05-progress-track">
+      <div class="dibo-f05-progress-fill" id="diboF05SlotBar" style="width:30%"></div>
+    </div>
+  </div>
+
+  <!-- 폼 -->
+  <div class="dibo-f05-form" id="diboF05FormWrap">
+    <div class="dibo-f05-type-label">상담 유형 선택</div>
+    <div class="dibo-f05-type-btns" id="diboF05Types">
+      <button class="dibo-f05-type-btn" data-v="방문 상담">방문 상담</button>
+      <button class="dibo-f05-type-btn" data-v="전화 상담">전화 상담</button>
+      <button class="dibo-f05-type-btn" data-v="온라인 상담">온라인</button>
+    </div>
+
+    <div class="dibo-f05-fields">
+      <div class="dibo-f05-field">
+        <span class="dibo-f05-label">이름</span>
+        <input class="dibo-f05-input" type="text" id="diboF05Name" placeholder="홍길동" maxlength="20" />
+      </div>
+      <div class="dibo-f05-field">
+        <span class="dibo-f05-label">연락처</span>
+        <input class="dibo-f05-input" type="tel" id="diboF05Tel" placeholder="010-0000-0000" maxlength="13" />
+      </div>
+    </div>
+
+    <label class="dibo-f05-agree">
+      <input class="dibo-f05-checkbox" type="checkbox" id="diboF05Agree" />
+      <span class="dibo-f05-agree-text">
+        <span class="dibo-f05-agree-link">[필수] 개인정보 수집·이용 동의</span>에 동의합니다.
+      </span>
+    </label>
+
+    <button class="dibo-f05-submit" id="diboF05Submit" disabled>지금 바로 무료 상담 신청</button>
+  </div>
+
+  <!-- 완료 -->
+  <div class="dibo-f05-thanks" id="diboF05Thanks">
+    <div class="dibo-f05-thanks-icon">🎉</div>
+    <p class="dibo-f05-thanks-title">신청이 완료되었습니다!</p>
+    <div class="dibo-f05-thanks-slot" id="diboF05ThanksSlot"></div>
+    <p class="dibo-f05-thanks-msg">담당 상담사가 곧 연락드립니다.<br>오늘 신청하신 분께 10% 할인 혜택이 적용됩니다.</p>
+  </div>
+
+</div>
+
+<script>
+/* ── Dibo Edit API ── */
+var diboF05EditId = null;
+(async function () {
+  try {
+    var res = await axios.get('https://api.di-bo.me/edit-set?config_id=copy_config_id', {
+      headers: { 'access-token': diboLoginManager.access_token }
+    });
+    diboF05EditId = res.data[0]?.id || null;
+  } catch (e) { console.error('[F05] Edit Set 조회 실패:', e); }
+})();
+
+async function diboF05PostEdit(name, tel, type) {
+  if (!diboF05EditId) return;
+  const fd = new FormData();
+  fd.append('req_body', JSON.stringify({ config_id: 'copy_config_id' }));
+  fd.append('column_01', name);  // 이름
+  fd.append('column_02', tel);   // 연락처
+  fd.append('column_03', type);  // 상담 유형
+  fd.append('column_04', ''); fd.append('column_05', ''); fd.append('column_06', '');
+  fd.append('column_07', ''); fd.append('column_08', '');
+  fd.append('column_09', ''); fd.append('column_10', '');
+  try {
+    await axios.post(
+      'https://api.di-bo.me/edit-set/' + diboF05EditId + '/rows',
+      fd,
+      { headers: { 'access-token': diboLoginManager?.access_token } }
+    );
+  } catch (e) { console.error('[F05] 데이터 제출 실패:', e); }
+}
+
+(function () {
+  var slots = 3;
+  var maxSlots = 10;
+  var selType = '';
+
+  /* ── 카운트다운 ── */
+  function updateTimer() {
+    var now  = new Date();
+    var end  = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+    var diff = Math.max(0, Math.floor((end - now) / 1000));
+    var h = Math.floor(diff / 3600);
+    var m = Math.floor((diff % 3600) / 60);
+    var s = diff % 60;
+    document.getElementById('diboF05H').textContent = String(h).padStart(2, '0');
+    document.getElementById('diboF05M').textContent = String(m).padStart(2, '0');
+    document.getElementById('diboF05S').textContent = String(s).padStart(2, '0');
+  }
+  updateTimer();
+  setInterval(updateTimer, 1000);
+
+  /* ── 슬롯 바 ── */
+  function updateSlotUI() {
+    document.getElementById('diboF05SlotTxt').textContent = slots + '자리 남음';
+    document.getElementById('diboF05SlotBar').style.width = Math.round((slots / maxSlots) * 100) + '%';
+  }
+  updateSlotUI();
+
+  /* ── 상담 유형 선택 ── */
+  document.getElementById('diboF05Types').querySelectorAll('.dibo-f05-type-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.getElementById('diboF05Types').querySelectorAll('.dibo-f05-type-btn').forEach(function(b){ b.classList.remove('selected'); });
+      this.classList.add('selected');
+      selType = this.dataset.v;
+      validate();
+    });
+  });
+
+  /* ── 입력 ── */
+  var nameEl  = document.getElementById('diboF05Name');
+  var telEl   = document.getElementById('diboF05Tel');
+  var agreeEl = document.getElementById('diboF05Agree');
+  var submitEl= document.getElementById('diboF05Submit');
+
+  telEl.addEventListener('input', function () {
+    var v = telEl.value.replace(/\D/g, '');
+    if (v.length <= 3)      telEl.value = v;
+    else if (v.length <= 7) telEl.value = v.slice(0,3)+'-'+v.slice(3);
+    else                    telEl.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+    validate();
+  });
+  nameEl.addEventListener('input', validate);
+  agreeEl.addEventListener('change', validate);
+
+  function validate() {
+    submitEl.disabled = !(selType &&
+      nameEl.value.trim().length >= 2 &&
+      telEl.value.replace(/\D/g,'').length >= 10 &&
+      agreeEl.checked);
+  }
+
+  /* ── 제출 ── */
+  submitEl.addEventListener('click', function () {
+    if (this.disabled || slots <= 0) return;
+    diboF05PostEdit(nameEl.value.trim(), telEl.value, selType);
+    slots = Math.max(0, slots - 1);
+    updateSlotUI();
+
+    document.getElementById('diboF05ThanksSlot').textContent =
+      '✅  ' + selType + ' · 잔여 ' + slots + '자리';
+
+    document.getElementById('diboF05FormWrap').style.display = 'none';
+    document.getElementById('diboF05Thanks').style.display   = 'flex';
+  });
+})();
+</script>
+</body>
+</html>

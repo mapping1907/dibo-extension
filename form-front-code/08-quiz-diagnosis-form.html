@@ -1,0 +1,447 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- ================================================
+   DIBO F08 · 퀴즈형 진단 폼 · 보험 상담 버전
+   class prefix : dibo-f08-
+   아임웹 코드위젯 즉시 적용
+   ================================================ -->
+<style>
+  .dibo-f08-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f0f4ff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(41,98,255,0.12);
+  }
+
+  /* ── 헤더 ── */
+  .dibo-f08-header {
+    background: #2962ff;
+    padding: 28px 24px 24px;
+    color: #fff;
+  }
+
+  .dibo-f08-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    letter-spacing: 0.3px;
+  }
+
+  .dibo-f08-header h2 { margin: 0 0 4px; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.3; }
+  .dibo-f08-header p  { margin: 0; font-size: 13px; opacity: 0.8; }
+
+  /* ── 진행 바 ── */
+  .dibo-f08-prog-wrap {
+    background: #2962ff;
+    padding: 0 24px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dibo-f08-prog-bar  { flex: 1; height: 4px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden; }
+  .dibo-f08-prog-fill { height: 100%; background: #fff; border-radius: 4px; transition: width 0.4s ease; }
+  .dibo-f08-prog-text { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 600; white-space: nowrap; }
+
+  /* ── 퀴즈 패널 ── */
+  .dibo-f08-panel { display: none; padding: 24px; }
+  .dibo-f08-panel.active { display: block; }
+
+  .dibo-f08-q-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 6px;
+    letter-spacing: -0.4px;
+  }
+
+  .dibo-f08-q-sub {
+    font-size: 12px;
+    color: #999;
+    margin: 0 0 16px;
+  }
+
+  .dibo-f08-choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .dibo-f08-choice {
+    padding: 14px 12px;
+    background: #fff;
+    border: 1.5px solid #e0e8ff;
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+
+  .dibo-f08-choice:hover    { border-color: #2962ff; background: #eef2ff; }
+  .dibo-f08-choice.selected { border-color: #2962ff; background: rgba(41,98,255,0.08); }
+
+  .dibo-f08-choice-icon { font-size: 24px; margin-bottom: 6px; line-height: 1; }
+  .dibo-f08-choice-text { font-size: 13px; font-weight: 600; color: #333; }
+  .dibo-f08-choice.selected .dibo-f08-choice-text { color: #2962ff; }
+
+  .dibo-f08-next {
+    width: 100%;
+    height: 48px;
+    background: #2962ff;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .dibo-f08-next:hover  { background: #1a52ef; }
+  .dibo-f08-next:active { transform: scale(0.98); }
+  .dibo-f08-next:disabled { background: #b0c0f0; cursor: default; transform: none; }
+
+  /* ── 결과 패널 ── */
+  .dibo-f08-result {
+    display: none;
+    padding: 24px;
+  }
+
+  .dibo-f08-result-badge {
+    display: inline-block;
+    background: rgba(41,98,255,0.1);
+    color: #2962ff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+
+  .dibo-f08-result-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 12px rgba(41,98,255,0.1);
+  }
+
+  .dibo-f08-result-icon { font-size: 36px; margin-bottom: 10px; }
+
+  .dibo-f08-result-name {
+    font-size: 18px;
+    font-weight: 800;
+    color: #2962ff;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .dibo-f08-result-desc {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.7;
+    margin-bottom: 12px;
+  }
+
+  .dibo-f08-result-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .dibo-f08-tag {
+    background: #eef2ff;
+    color: #2962ff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  /* 연락처 */
+  .dibo-f08-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  .dibo-f08-label { font-size: 11px; font-weight: 600; color: #888; }
+
+  .dibo-f08-input {
+    height: 44px;
+    border: 1.5px solid #dde4ff;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 14px;
+    color: #1a1a1a;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+    width: 100%;
+  }
+
+  .dibo-f08-input:focus { border-color: #2962ff; }
+  .dibo-f08-input::placeholder { color: #bbb; }
+
+  .dibo-f08-fields { display: flex; gap: 10px; margin-bottom: 10px; }
+  .dibo-f08-fields .dibo-f08-field { flex: 1; margin-bottom: 0; }
+
+  .dibo-f08-agree { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; cursor: pointer; }
+  .dibo-f08-checkbox { width: 15px; height: 15px; accent-color: #2962ff; margin-top: 2px; flex-shrink: 0; cursor: pointer; }
+  .dibo-f08-agree-text { font-size: 11px; color: #aaa; line-height: 1.55; }
+  .dibo-f08-agree-link { color: #2962ff; text-decoration: underline; cursor: pointer; }
+
+  .dibo-f08-submit {
+    width: 100%;
+    height: 50px;
+    background: #2962ff;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .dibo-f08-submit:hover  { background: #1a52ef; }
+  .dibo-f08-submit:active { transform: scale(0.98); }
+  .dibo-f08-submit:disabled { background: #b0c0f0; cursor: default; transform: none; }
+
+  /* 완료 */
+  .dibo-f08-thanks {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 44px 24px;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .dibo-f08-thanks-icon  { font-size: 44px; }
+  .dibo-f08-thanks-title { font-size: 18px; font-weight: 800; color: #1a1a1a; letter-spacing: -0.5px; }
+  .dibo-f08-thanks-msg   { font-size: 13px; color: #888; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="dibo-f08-wrap">
+
+  <div class="dibo-f08-header">
+    <div class="dibo-f08-badge">🛡️ 3분 보험 진단</div>
+    <h2>내게 꼭 맞는 보험을<br>찾아드릴게요</h2>
+    <p>4가지 질문만 답하면 맞춤 상품을 추천드립니다</p>
+  </div>
+
+  <div class="dibo-f08-prog-wrap">
+    <div class="dibo-f08-prog-bar">
+      <div class="dibo-f08-prog-fill" id="diboF08Fill" style="width:0%"></div>
+    </div>
+    <span class="dibo-f08-prog-text" id="diboF08ProgTxt">0 / 4</span>
+  </div>
+
+  <!-- Q1 -->
+  <div class="dibo-f08-panel active" id="diboF08P1">
+    <p class="dibo-f08-q-title">연령대를 알려주세요</p>
+    <p class="dibo-f08-q-sub">보험 설계에 가장 중요한 기준입니다</p>
+    <div class="dibo-f08-choices">
+      <div class="dibo-f08-choice" data-v="20대"><div class="dibo-f08-choice-icon">🧑</div><div class="dibo-f08-choice-text">20대</div></div>
+      <div class="dibo-f08-choice" data-v="30대"><div class="dibo-f08-choice-icon">👔</div><div class="dibo-f08-choice-text">30대</div></div>
+      <div class="dibo-f08-choice" data-v="40대"><div class="dibo-f08-choice-icon">💼</div><div class="dibo-f08-choice-text">40대</div></div>
+      <div class="dibo-f08-choice" data-v="50대 이상"><div class="dibo-f08-choice-icon">👴</div><div class="dibo-f08-choice-text">50대 이상</div></div>
+    </div>
+    <button class="dibo-f08-next" data-step="1" disabled>다음 →</button>
+  </div>
+
+  <!-- Q2 -->
+  <div class="dibo-f08-panel" id="diboF08P2">
+    <p class="dibo-f08-q-title">가족 구성은 어떻게 되시나요?</p>
+    <p class="dibo-f08-q-sub">가족 형태에 따라 필요한 보장이 달라집니다</p>
+    <div class="dibo-f08-choices">
+      <div class="dibo-f08-choice" data-v="미혼 혼자"><div class="dibo-f08-choice-icon">🙋</div><div class="dibo-f08-choice-text">미혼 혼자</div></div>
+      <div class="dibo-f08-choice" data-v="부부만"><div class="dibo-f08-choice-icon">💑</div><div class="dibo-f08-choice-text">부부만</div></div>
+      <div class="dibo-f08-choice" data-v="자녀 있음"><div class="dibo-f08-choice-icon">👨‍👩‍👧</div><div class="dibo-f08-choice-text">자녀 있음</div></div>
+      <div class="dibo-f08-choice" data-v="부모님 부양"><div class="dibo-f08-choice-icon">🏠</div><div class="dibo-f08-choice-text">부모님 부양</div></div>
+    </div>
+    <button class="dibo-f08-next" data-step="2" disabled>다음 →</button>
+  </div>
+
+  <!-- Q3 -->
+  <div class="dibo-f08-panel" id="diboF08P3">
+    <p class="dibo-f08-q-title">가장 걱정되는 것은 무엇인가요?</p>
+    <p class="dibo-f08-q-sub">핵심 보장 영역을 파악합니다</p>
+    <div class="dibo-f08-choices">
+      <div class="dibo-f08-choice" data-v="암·중증질환"><div class="dibo-f08-choice-icon">🏥</div><div class="dibo-f08-choice-text">암·중증질환</div></div>
+      <div class="dibo-f08-choice" data-v="사고·상해"><div class="dibo-f08-choice-icon">🩹</div><div class="dibo-f08-choice-text">사고·상해</div></div>
+      <div class="dibo-f08-choice" data-v="노후 대비"><div class="dibo-f08-choice-icon">📈</div><div class="dibo-f08-choice-text">노후 대비</div></div>
+      <div class="dibo-f08-choice" data-v="가족 생계 보호"><div class="dibo-f08-choice-icon">🛡️</div><div class="dibo-f08-choice-text">가족 생계 보호</div></div>
+    </div>
+    <button class="dibo-f08-next" data-step="3" disabled>다음 →</button>
+  </div>
+
+  <!-- Q4 -->
+  <div class="dibo-f08-panel" id="diboF08P4">
+    <p class="dibo-f08-q-title">월 보험료 예산은 얼마인가요?</p>
+    <p class="dibo-f08-q-sub">예산에 맞는 최적의 보장을 설계해 드립니다</p>
+    <div class="dibo-f08-choices">
+      <div class="dibo-f08-choice" data-v="~5만원"><div class="dibo-f08-choice-icon">💰</div><div class="dibo-f08-choice-text">~5만원</div></div>
+      <div class="dibo-f08-choice" data-v="5~10만원"><div class="dibo-f08-choice-icon">💰💰</div><div class="dibo-f08-choice-text">5~10만원</div></div>
+      <div class="dibo-f08-choice" data-v="10~20만원"><div class="dibo-f08-choice-icon">💰💰💰</div><div class="dibo-f08-choice-text">10~20만원</div></div>
+      <div class="dibo-f08-choice" data-v="20만원 이상"><div class="dibo-f08-choice-icon">🏆</div><div class="dibo-f08-choice-text">20만원 이상</div></div>
+    </div>
+    <button class="dibo-f08-next" data-step="4" disabled>결과 보기 →</button>
+  </div>
+
+  <!-- 결과 -->
+  <div class="dibo-f08-result" id="diboF08Result">
+    <div class="dibo-f08-result-badge">✨ 맞춤 추천 결과</div>
+    <div class="dibo-f08-result-card" id="diboF08ResultCard">
+      <div class="dibo-f08-result-icon" id="diboF08RIcon"></div>
+      <div class="dibo-f08-result-name" id="diboF08RName"></div>
+      <div class="dibo-f08-result-desc" id="diboF08RDesc"></div>
+      <div class="dibo-f08-result-tags" id="diboF08RTags"></div>
+    </div>
+
+    <div class="dibo-f08-fields">
+      <div class="dibo-f08-field">
+        <span class="dibo-f08-label">이름</span>
+        <input class="dibo-f08-input" type="text" id="diboF08Name" placeholder="홍길동" maxlength="20" />
+      </div>
+      <div class="dibo-f08-field">
+        <span class="dibo-f08-label">연락처</span>
+        <input class="dibo-f08-input" type="tel" id="diboF08Tel" placeholder="010-0000-0000" maxlength="13" />
+      </div>
+    </div>
+
+    <label class="dibo-f08-agree">
+      <input class="dibo-f08-checkbox" type="checkbox" id="diboF08Agree" />
+      <span class="dibo-f08-agree-text">
+        <span class="dibo-f08-agree-link">[필수] 개인정보 수집·이용 동의</span>에 동의합니다.
+      </span>
+    </label>
+
+    <button class="dibo-f08-submit" id="diboF08Submit" disabled>이 상품 상담 받기</button>
+  </div>
+
+  <!-- 완료 -->
+  <div class="dibo-f08-thanks" id="diboF08Thanks">
+    <div class="dibo-f08-thanks-icon">🎯</div>
+    <p class="dibo-f08-thanks-title">상담 신청 완료!</p>
+    <p class="dibo-f08-thanks-msg">전문 보험 설계사가 영업일 기준 1일 내<br>연락드리겠습니다.</p>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var answers = {};
+  var step = 1;
+
+  /* ── 결과 매핑 ── */
+  var RESULTS = [
+    { cond: function(a){ return a.q3 === '노후 대비' || a.q4 === '20만원 이상'; },
+      icon:'📈', name:'종신/연금보험', desc:'노후 소득 보장과 사망 시 유족 생활비를 동시에 준비할 수 있는 상품입니다.', tags:['노후 대비','종신 보장','연금 수령'] },
+    { cond: function(a){ return a.q3 === '암·중증질환'; },
+      icon:'🏥', name:'건강보험 (암·3대 질병)', desc:'암·뇌졸중·심근경색 등 중증질환 치료비와 입원비를 집중 보장합니다.', tags:['암 진단금','중증질환','입원 보장'] },
+    { cond: function(a){ return a.q3 === '사고·상해' || a.q2 === '미혼 혼자'; },
+      icon:'🩹', name:'실손+상해보험', desc:'사고·질병 치료비를 실비로 보장하는 필수 기본 보험입니다.', tags:['실손 보장','통원 지원','상해 보장'] },
+    { cond: function(){ return true; },
+      icon:'🛡️', name:'통합 보장 설계', desc:'연령·가족 상황을 종합 분석한 맞춤형 포트폴리오를 제안드립니다.', tags:['맞춤 설계','전문가 상담','포트폴리오'] }
+  ];
+
+  function getResult() {
+    for (var i = 0; i < RESULTS.length; i++) {
+      if (RESULTS[i].cond(answers)) return RESULTS[i];
+    }
+    return RESULTS[RESULTS.length - 1];
+  }
+
+  /* ── 단계 처리 ── */
+  function setupPanel(n) {
+    var panel = document.getElementById('diboF08P' + n);
+    var btn   = panel.querySelector('.dibo-f08-next');
+
+    panel.querySelectorAll('.dibo-f08-choice').forEach(function (c) {
+      c.addEventListener('click', function () {
+        panel.querySelectorAll('.dibo-f08-choice').forEach(function(x){ x.classList.remove('selected'); });
+        this.classList.add('selected');
+        answers['q' + n] = this.dataset.v;
+        btn.disabled = false;
+      });
+    });
+
+    btn.addEventListener('click', function () {
+      if (this.disabled) return;
+      panel.classList.remove('active');
+
+      var pct = Math.round((n / 4) * 100);
+      document.getElementById('diboF08Fill').style.width = pct + '%';
+      document.getElementById('diboF08ProgTxt').textContent = n + ' / 4';
+
+      if (n < 4) {
+        document.getElementById('diboF08P' + (n + 1)).classList.add('active');
+      } else {
+        showResult();
+      }
+    });
+  }
+
+  for (var i = 1; i <= 4; i++) setupPanel(i);
+
+  function showResult() {
+    document.getElementById('diboF08Fill').style.width = '100%';
+    document.getElementById('diboF08ProgTxt').textContent = '완료';
+
+    var r = getResult();
+    document.getElementById('diboF08RIcon').textContent = r.icon;
+    document.getElementById('diboF08RName').textContent = r.name;
+    document.getElementById('diboF08RDesc').textContent = r.desc;
+    document.getElementById('diboF08RTags').innerHTML = r.tags.map(function(t){
+      return '<span class="dibo-f08-tag">' + t + '</span>';
+    }).join('');
+
+    document.getElementById('diboF08Result').style.display = 'block';
+  }
+
+  /* ── 연락처 ── */
+  var telEl   = document.getElementById('diboF08Tel');
+  var nameEl  = document.getElementById('diboF08Name');
+  var agreeEl = document.getElementById('diboF08Agree');
+  var submitEl= document.getElementById('diboF08Submit');
+
+  telEl.addEventListener('input', function () {
+    var v = telEl.value.replace(/\D/g,'');
+    if (v.length <= 3)      telEl.value = v;
+    else if (v.length <= 7) telEl.value = v.slice(0,3)+'-'+v.slice(3);
+    else                    telEl.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+    validate();
+  });
+  nameEl.addEventListener('input', validate);
+  agreeEl.addEventListener('change', validate);
+
+  function validate() {
+    submitEl.disabled = !(nameEl.value.trim().length >= 2 &&
+      telEl.value.replace(/\D/g,'').length >= 10 && agreeEl.checked);
+  }
+
+  submitEl.addEventListener('click', function () {
+    if (this.disabled) return;
+    document.getElementById('diboF08Result').style.display = 'none';
+    document.getElementById('diboF08Thanks').style.display = 'flex';
+  });
+})();
+</script>
+</body>
+</html>

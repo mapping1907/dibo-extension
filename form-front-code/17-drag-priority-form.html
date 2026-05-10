@@ -1,0 +1,549 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- ================================================
+   DIBO F17 · 드래그 우선순위 폼 · 개발자 포트폴리오 버전
+   class prefix : dibo-f17-
+   아임웹 코드위젯 즉시 적용
+   ================================================ -->
+<style>
+  .dibo-f17-wrap {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0a0a0a;
+    border-radius: 20px;
+    padding: 28px 20px 32px;
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: 0 8px 40px rgba(0,255,136,0.08);
+    border: 1px solid #1a1a1a;
+  }
+
+  .dibo-f17-badge {
+    display: inline-block;
+    background: rgba(0,255,136,0.08);
+    color: #00ff88;
+    border: 1px solid rgba(0,255,136,0.2);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+    font-family: monospace;
+  }
+
+  .dibo-f17-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #f0f0f0;
+    margin: 0 0 4px;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+  }
+
+  .dibo-f17-subtitle {
+    font-size: 12px;
+    color: #555;
+    margin: 0 0 8px;
+    line-height: 1.6;
+  }
+
+  .dibo-f17-hint {
+    font-size: 11px;
+    color: #00ff88;
+    background: rgba(0,255,136,0.06);
+    border: 1px solid rgba(0,255,136,0.15);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  /* ── 드래그 리스트 ── */
+  .dibo-f17-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 20px;
+    min-height: 40px;
+  }
+
+  .dibo-f17-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 10px;
+    cursor: grab;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s, box-shadow 0.15s;
+    user-select: none;
+  }
+
+  .dibo-f17-item:hover {
+    border-color: rgba(0,255,136,0.3);
+    background: #141414;
+  }
+
+  .dibo-f17-item.is-dragging {
+    cursor: grabbing;
+    background: #1a1a1a;
+    border-color: #00ff88;
+    box-shadow: 0 4px 20px rgba(0,255,136,0.2);
+    transform: scale(1.02);
+    opacity: 0.95;
+  }
+
+  .dibo-f17-item.drag-over {
+    border-color: rgba(0,255,136,0.5);
+    background: #0d1a12;
+  }
+
+  .dibo-f17-rank {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(0,255,136,0.12);
+    color: #00ff88;
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-family: monospace;
+    transition: background 0.2s;
+  }
+
+  .dibo-f17-item:nth-child(1) .dibo-f17-rank { background: rgba(0,255,136,0.25); }
+  .dibo-f17-item:nth-child(2) .dibo-f17-rank { background: rgba(0,255,136,0.18); }
+  .dibo-f17-item:nth-child(3) .dibo-f17-rank { background: rgba(0,255,136,0.12); }
+
+  .dibo-f17-item-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    width: 24px;
+    text-align: center;
+  }
+
+  .dibo-f17-item-info { flex: 1; min-width: 0; }
+  .dibo-f17-item-name { font-size: 13px; font-weight: 700; color: #e0e0e0; margin: 0 0 1px; }
+  .dibo-f17-item-desc { font-size: 11px; color: #555; margin: 0; }
+
+  .dibo-f17-drag-handle {
+    color: #333;
+    flex-shrink: 0;
+    cursor: grab;
+    transition: color 0.2s;
+  }
+
+  .dibo-f17-item:hover .dibo-f17-drag-handle { color: #00ff88; }
+
+  /* ── 요약 ── */
+  .dibo-f17-summary {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    font-family: monospace;
+  }
+
+  .dibo-f17-summary-title {
+    font-size: 10px;
+    color: #00ff88;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .dibo-f17-summary-line {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 3px;
+  }
+
+  .dibo-f17-summary-line span { color: #00ff88; }
+
+  /* ── 연락처 ── */
+  .dibo-f17-contact {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .dibo-f17-contact.is-open { max-height: 300px; }
+
+  .dibo-f17-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .dibo-f17-label { font-size: 11px; font-weight: 600; color: #555; font-family: monospace; }
+
+  .dibo-f17-input {
+    height: 46px;
+    border: 1px solid #222;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 14px;
+    color: #e0e0e0;
+    background: #111;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+    width: 100%;
+  }
+
+  .dibo-f17-input:focus {
+    border-color: #00ff88;
+    box-shadow: 0 0 0 3px rgba(0,255,136,0.10);
+  }
+
+  .dibo-f17-input::placeholder { color: #333; }
+
+  .dibo-f17-agree {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+
+  .dibo-f17-checkbox {
+    width: 15px;
+    height: 15px;
+    accent-color: #00ff88;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .dibo-f17-agree-text { font-size: 11px; color: #555; line-height: 1.55; }
+  .dibo-f17-agree-link { color: #00ff88; text-decoration: underline; cursor: pointer; }
+
+  .dibo-f17-cta-btn {
+    width: 100%;
+    height: 52px;
+    background: #00ff88;
+    color: #0a0a0a;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+    margin-bottom: 8px;
+  }
+
+  .dibo-f17-cta-btn:hover { background: #00e077; }
+  .dibo-f17-cta-btn:active { transform: scale(0.98); }
+
+  .dibo-f17-submit {
+    width: 100%;
+    height: 52px;
+    background: #00ff88;
+    color: #0a0a0a;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .dibo-f17-submit:hover { background: #00e077; }
+  .dibo-f17-submit:active { transform: scale(0.98); }
+  .dibo-f17-submit:disabled { background: #1a3a2a; color: #2a5a3a; cursor: default; transform: none; }
+
+  /* ── 완료 ── */
+  .dibo-f17-thanks {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px 0 8px;
+    gap: 10px;
+  }
+
+  .dibo-f17-thanks-icon { font-size: 44px; }
+  .dibo-f17-thanks-title { font-size: 18px; font-weight: 800; color: #00ff88; letter-spacing: -0.4px; }
+  .dibo-f17-thanks-msg { font-size: 12px; color: #555; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="dibo-f17-wrap">
+  <div class="dibo-f17-badge">// 문의하기</div>
+  <p class="dibo-f17-title">필요한 기술 스택을<br>우선순위로 정렬해주세요</p>
+  <p class="dibo-f17-subtitle">드래그로 순서를 바꾸면 맞춤형 제안을 드립니다</p>
+  <div class="dibo-f17-hint">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="#00ff88" stroke-width="1.5" stroke-linecap="round"/></svg>
+    항목을 드래그해서 원하는 순서로 바꾸세요
+  </div>
+
+  <div id="diboF17FormArea">
+    <!-- 드래그 리스트 -->
+    <div class="dibo-f17-list" id="diboF17List">
+      <div class="dibo-f17-item" draggable="true" data-id="react">
+        <span class="dibo-f17-rank">1</span>
+        <span class="dibo-f17-item-icon">⚛️</span>
+        <div class="dibo-f17-item-info">
+          <p class="dibo-f17-item-name">React / Next.js</p>
+          <p class="dibo-f17-item-desc">프론트엔드 · 웹 앱 개발</p>
+        </div>
+        <svg class="dibo-f17-drag-handle" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="5" cy="4" r="1.2" fill="currentColor"/><circle cx="11" cy="4" r="1.2" fill="currentColor"/><circle cx="5" cy="8" r="1.2" fill="currentColor"/><circle cx="11" cy="8" r="1.2" fill="currentColor"/><circle cx="5" cy="12" r="1.2" fill="currentColor"/><circle cx="11" cy="12" r="1.2" fill="currentColor"/></svg>
+      </div>
+      <div class="dibo-f17-item" draggable="true" data-id="node">
+        <span class="dibo-f17-rank">2</span>
+        <span class="dibo-f17-item-icon">🟢</span>
+        <div class="dibo-f17-item-info">
+          <p class="dibo-f17-item-name">Node.js / Express</p>
+          <p class="dibo-f17-item-desc">백엔드 · API 서버 개발</p>
+        </div>
+        <svg class="dibo-f17-drag-handle" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="5" cy="4" r="1.2" fill="currentColor"/><circle cx="11" cy="4" r="1.2" fill="currentColor"/><circle cx="5" cy="8" r="1.2" fill="currentColor"/><circle cx="11" cy="8" r="1.2" fill="currentColor"/><circle cx="5" cy="12" r="1.2" fill="currentColor"/><circle cx="11" cy="12" r="1.2" fill="currentColor"/></svg>
+      </div>
+      <div class="dibo-f17-item" draggable="true" data-id="ts">
+        <span class="dibo-f17-rank">3</span>
+        <span class="dibo-f17-item-icon">🔷</span>
+        <div class="dibo-f17-item-info">
+          <p class="dibo-f17-item-name">TypeScript</p>
+          <p class="dibo-f17-item-desc">타입 안전 · 대규모 프로젝트</p>
+        </div>
+        <svg class="dibo-f17-drag-handle" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="5" cy="4" r="1.2" fill="currentColor"/><circle cx="11" cy="4" r="1.2" fill="currentColor"/><circle cx="5" cy="8" r="1.2" fill="currentColor"/><circle cx="11" cy="8" r="1.2" fill="currentColor"/><circle cx="5" cy="12" r="1.2" fill="currentColor"/><circle cx="11" cy="12" r="1.2" fill="currentColor"/></svg>
+      </div>
+      <div class="dibo-f17-item" draggable="true" data-id="db">
+        <span class="dibo-f17-rank">4</span>
+        <span class="dibo-f17-item-icon">🗄️</span>
+        <div class="dibo-f17-item-info">
+          <p class="dibo-f17-item-name">DB 설계 / 최적화</p>
+          <p class="dibo-f17-item-desc">MySQL · PostgreSQL · MongoDB</p>
+        </div>
+        <svg class="dibo-f17-drag-handle" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="5" cy="4" r="1.2" fill="currentColor"/><circle cx="11" cy="4" r="1.2" fill="currentColor"/><circle cx="5" cy="8" r="1.2" fill="currentColor"/><circle cx="11" cy="8" r="1.2" fill="currentColor"/><circle cx="5" cy="12" r="1.2" fill="currentColor"/><circle cx="11" cy="12" r="1.2" fill="currentColor"/></svg>
+      </div>
+      <div class="dibo-f17-item" draggable="true" data-id="devops">
+        <span class="dibo-f17-rank">5</span>
+        <span class="dibo-f17-item-icon">☁️</span>
+        <div class="dibo-f17-item-info">
+          <p class="dibo-f17-item-name">DevOps / 배포</p>
+          <p class="dibo-f17-item-desc">Docker · AWS · CI/CD</p>
+        </div>
+        <svg class="dibo-f17-drag-handle" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="5" cy="4" r="1.2" fill="currentColor"/><circle cx="11" cy="4" r="1.2" fill="currentColor"/><circle cx="5" cy="8" r="1.2" fill="currentColor"/><circle cx="11" cy="8" r="1.2" fill="currentColor"/><circle cx="5" cy="12" r="1.2" fill="currentColor"/><circle cx="11" cy="12" r="1.2" fill="currentColor"/></svg>
+      </div>
+      <div class="dibo-f17-item" draggable="true" data-id="mobile">
+        <span class="dibo-f17-rank">6</span>
+        <span class="dibo-f17-item-icon">📱</span>
+        <div class="dibo-f17-item-info">
+          <p class="dibo-f17-item-name">모바일 앱</p>
+          <p class="dibo-f17-item-desc">React Native · Flutter</p>
+        </div>
+        <svg class="dibo-f17-drag-handle" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="5" cy="4" r="1.2" fill="currentColor"/><circle cx="11" cy="4" r="1.2" fill="currentColor"/><circle cx="5" cy="8" r="1.2" fill="currentColor"/><circle cx="11" cy="8" r="1.2" fill="currentColor"/><circle cx="5" cy="12" r="1.2" fill="currentColor"/><circle cx="11" cy="12" r="1.2" fill="currentColor"/></svg>
+      </div>
+    </div>
+
+    <!-- 요약 -->
+    <div class="dibo-f17-summary" id="diboF17Summary"></div>
+
+    <!-- CTA 버튼 -->
+    <button class="dibo-f17-cta-btn" id="diboF17CtaBtn">이 순서로 문의하기</button>
+
+    <!-- 연락처 -->
+    <div class="dibo-f17-contact" id="diboF17Contact">
+      <div>
+        <div class="dibo-f17-field">
+          <span class="dibo-f17-label">// 성함 또는 회사명</span>
+          <input class="dibo-f17-input" type="text" id="diboF17Name" placeholder="홍길동 / DIBO Inc." maxlength="30" />
+        </div>
+        <div class="dibo-f17-field">
+          <span class="dibo-f17-label">// 연락처</span>
+          <input class="dibo-f17-input" type="tel" id="diboF17Tel" placeholder="010-0000-0000" maxlength="13" />
+        </div>
+        <label class="dibo-f17-agree">
+          <input class="dibo-f17-checkbox" type="checkbox" id="diboF17Agree" />
+          <span class="dibo-f17-agree-text">
+            <span class="dibo-f17-agree-link">[필수] 개인정보 수집·이용 동의</span>에 동의합니다.
+          </span>
+        </label>
+        <button class="dibo-f17-submit" id="diboF17Submit" disabled>문의 전송하기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dibo-f17-thanks" id="diboF17Thanks">
+    <div class="dibo-f17-thanks-icon">🚀</div>
+    <p class="dibo-f17-thanks-title">// 문의 접수 완료</p>
+    <p class="dibo-f17-thanks-msg">우선순위에 맞는 제안서를 준비해<br>24시간 내 연락드리겠습니다.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  var list      = document.getElementById('diboF17List');
+  var summaryEl = document.getElementById('diboF17Summary');
+  var ctaBtn    = document.getElementById('diboF17CtaBtn');
+  var contactEl = document.getElementById('diboF17Contact');
+  var nameEl    = document.getElementById('diboF17Name');
+  var telEl     = document.getElementById('diboF17Tel');
+  var agreeEl   = document.getElementById('diboF17Agree');
+  var submitEl  = document.getElementById('diboF17Submit');
+  var formArea  = document.getElementById('diboF17FormArea');
+  var thanksArea= document.getElementById('diboF17Thanks');
+
+  var dragSrc = null;
+
+  /* ── 드래그 앤 드롭 ── */
+  function addDragHandlers(item) {
+    item.addEventListener('dragstart', function (e) {
+      dragSrc = item;
+      item.classList.add('is-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    item.addEventListener('dragend', function () {
+      item.classList.remove('is-dragging');
+      list.querySelectorAll('.dibo-f17-item').forEach(function (i) {
+        i.classList.remove('drag-over');
+      });
+      updateRanks();
+      updateSummary();
+    });
+
+    item.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (item !== dragSrc) item.classList.add('drag-over');
+    });
+
+    item.addEventListener('dragleave', function () {
+      item.classList.remove('drag-over');
+    });
+
+    item.addEventListener('drop', function (e) {
+      e.preventDefault();
+      if (dragSrc && dragSrc !== item) {
+        var items   = Array.from(list.querySelectorAll('.dibo-f17-item'));
+        var srcIdx  = items.indexOf(dragSrc);
+        var destIdx = items.indexOf(item);
+        if (srcIdx < destIdx) list.insertBefore(dragSrc, item.nextSibling);
+        else list.insertBefore(dragSrc, item);
+      }
+      item.classList.remove('drag-over');
+    });
+  }
+
+  list.querySelectorAll('.dibo-f17-item').forEach(addDragHandlers);
+
+  /* ── 터치 드래그 (모바일) ── */
+  var touchItem = null, touchClone = null, touchOffY = 0;
+
+  list.querySelectorAll('.dibo-f17-item').forEach(function (item) {
+    item.addEventListener('touchstart', function (e) {
+      touchItem = item;
+      var t = e.touches[0];
+      var rect = item.getBoundingClientRect();
+      touchOffY = t.clientY - rect.top;
+      touchClone = item.cloneNode(true);
+      touchClone.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + (t.clientY - touchOffY) + 'px;width:' + rect.width + 'px;opacity:0.9;z-index:9999;pointer-events:none;';
+      document.body.appendChild(touchClone);
+      item.style.opacity = '0.3';
+    }, { passive: true });
+
+    item.addEventListener('touchmove', function (e) {
+      if (!touchClone) return;
+      e.preventDefault();
+      var t = e.touches[0];
+      touchClone.style.top = (t.clientY - touchOffY) + 'px';
+      var els = document.elementsFromPoint(t.clientX, t.clientY);
+      var target = els.find(function (el) { return el.classList.contains('dibo-f17-item') && el !== touchItem; });
+      list.querySelectorAll('.dibo-f17-item').forEach(function (i) { i.classList.remove('drag-over'); });
+      if (target) target.classList.add('drag-over');
+    }, { passive: false });
+
+    item.addEventListener('touchend', function (e) {
+      if (touchClone) { document.body.removeChild(touchClone); touchClone = null; }
+      if (!touchItem) return;
+      touchItem.style.opacity = '';
+      var t = e.changedTouches[0];
+      var els = document.elementsFromPoint(t.clientX, t.clientY);
+      var target = els.find(function (el) { return el.classList.contains('dibo-f17-item') && el !== touchItem; });
+      if (target) {
+        var items   = Array.from(list.querySelectorAll('.dibo-f17-item'));
+        var srcIdx  = items.indexOf(touchItem);
+        var destIdx = items.indexOf(target);
+        if (srcIdx < destIdx) list.insertBefore(touchItem, target.nextSibling);
+        else list.insertBefore(touchItem, target);
+      }
+      list.querySelectorAll('.dibo-f17-item').forEach(function (i) { i.classList.remove('drag-over'); });
+      updateRanks();
+      updateSummary();
+      touchItem = null;
+    });
+  });
+
+  function updateRanks() {
+    list.querySelectorAll('.dibo-f17-item').forEach(function (item, i) {
+      item.querySelector('.dibo-f17-rank').textContent = i + 1;
+    });
+  }
+
+  function updateSummary() {
+    var items = list.querySelectorAll('.dibo-f17-item');
+    var html = '<p class="dibo-f17-summary-title">// priority_stack[]</p>';
+    items.forEach(function (item, i) {
+      var name = item.querySelector('.dibo-f17-item-name').textContent;
+      html += '<p class="dibo-f17-summary-line"><span>[' + (i+1) + ']</span> ' + name + '</p>';
+    });
+    summaryEl.innerHTML = html;
+  }
+
+  updateSummary();
+
+  /* ── CTA ── */
+  ctaBtn.addEventListener('click', function () {
+    contactEl.classList.add('is-open');
+    ctaBtn.style.display = 'none';
+    setTimeout(function () {
+      contactEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+  });
+
+  /* ── 전화번호 포맷 ── */
+  telEl.addEventListener('input', function () {
+    var v = telEl.value.replace(/\D/g,'');
+    if (v.length <= 3)      telEl.value = v;
+    else if (v.length <= 7) telEl.value = v.slice(0,3)+'-'+v.slice(3);
+    else                    telEl.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+    validate();
+  });
+
+  nameEl.addEventListener('input', validate);
+  agreeEl.addEventListener('change', validate);
+
+  function validate() {
+    submitEl.disabled = !(
+      nameEl.value.trim().length >= 2 &&
+      telEl.value.replace(/\D/g,'').length >= 10 &&
+      agreeEl.checked
+    );
+  }
+
+  submitEl.addEventListener('click', function () {
+    if (this.disabled) return;
+    formArea.style.display = 'none';
+    thanksArea.style.display = 'flex';
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,595 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- ================================================
+   DIBO F07 · 실시간 가격 계산기 폼 · 자동차 딜러 버전
+   class prefix : dibo-f07-
+   아임웹 코드위젯 즉시 적용
+   ================================================ -->
+<style>
+  .dibo-f07-wrap {
+    max-width: 520px;
+    margin: 0 auto;
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #111;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 12px 48px rgba(58,134,255,0.18);
+  }
+
+  /* ── 헤더 ── */
+  .dibo-f07-header {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .dibo-f07-badge {
+    display: inline-block;
+    background: rgba(58,134,255,0.12);
+    border: 1px solid rgba(58,134,255,0.3);
+    color: #3a86ff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    letter-spacing: 0.2px;
+  }
+
+  .dibo-f07-header h2 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+  }
+
+  .dibo-f07-header p { margin: 0; font-size: 12px; color: #555; }
+
+  /* ── 모델 선택 ── */
+  .dibo-f07-section {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .dibo-f07-sec-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #555;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .dibo-f07-models {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dibo-f07-model-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: #1a1a1a;
+    border: 1.5px solid #2a2a2a;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .dibo-f07-model-card:hover { border-color: #3a86ff; }
+  .dibo-f07-model-card.selected { border-color: #3a86ff; background: rgba(58,134,255,0.08); }
+
+  .dibo-f07-model-info { display: flex; flex-direction: column; gap: 2px; }
+
+  .dibo-f07-model-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .dibo-f07-model-card.selected .dibo-f07-model-name { color: #3a86ff; }
+
+  .dibo-f07-model-sub { font-size: 11px; color: #555; }
+
+  .dibo-f07-model-price {
+    font-size: 15px;
+    font-weight: 800;
+    color: #888;
+    letter-spacing: -0.5px;
+  }
+
+  .dibo-f07-model-card.selected .dibo-f07-model-price { color: #3a86ff; }
+
+  .dibo-f07-model-radio {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #333;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 12px;
+    transition: border-color 0.2s;
+  }
+
+  .dibo-f07-model-card.selected .dibo-f07-model-radio {
+    border-color: #3a86ff;
+  }
+
+  .dibo-f07-model-radio-dot {
+    width: 8px;
+    height: 8px;
+    background: #3a86ff;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .dibo-f07-model-card.selected .dibo-f07-model-radio-dot { opacity: 1; }
+
+  /* ── 옵션 ── */
+  .dibo-f07-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .dibo-f07-opt {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: #1a1a1a;
+    border: 1.5px solid #2a2a2a;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+
+  .dibo-f07-opt:hover { border-color: #3a86ff; }
+  .dibo-f07-opt.on    { border-color: #3a86ff; background: rgba(58,134,255,0.08); }
+
+  .dibo-f07-opt-left { display: flex; flex-direction: column; gap: 2px; }
+  .dibo-f07-opt-name { font-size: 13px; font-weight: 600; color: #aaa; }
+  .dibo-f07-opt.on .dibo-f07-opt-name { color: #3a86ff; }
+  .dibo-f07-opt-price { font-size: 11px; color: #555; }
+  .dibo-f07-opt.on .dibo-f07-opt-price { color: #3a86ff; }
+
+  .dibo-f07-toggle {
+    width: 32px;
+    height: 18px;
+    background: #2a2a2a;
+    border-radius: 9px;
+    flex-shrink: 0;
+    position: relative;
+    transition: background 0.25s;
+  }
+
+  .dibo-f07-opt.on .dibo-f07-toggle { background: #3a86ff; }
+
+  .dibo-f07-toggle-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.25s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  .dibo-f07-opt.on .dibo-f07-toggle-knob { transform: translateX(14px); }
+
+  /* ── 합계 ── */
+  .dibo-f07-total-wrap {
+    padding: 16px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .dibo-f07-total-label { font-size: 13px; color: #666; font-weight: 600; }
+
+  .dibo-f07-total-price {
+    font-size: 24px;
+    font-weight: 800;
+    color: #3a86ff;
+    letter-spacing: -1px;
+    transition: transform 0.15s;
+  }
+
+  .dibo-f07-total-price.pulse { transform: scale(1.06); }
+
+  /* ── 견적 요청 버튼 ── */
+  .dibo-f07-cta-wrap {
+    padding: 16px 24px;
+  }
+
+  .dibo-f07-cta-btn {
+    width: 100%;
+    height: 50px;
+    background: #3a86ff;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .dibo-f07-cta-btn:hover  { background: #2a76ef; }
+  .dibo-f07-cta-btn:active { transform: scale(0.98); }
+  .dibo-f07-cta-btn:disabled { background: #1a2a4a; color: #2a4a7a; cursor: default; transform: none; }
+
+  /* ── 연락처 폼 (숨김 → 슬라이드다운) ── */
+  .dibo-f07-contact {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .dibo-f07-contact.open { max-height: 320px; }
+
+  .dibo-f07-contact-inner {
+    padding: 0 24px 24px;
+  }
+
+  .dibo-f07-contact-summary {
+    background: rgba(58,134,255,0.08);
+    border: 1px solid rgba(58,134,255,0.2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    font-size: 12px;
+    color: #3a86ff;
+    font-weight: 600;
+    line-height: 1.7;
+  }
+
+  .dibo-f07-fields {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .dibo-f07-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .dibo-f07-label { font-size: 11px; font-weight: 600; color: #555; }
+
+  .dibo-f07-input {
+    height: 44px;
+    border: 1.5px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 14px;
+    color: #fff;
+    background: #1a1a1a;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+    width: 100%;
+  }
+
+  .dibo-f07-input:focus { border-color: #3a86ff; }
+  .dibo-f07-input::placeholder { color: #444; }
+
+  .dibo-f07-agree {
+    display: flex; align-items: flex-start; gap: 8px;
+    margin-bottom: 14px; cursor: pointer;
+  }
+
+  .dibo-f07-checkbox { width: 15px; height: 15px; accent-color: #3a86ff; margin-top: 2px; flex-shrink: 0; cursor: pointer; }
+  .dibo-f07-agree-text { font-size: 11px; color: #555; line-height: 1.55; }
+  .dibo-f07-agree-link { color: #3a86ff; text-decoration: underline; cursor: pointer; }
+
+  .dibo-f07-submit {
+    width: 100%;
+    height: 50px;
+    background: #3a86ff;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .dibo-f07-submit:hover  { background: #2a76ef; }
+  .dibo-f07-submit:active { transform: scale(0.98); }
+  .dibo-f07-submit:disabled { background: #1a2a4a; color: #2a4a7a; cursor: default; transform: none; }
+
+  /* ── 완료 ── */
+  .dibo-f07-thanks {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 44px 24px;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .dibo-f07-thanks-icon  { font-size: 44px; }
+  .dibo-f07-thanks-title { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+  .dibo-f07-thanks-card  {
+    background: rgba(58,134,255,0.1);
+    border: 1px solid rgba(58,134,255,0.3);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 13px;
+    color: #3a86ff;
+    font-weight: 600;
+    line-height: 1.8;
+  }
+  .dibo-f07-thanks-msg { font-size: 12px; color: #555; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="dibo-f07-wrap">
+
+  <div class="dibo-f07-header">
+    <div class="dibo-f07-badge">🚗 실시간 견적</div>
+    <h2>내 구성의 견적을<br>지금 바로 확인하세요</h2>
+    <p>모델 선택 후 원하는 옵션을 추가해보세요</p>
+  </div>
+
+  <!-- 모델 선택 -->
+  <div class="dibo-f07-section">
+    <div class="dibo-f07-sec-title">차량 모델</div>
+    <div class="dibo-f07-models" id="diboF07Models">
+      <div class="dibo-f07-model-card" data-base="28900000" data-name="스탠다드">
+        <div class="dibo-f07-model-info">
+          <span class="dibo-f07-model-name">스탠다드</span>
+          <span class="dibo-f07-model-sub">2.0 가솔린 · 기본형</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="dibo-f07-model-price">2,890만원~</span>
+          <div class="dibo-f07-model-radio"><div class="dibo-f07-model-radio-dot"></div></div>
+        </div>
+      </div>
+      <div class="dibo-f07-model-card" data-base="33500000" data-name="프리미엄">
+        <div class="dibo-f07-model-info">
+          <span class="dibo-f07-model-name">프리미엄</span>
+          <span class="dibo-f07-model-sub">2.5 터보 · 풀옵션 기반</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="dibo-f07-model-price">3,350만원~</span>
+          <div class="dibo-f07-model-radio"><div class="dibo-f07-model-radio-dot"></div></div>
+        </div>
+      </div>
+      <div class="dibo-f07-model-card" data-base="41000000" data-name="럭셔리">
+        <div class="dibo-f07-model-info">
+          <span class="dibo-f07-model-name">럭셔리</span>
+          <span class="dibo-f07-model-sub">3.5 하이브리드 · 플래그십</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="dibo-f07-model-price">4,100만원~</span>
+          <div class="dibo-f07-model-radio"><div class="dibo-f07-model-radio-dot"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 옵션 -->
+  <div class="dibo-f07-section">
+    <div class="dibo-f07-sec-title">추가 옵션</div>
+    <div class="dibo-f07-options" id="diboF07Opts">
+      <div class="dibo-f07-opt" data-price="1500000">
+        <div class="dibo-f07-opt-left">
+          <span class="dibo-f07-opt-name">선루프</span>
+          <span class="dibo-f07-opt-price">+150만원</span>
+        </div>
+        <div class="dibo-f07-toggle"><div class="dibo-f07-toggle-knob"></div></div>
+      </div>
+      <div class="dibo-f07-opt" data-price="900000">
+        <div class="dibo-f07-opt-left">
+          <span class="dibo-f07-opt-name">내비게이션</span>
+          <span class="dibo-f07-opt-price">+90만원</span>
+        </div>
+        <div class="dibo-f07-toggle"><div class="dibo-f07-toggle-knob"></div></div>
+      </div>
+      <div class="dibo-f07-opt" data-price="800000">
+        <div class="dibo-f07-opt-left">
+          <span class="dibo-f07-opt-name">열선 시트</span>
+          <span class="dibo-f07-opt-price">+80만원</span>
+        </div>
+        <div class="dibo-f07-toggle"><div class="dibo-f07-toggle-knob"></div></div>
+      </div>
+      <div class="dibo-f07-opt" data-price="2200000">
+        <div class="dibo-f07-opt-left">
+          <span class="dibo-f07-opt-name">ADAS 패키지</span>
+          <span class="dibo-f07-opt-price">+220만원</span>
+        </div>
+        <div class="dibo-f07-toggle"><div class="dibo-f07-toggle-knob"></div></div>
+      </div>
+      <div class="dibo-f07-opt" data-price="500000">
+        <div class="dibo-f07-opt-left">
+          <span class="dibo-f07-opt-name">블랙박스</span>
+          <span class="dibo-f07-opt-price">+50만원</span>
+        </div>
+        <div class="dibo-f07-toggle"><div class="dibo-f07-toggle-knob"></div></div>
+      </div>
+      <div class="dibo-f07-opt" data-price="1200000">
+        <div class="dibo-f07-opt-left">
+          <span class="dibo-f07-opt-name">프리미엄 오디오</span>
+          <span class="dibo-f07-opt-price">+120만원</span>
+        </div>
+        <div class="dibo-f07-toggle"><div class="dibo-f07-toggle-knob"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 합계 -->
+  <div class="dibo-f07-total-wrap">
+    <span class="dibo-f07-total-label">예상 견적 합계</span>
+    <span class="dibo-f07-total-price" id="diboF07Total">모델을 선택하세요</span>
+  </div>
+
+  <!-- 견적 요청 버튼 -->
+  <div class="dibo-f07-cta-wrap">
+    <button class="dibo-f07-cta-btn" id="diboF07CtaBtn" disabled>이 구성으로 견적 요청하기</button>
+  </div>
+
+  <!-- 연락처 -->
+  <div class="dibo-f07-contact" id="diboF07Contact">
+    <div class="dibo-f07-contact-inner">
+      <div class="dibo-f07-contact-summary" id="diboF07Summary"></div>
+
+      <div class="dibo-f07-fields">
+        <div class="dibo-f07-field">
+          <span class="dibo-f07-label">이름</span>
+          <input class="dibo-f07-input" type="text" id="diboF07Name" placeholder="홍길동" maxlength="20" />
+        </div>
+        <div class="dibo-f07-field">
+          <span class="dibo-f07-label">연락처</span>
+          <input class="dibo-f07-input" type="tel" id="diboF07Tel" placeholder="010-0000-0000" maxlength="13" />
+        </div>
+      </div>
+
+      <label class="dibo-f07-agree">
+        <input class="dibo-f07-checkbox" type="checkbox" id="diboF07Agree" />
+        <span class="dibo-f07-agree-text">
+          <span class="dibo-f07-agree-link">[필수] 개인정보 수집·이용 동의</span>에 동의합니다.
+        </span>
+      </label>
+
+      <button class="dibo-f07-submit" id="diboF07Submit" disabled>견적 신청하기</button>
+    </div>
+  </div>
+
+  <!-- 완료 -->
+  <div class="dibo-f07-thanks" id="diboF07Thanks">
+    <div class="dibo-f07-thanks-icon">🚗</div>
+    <p class="dibo-f07-thanks-title">견적 신청 완료!</p>
+    <div class="dibo-f07-thanks-card" id="diboF07ThanksCard"></div>
+    <p class="dibo-f07-thanks-msg">담당 딜러가 영업일 기준 1일 내 연락드립니다.</p>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var basePrice = 0;
+  var selModelName = '';
+  var contactOpen = false;
+
+  /* ── 가격 포맷 ── */
+  function fmt(n) {
+    return Math.round(n / 10000).toLocaleString() + '만원';
+  }
+
+  /* ── 합계 계산 ── */
+  function calcTotal() {
+    var optSum = 0;
+    document.getElementById('diboF07Opts').querySelectorAll('.dibo-f07-opt.on').forEach(function(el) {
+      optSum += parseInt(el.dataset.price, 10);
+    });
+    return basePrice + optSum;
+  }
+
+  function updateTotal() {
+    var el = document.getElementById('diboF07Total');
+    if (!basePrice) { el.textContent = '모델을 선택하세요'; return; }
+    el.textContent = fmt(calcTotal());
+    el.classList.add('pulse');
+    setTimeout(function(){ el.classList.remove('pulse'); }, 200);
+    document.getElementById('diboF07CtaBtn').disabled = false;
+  }
+
+  /* ── 모델 선택 ── */
+  document.getElementById('diboF07Models').querySelectorAll('.dibo-f07-model-card').forEach(function (card) {
+    card.addEventListener('click', function () {
+      document.getElementById('diboF07Models').querySelectorAll('.dibo-f07-model-card').forEach(function(c){ c.classList.remove('selected'); });
+      this.classList.add('selected');
+      basePrice    = parseInt(this.dataset.base, 10);
+      selModelName = this.dataset.name;
+      updateTotal();
+      if (contactOpen) updateSummary();
+    });
+  });
+
+  /* ── 옵션 토글 ── */
+  document.getElementById('diboF07Opts').querySelectorAll('.dibo-f07-opt').forEach(function (opt) {
+    opt.addEventListener('click', function () {
+      this.classList.toggle('on');
+      updateTotal();
+      if (contactOpen) updateSummary();
+    });
+  });
+
+  /* ── 견적 요청 버튼 → 연락처 오픈 ── */
+  document.getElementById('diboF07CtaBtn').addEventListener('click', function () {
+    if (this.disabled) return;
+    contactOpen = true;
+    updateSummary();
+    document.getElementById('diboF07Contact').classList.add('open');
+    this.disabled = true;
+    this.textContent = '연락처를 입력해주세요 ↓';
+  });
+
+  function updateSummary() {
+    var opts = Array.from(document.getElementById('diboF07Opts').querySelectorAll('.dibo-f07-opt.on'))
+      .map(function(el){ return el.querySelector('.dibo-f07-opt-name').textContent; });
+    document.getElementById('diboF07Summary').innerHTML =
+      '🚗 ' + selModelName + ' · ' + fmt(calcTotal()) +
+      (opts.length ? '<br>✅ ' + opts.join(' / ') : '');
+  }
+
+  /* ── 연락처 입력 ── */
+  var telEl   = document.getElementById('diboF07Tel');
+  var nameEl  = document.getElementById('diboF07Name');
+  var agreeEl = document.getElementById('diboF07Agree');
+  var submitEl= document.getElementById('diboF07Submit');
+
+  telEl.addEventListener('input', function () {
+    var v = telEl.value.replace(/\D/g,'');
+    if (v.length <= 3)      telEl.value = v;
+    else if (v.length <= 7) telEl.value = v.slice(0,3)+'-'+v.slice(3);
+    else                    telEl.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+    validate();
+  });
+  nameEl.addEventListener('input', validate);
+  agreeEl.addEventListener('change', validate);
+
+  function validate() {
+    submitEl.disabled = !(nameEl.value.trim().length >= 2 &&
+      telEl.value.replace(/\D/g,'').length >= 10 && agreeEl.checked);
+  }
+
+  submitEl.addEventListener('click', function () {
+    if (this.disabled) return;
+    document.getElementById('diboF07ThanksCard').innerHTML =
+      '🚗 ' + selModelName + '<br>💰 견적: ' + fmt(calcTotal()) + '<br>👤 ' + nameEl.value;
+    document.querySelector('.dibo-f07-section').closest('.dibo-f07-wrap').querySelectorAll(
+      '.dibo-f07-section, .dibo-f07-total-wrap, .dibo-f07-cta-wrap, .dibo-f07-contact'
+    ).forEach(function(el){ el.style.display='none'; });
+    document.querySelector('.dibo-f07-header').style.display = 'none';
+    document.getElementById('diboF07Thanks').style.display = 'flex';
+  });
+})();
+</script>
+</body>
+</html>

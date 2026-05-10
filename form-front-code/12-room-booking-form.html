@@ -1,0 +1,577 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- ================================================
+   DIBO F12 · 객실/패키지 선택 폼 · 펜션 버전
+   class prefix : dibo-f12-
+   아임웹 코드위젯 즉시 적용
+   ================================================ -->
+<style>
+  .dibo-f12-wrap {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #faf7f2;
+    border-radius: 20px;
+    padding: 28px 20px 32px;
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: 0 4px 32px rgba(139,105,20,0.10);
+  }
+
+  .dibo-f12-badge {
+    display: inline-block;
+    background: #fdf0d5;
+    color: #8b6914;
+    border: 1px solid #e8cfa0;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+
+  .dibo-f12-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #2a1a00;
+    margin: 0 0 4px;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+  }
+
+  .dibo-f12-subtitle {
+    font-size: 12px;
+    color: #a08050;
+    margin: 0 0 24px;
+    line-height: 1.6;
+  }
+
+  /* ── 객실 카드 ── */
+  .dibo-f12-rooms {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .dibo-f12-room-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 2px solid #ecdcc0;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+  }
+
+  .dibo-f12-room-card:hover { border-color: #c8a060; }
+
+  .dibo-f12-room-card.is-selected {
+    border-color: #8b6914;
+    background: #fdf7ec;
+    box-shadow: 0 2px 16px rgba(139,105,20,0.15);
+  }
+
+  .dibo-f12-room-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #fdf0d5, #e8cfa0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+
+  .dibo-f12-room-info { flex: 1; min-width: 0; }
+
+  .dibo-f12-room-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #2a1a00;
+    margin: 0 0 3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dibo-f12-room-recommend {
+    font-size: 10px;
+    font-weight: 700;
+    background: #8b6914;
+    color: #fff;
+    padding: 2px 7px;
+    border-radius: 20px;
+  }
+
+  .dibo-f12-room-desc {
+    font-size: 11px;
+    color: #8b7040;
+    margin: 0 0 5px;
+    line-height: 1.4;
+  }
+
+  .dibo-f12-room-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dibo-f12-room-price {
+    font-size: 14px;
+    font-weight: 800;
+    color: #8b6914;
+  }
+
+  .dibo-f12-room-capacity {
+    font-size: 11px;
+    color: #a08050;
+  }
+
+  .dibo-f12-room-avail {
+    font-size: 10px;
+    color: #c0844a;
+    font-weight: 600;
+  }
+
+  .dibo-f12-room-check {
+    width: 22px;
+    height: 22px;
+    background: #8b6914;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.2s, transform 0.2s;
+    align-self: center;
+  }
+
+  .dibo-f12-room-card.is-selected .dibo-f12-room-check {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* ── 날짜·인원 섹션 ── */
+  .dibo-f12-section {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.45s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .dibo-f12-section.is-open { max-height: 700px; }
+
+  .dibo-f12-section-inner { padding-top: 4px; }
+
+  .dibo-f12-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #6a4a10;
+    margin: 0 0 10px;
+  }
+
+  .dibo-f12-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .dibo-f12-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .dibo-f12-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #8b7040;
+  }
+
+  .dibo-f12-input {
+    height: 46px;
+    border: 1.5px solid #ecdcc0;
+    border-radius: 10px;
+    padding: 0 12px;
+    font-size: 14px;
+    color: #2a1a00;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+    width: 100%;
+  }
+
+  .dibo-f12-input:focus {
+    border-color: #8b6914;
+    box-shadow: 0 0 0 3px rgba(139,105,20,0.10);
+  }
+
+  .dibo-f12-input::placeholder { color: #d0b888; }
+
+  /* ── 인원 +/- ── */
+  .dibo-f12-counter {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    height: 46px;
+    border: 1.5px solid #ecdcc0;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .dibo-f12-counter-btn {
+    width: 46px;
+    height: 100%;
+    border: none;
+    background: #fdf7ec;
+    color: #8b6914;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-family: inherit;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .dibo-f12-counter-btn:hover { background: #f0e0b0; }
+
+  .dibo-f12-counter-val {
+    flex: 1;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #2a1a00;
+  }
+
+  /* ── 요약 ── */
+  .dibo-f12-summary {
+    background: #fdf7ec;
+    border: 1.5px solid #e8cfa0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    display: none;
+  }
+
+  .dibo-f12-summary-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8b6914;
+    margin-bottom: 8px;
+  }
+
+  .dibo-f12-summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #4a3000;
+    padding: 3px 0;
+    border-bottom: 1px solid #f0e0c0;
+  }
+
+  .dibo-f12-summary-row:last-child { border-bottom: none; }
+  .dibo-f12-summary-row span:first-child { color: #8b7040; font-weight: 600; }
+  .dibo-f12-summary-total { font-size: 14px; font-weight: 800; color: #8b6914; }
+
+  .dibo-f12-agree {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+
+  .dibo-f12-checkbox {
+    width: 15px;
+    height: 15px;
+    accent-color: #8b6914;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .dibo-f12-agree-text { font-size: 11px; color: #a08050; line-height: 1.55; }
+  .dibo-f12-agree-link { color: #8b6914; text-decoration: underline; cursor: pointer; }
+
+  .dibo-f12-submit {
+    width: 100%;
+    height: 52px;
+    background: #8b6914;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .dibo-f12-submit:hover { background: #7a5c10; }
+  .dibo-f12-submit:active { transform: scale(0.98); }
+  .dibo-f12-submit:disabled { background: #d0b888; cursor: default; transform: none; }
+
+  /* ── 완료 ── */
+  .dibo-f12-thanks {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px 0 8px;
+    gap: 10px;
+  }
+
+  .dibo-f12-thanks-icon { font-size: 44px; }
+  .dibo-f12-thanks-title { font-size: 18px; font-weight: 800; color: #2a1a00; letter-spacing: -0.4px; }
+  .dibo-f12-thanks-msg { font-size: 12px; color: #a08050; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="dibo-f12-wrap">
+  <div class="dibo-f12-badge">🏡 펜션 예약 신청</div>
+  <p class="dibo-f12-title">마음에 드는 객실을 골라<br>특별한 하루를 예약하세요</p>
+  <p class="dibo-f12-subtitle">객실 선택 → 날짜·인원 입력 → 신청 완료</p>
+
+  <div id="diboF12FormArea">
+    <!-- 객실 카드 -->
+    <div class="dibo-f12-rooms" id="diboF12Rooms">
+      <div class="dibo-f12-room-card" data-room="숲속 스탠다드" data-price="150000" data-cap="2~4인">
+        <div class="dibo-f12-room-thumb">🌲</div>
+        <div class="dibo-f12-room-info">
+          <p class="dibo-f12-room-name">숲속 스탠다드</p>
+          <p class="dibo-f12-room-desc">나무 향 가득한 아늑한 객실 · 더블베드 1개</p>
+          <div class="dibo-f12-room-meta">
+            <span class="dibo-f12-room-price">150,000원/박</span>
+            <span class="dibo-f12-room-capacity">2~4인</span>
+            <span class="dibo-f12-room-avail">잔여 3실</span>
+          </div>
+        </div>
+        <div class="dibo-f12-room-check">
+          <svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="dibo-f12-room-card" data-room="계곡뷰 디럭스" data-price="220000" data-cap="2~6인">
+        <div class="dibo-f12-room-thumb">🏞️</div>
+        <div class="dibo-f12-room-info">
+          <p class="dibo-f12-room-name">
+            계곡뷰 디럭스
+            <span class="dibo-f12-room-recommend">인기</span>
+          </p>
+          <p class="dibo-f12-room-desc">계곡 전망 테라스 · 더블베드 + 소파베드</p>
+          <div class="dibo-f12-room-meta">
+            <span class="dibo-f12-room-price">220,000원/박</span>
+            <span class="dibo-f12-room-capacity">2~6인</span>
+            <span class="dibo-f12-room-avail">잔여 2실</span>
+          </div>
+        </div>
+        <div class="dibo-f12-room-check">
+          <svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="dibo-f12-room-card" data-room="가족 패밀리" data-price="320000" data-cap="4~10인">
+        <div class="dibo-f12-room-thumb">🏡</div>
+        <div class="dibo-f12-room-info">
+          <p class="dibo-f12-room-name">가족 패밀리</p>
+          <p class="dibo-f12-room-desc">독채형 · 바베큐 시설 포함 · 넓은 마당</p>
+          <div class="dibo-f12-room-meta">
+            <span class="dibo-f12-room-price">320,000원/박</span>
+            <span class="dibo-f12-room-capacity">4~10인</span>
+            <span class="dibo-f12-room-avail">잔여 1실</span>
+          </div>
+        </div>
+        <div class="dibo-f12-room-check">
+          <svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- 날짜·인원·연락처 -->
+    <div class="dibo-f12-section" id="diboF12Section">
+      <div class="dibo-f12-section-inner">
+
+        <p class="dibo-f12-section-title">체크인 / 체크아웃 날짜</p>
+        <div class="dibo-f12-row">
+          <div class="dibo-f12-field">
+            <span class="dibo-f12-label">체크인</span>
+            <input class="dibo-f12-input" type="date" id="diboF12Checkin" />
+          </div>
+          <div class="dibo-f12-field">
+            <span class="dibo-f12-label">체크아웃</span>
+            <input class="dibo-f12-input" type="date" id="diboF12Checkout" />
+          </div>
+        </div>
+
+        <p class="dibo-f12-section-title">인원 수</p>
+        <div style="margin-bottom:14px;">
+          <div class="dibo-f12-counter">
+            <button class="dibo-f12-counter-btn" id="diboF12Minus">−</button>
+            <span class="dibo-f12-counter-val" id="diboF12Count">2명</span>
+            <button class="dibo-f12-counter-btn" id="diboF12Plus">＋</button>
+          </div>
+        </div>
+
+        <div class="dibo-f12-summary" id="diboF12Summary">
+          <p class="dibo-f12-summary-title">📋 예약 요약</p>
+          <div class="dibo-f12-summary-row"><span>객실</span><span id="diboF12SumRoom">—</span></div>
+          <div class="dibo-f12-summary-row"><span>체크인</span><span id="diboF12SumCheckin">—</span></div>
+          <div class="dibo-f12-summary-row"><span>체크아웃</span><span id="diboF12SumCheckout">—</span></div>
+          <div class="dibo-f12-summary-row"><span>인원</span><span id="diboF12SumCount">—</span></div>
+          <div class="dibo-f12-summary-row"><span>예상 금액</span><span class="dibo-f12-summary-total" id="diboF12SumTotal">—</span></div>
+        </div>
+
+        <div class="dibo-f12-field" style="margin-bottom:10px;">
+          <span class="dibo-f12-label">예약자 성함</span>
+          <input class="dibo-f12-input" type="text" id="diboF12Name" placeholder="홍길동" maxlength="20" />
+        </div>
+        <div class="dibo-f12-field" style="margin-bottom:14px;">
+          <span class="dibo-f12-label">연락처</span>
+          <input class="dibo-f12-input" type="tel" id="diboF12Tel" placeholder="010-0000-0000" maxlength="13" />
+        </div>
+
+        <label class="dibo-f12-agree">
+          <input class="dibo-f12-checkbox" type="checkbox" id="diboF12Agree" />
+          <span class="dibo-f12-agree-text">
+            <span class="dibo-f12-agree-link">[필수] 개인정보 수집·이용 동의</span>에 동의합니다.
+          </span>
+        </label>
+
+        <button class="dibo-f12-submit" id="diboF12Submit" disabled>예약 신청하기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dibo-f12-thanks" id="diboF12Thanks">
+    <div class="dibo-f12-thanks-icon">🌿</div>
+    <p class="dibo-f12-thanks-title">예약 신청 완료!</p>
+    <p class="dibo-f12-thanks-msg">확인 후 당일 내 연락드리겠습니다.<br>편안한 여행 되시길 바랍니다.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  var roomCards  = document.querySelectorAll('.dibo-f12-room-card');
+  var section    = document.getElementById('diboF12Section');
+  var checkinEl  = document.getElementById('diboF12Checkin');
+  var checkoutEl = document.getElementById('diboF12Checkout');
+  var minusBtn   = document.getElementById('diboF12Minus');
+  var plusBtn    = document.getElementById('diboF12Plus');
+  var countEl    = document.getElementById('diboF12Count');
+  var summaryEl  = document.getElementById('diboF12Summary');
+  var nameEl     = document.getElementById('diboF12Name');
+  var telEl      = document.getElementById('diboF12Tel');
+  var agreeEl    = document.getElementById('diboF12Agree');
+  var submitEl   = document.getElementById('diboF12Submit');
+  var formArea   = document.getElementById('diboF12FormArea');
+  var thanksArea = document.getElementById('diboF12Thanks');
+
+  var selRoom  = null;
+  var guestCnt = 2;
+
+  /* 오늘 날짜 최솟값 */
+  var todayStr = new Date().toISOString().split('T')[0];
+  checkinEl.min  = todayStr;
+  checkoutEl.min = todayStr;
+
+  /* ── 객실 선택 ── */
+  roomCards.forEach(function (card) {
+    card.addEventListener('click', function () {
+      roomCards.forEach(function (c) { c.classList.remove('is-selected'); });
+      card.classList.add('is-selected');
+      selRoom = { name: card.dataset.room, price: parseInt(card.dataset.price) };
+      section.classList.add('is-open');
+      updateSummary();
+      validate();
+    });
+  });
+
+  /* ── 날짜 ── */
+  checkinEl.addEventListener('change', function () {
+    if (checkoutEl.value && checkoutEl.value <= checkinEl.value) checkoutEl.value = '';
+    checkoutEl.min = checkinEl.value;
+    updateSummary();
+    validate();
+  });
+
+  checkoutEl.addEventListener('change', function () {
+    updateSummary();
+    validate();
+  });
+
+  /* ── 인원 +/- ── */
+  minusBtn.addEventListener('click', function () {
+    if (guestCnt > 1) { guestCnt--; countEl.textContent = guestCnt + '명'; updateSummary(); validate(); }
+  });
+
+  plusBtn.addEventListener('click', function () {
+    if (guestCnt < 20) { guestCnt++; countEl.textContent = guestCnt + '명'; updateSummary(); validate(); }
+  });
+
+  function calcNights() {
+    if (!checkinEl.value || !checkoutEl.value) return 0;
+    var diff = new Date(checkoutEl.value) - new Date(checkinEl.value);
+    return Math.max(0, Math.floor(diff / 86400000));
+  }
+
+  function updateSummary() {
+    if (!selRoom) return;
+    var nights = calcNights();
+    var total  = selRoom.price * (nights || 1);
+    summaryEl.style.display = 'block';
+    document.getElementById('diboF12SumRoom').textContent    = selRoom.name;
+    document.getElementById('diboF12SumCheckin').textContent  = checkinEl.value  || '미선택';
+    document.getElementById('diboF12SumCheckout').textContent = checkoutEl.value || '미선택';
+    document.getElementById('diboF12SumCount').textContent    = guestCnt + '명';
+    document.getElementById('diboF12SumTotal').textContent    = nights
+      ? total.toLocaleString() + '원 (' + nights + '박)'
+      : selRoom.price.toLocaleString() + '원/박';
+  }
+
+  /* ── 전화번호 포맷 ── */
+  telEl.addEventListener('input', function () {
+    var v = telEl.value.replace(/\D/g,'');
+    if (v.length <= 3)      telEl.value = v;
+    else if (v.length <= 7) telEl.value = v.slice(0,3)+'-'+v.slice(3);
+    else                    telEl.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+    validate();
+  });
+
+  nameEl.addEventListener('input', validate);
+  agreeEl.addEventListener('change', validate);
+
+  function validate() {
+    submitEl.disabled = !(
+      selRoom &&
+      checkinEl.value &&
+      checkoutEl.value &&
+      checkinEl.value < checkoutEl.value &&
+      nameEl.value.trim().length >= 2 &&
+      telEl.value.replace(/\D/g,'').length >= 10 &&
+      agreeEl.checked
+    );
+  }
+
+  submitEl.addEventListener('click', function () {
+    if (this.disabled) return;
+    formArea.style.display = 'none';
+    thanksArea.style.display = 'flex';
+  });
+})();
+</script>
+</body>
+</html>
