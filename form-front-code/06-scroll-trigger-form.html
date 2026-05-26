@@ -1,4 +1,41 @@
 ﻿<!DOCTYPE html>
+<!--
+  ================================================================
+  ✦ 디보(dibo) 익스텐션 | 스크롤 트리거 슬라이드업 폼 – 웨딩·이벤트·서비스업
+  ================================================================
+
+  【페이지 개요】
+  페이지를 40% 이상 스크롤하면 하단에서 자동으로 슬라이드업되는 상담 폼입니다.
+  모바일·PC 모두 하단 고정형으로 동작하며, PC(768px+)에서는 중앙 정렬 패널로
+  전환됩니다. 이미 닫은 사용자에게는 세션 내 재노출되지 않아 UX를 해치지 않습니다.
+  웨딩홀·스튜디오·예식 업체 등 맞춤 견적이 필요한 업종에 최적화되어 있습니다.
+
+  【SEO 키워드】
+  웨딩 맞춤 견적 신청, 웨딩홀 상담 폼, 스크롤 트리거 CTA,
+  예식 견적 문의, 웨딩 플래너 상담 신청
+
+  【사용 전 필수 설정】
+  1. 배지·제목·부제목 수정
+     → .dibo-f06-badge 텍스트, .dibo-f06-title, .dibo-f06-desc HTML 수정
+
+  2. 입력 필드 수정
+     → 예식 희망일(date), 하객 수(select 옵션), 연락처 placeholder 수정
+
+  3. 버튼 텍스트 수정
+     → 제출 버튼 문구 (현재: "맞춤 견적 받아보기")
+
+  4. 테마 컬러 수정
+     → CSS에서 #c9a96e (골드) 값을 브랜드 컬러로 일괄 변경
+
+  5. 폼 제출 처리 연동  ★ [수정 필수]
+     → submitEl click 핸들러 내부에 실제 API 엔드포인트 연동 코드 추가
+
+  【폼 노출 / 닫기 방식】
+  - 노출 조건 : 스크롤 40% 도달 또는 페이지 진입 후 3초 경과 (짧은 페이지)
+  - 세션 관리 : X 버튼 클릭 시 sessionStorage에 저장 → 같은 세션 내 재노출 없음
+  - 폼 닫기   : 상단 X 버튼 클릭
+  ================================================================
+-->
 <html lang="ko">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -375,10 +412,42 @@
   /* ── 제출 ── */
   submitEl.addEventListener('click', function () {
     if (this.disabled) return;
+    postEditData();
     document.getElementById('diboF06FormArea').style.display = 'none';
     document.getElementById('diboF06Thanks').style.display   = 'flex';
     sessionStorage.setItem(STORAGE_KEY, '1');
   });
+
+  /* ── Edit API 연동 ── */
+  var form_id = null;
+
+  (async function () {
+    try {
+      var res = await axios.get('https://api.di-bo.me/edit-set?config_id=copy_config_id', {
+        headers: { 'access-token': diboLoginManager.access_token }
+      });
+      form_id = res.data[0]?.id || null;
+    } catch (e) {}
+  })();
+
+  function postEditData() {
+    if (!form_id) return;
+    var fd = new FormData();
+    fd.append('req_body', JSON.stringify({ config_id: 'copy_config_id' }));
+    fd.append('column_01', dateEl.value);
+    fd.append('column_02', guestsEl.value);
+    fd.append('column_03', telEl.value);
+    fd.append('column_04', '동의');
+    fd.append('column_05', '');
+    fd.append('column_06', '');
+    fd.append('column_07', '');
+    fd.append('column_08', '');
+    fd.append('column_09', '');
+    fd.append('column_10', '');
+    axios.post('https://api.di-bo.me/edit-set/' + form_id + '/rows', fd, {
+      headers: { 'access-token': diboLoginManager?.access_token }
+    }).catch(function (e) { console.error('입력폼 데이터 생성 실패:', e); });
+  }
 })();
 </script>
 </body>

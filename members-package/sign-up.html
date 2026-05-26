@@ -4,8 +4,8 @@
 =======================================================
 
 【자동 설정값】
-  1. copy_group_id  : 디보 관리자에서 코드 복사 시 실제 회원 그룹 ID로 자동 치환
-  2. copy_site_id   : 디보 관리자에서 코드 복사 시 실제 사이트 ID로 자동 치환
+  1. GSZV75YPE1SK  : 디보 관리자에서 코드 복사 시 실제 회원 그룹 ID로 자동 치환
+  2. SU6WD411WKPC   : 디보 관리자에서 코드 복사 시 실제 사이트 ID로 자동 치환
   3. diboToken      : 익스텐션 전역 변수로 자동 주입 (별도 선언 불필요)
 
 【동작 방식】
@@ -31,14 +31,18 @@
       font-family: 'Noto Sans KR', sans-serif;
       background: #f5f5f5;
       min-height: 100vh;
-      padding: 40px 20px;
+      padding: 0px;
       color: #111;
     }
 
     .dibo-su-wrap {
       width: 100%;
       max-width: 540px;
+      min-height: 100vh;
       margin: 0 auto;
+      color: #111;
+      padding: 40px 0;
+      color: #111;
     }
 
     .dibo-su-logo {
@@ -626,6 +630,30 @@
       .dibo-su-row { grid-template-columns: 1fr; gap: 0; }
       .dibo-su-type-card { padding: 22px 12px; }
     }
+
+    /* Email verification */
+    .dibo-su-email-row { display: flex; gap: 8px; align-items: stretch; }
+    .dibo-su-email-row .dibo-su-input { flex: 1; }
+    .dibo-su-verify-btn {
+      flex-shrink: 0;
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Noto Sans KR', sans-serif;
+      border-radius: 10px;
+      cursor: pointer;
+      border: 1.5px solid #000;
+      background: #000;
+      color: #fff;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+    .dibo-su-verify-btn:hover { opacity: 0.8; }
+    .dibo-su-verify-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .dibo-su-verify-timer { font-size: 13px; color: #e53935; margin-top: 6px; }
+    .dibo-su-verify-msg { font-size: 13px; margin-top: 4px; }
+    .dibo-su-verify-msg.success { color: #2ECE97; }
+    .dibo-su-verify-msg.error { color: #e53935; }
   </style>
 </head>
 <body>
@@ -682,7 +710,7 @@
         <button class="dibo-su-btn primary" style="width:100%" onclick="goToStep2()" id="nextBtn1" disabled>다음</button>
 
         <div class="dibo-su-back" style="margin-top:16px">
-          <a href="log-in.html">이미 계정이 있으신가요? 로그인</a>
+          <a href="log-in.html" id="linkLogin">이미 계정이 있으신가요? 로그인</a>
         </div>
       </div>
 
@@ -714,7 +742,7 @@
           </div>
           <h2 id="completeTitle">회원가입 완료!</h2>
           <p id="completeMsg">가입이 완료되었습니다.<br>로그인하여 서비스를 이용해보세요.</p>
-          <button class="dibo-su-btn primary" style="width:100%; max-width:280px" onclick="location.href='log-in.html'">로그인하러 가기</button>
+          <button class="dibo-su-btn primary" style="width:100%; max-width:280px" id="btnGoLogin">로그인하러 가기</button>
         </div>
       </div>
     </div>
@@ -722,8 +750,13 @@
 
   <script>
     // ★ [필수 설정] 가입 대상 그룹 ID / 사이트 ID
-    const SIGNUP_GROUP_ID = 'copy_group_id';
-    const SIGNUP_SITE_ID  = 'copy_site_id';
+    const SIGNUP_GROUP_ID = 'GSZV75YPE1SK';
+    const SIGNUP_SITE_ID  = 'SU6WD411WKPC';
+
+    // ★ [수정 가능] 페이지 링크 설정
+    // 아임웹: 페이지명.html 형식으로 입력 (예: 'log-in.html')
+    // 외부 URL: 'https://example.com/login' 형식으로 입력
+    const LINK_LOGIN = 'log-in.html';  // 로그인 페이지 (하단 "이미 계정이 있으신가요?" 링크)
 
     // ★ [수정 가능] 약관 항목별 노출 설정 (API 미연결 시 또는 항목 직접 제어 시)
     // use: false 로 변경하면 해당 약관 항목을 숨깁니다.
@@ -840,7 +873,9 @@
       const loginType    = config?.login_type   || 'email';
       const pwMinLen     = config?.pw_min_length || 8;
       const pwPolicy     = config?.pw_policy     || { upper: true, number: true, special: false };
-      const profileField = config?.profile_field ?? { use: DEFAULT_PROFILE_USE };
+      const profileField = config
+        ? { use: config.profile_field?.use ?? false }
+        : { use: DEFAULT_PROFILE_USE };
       const termsEnabled = config?.terms_enabled ?? true;
       const termsContent = config?.terms_content || getDefaultTermsContent();
       // API에서 항목별 use 값이 오면 그것을 사용, 없으면 상단 DEFAULT_TERMS_USE 적용
@@ -889,9 +924,26 @@
       // ── [그룹 공통] 이메일/아이디 + 비밀번호 ──
       html += `<div class="dibo-su-section-title">계정 정보</div>`;
       if (loginType === 'email') {
-        html += field('email', 'email', '이메일', '이메일 주소를 입력하세요', true);
+        html += `
+          <div class="dibo-su-form-group">
+            <label class="dibo-su-label">이메일</label>
+            <div class="dibo-su-email-row">
+              <input type="email" class="dibo-su-input" name="email" id="emailInput" placeholder="이메일 주소를 입력하세요" required>
+              <button type="button" class="dibo-su-verify-btn" id="sendCodeBtn" onclick="sendEmailCode()">인증보내기</button>
+            </div>
+            <div id="emailVerifyBox" style="display:none; margin-top:10px">
+              <div class="dibo-su-email-row">
+                <input type="text" class="dibo-su-input" id="emailCodeInput" placeholder="인증코드 6자리 입력" maxlength="6" style="letter-spacing:0.15em">
+                <button type="button" class="dibo-su-verify-btn" id="verifyCodeBtn" onclick="verifyEmailCode()">인증하기</button>
+              </div>
+              <div id="emailVerifyTimer" class="dibo-su-verify-timer"></div>
+              <div id="emailVerifyMsg" class="dibo-su-verify-msg"></div>
+            </div>
+            <input type="hidden" name="email_verified" id="emailVerifiedFlag" value="false">
+          </div>`;
       } else {
         html += field('user_id', 'text', '아이디', '아이디를 입력하세요 (영문, 숫자)', true);
+        html += field('email', 'email', '이메일', '이메일 주소를 입력하세요', true);
       }
       // 사업자의 경우 이름은 계정 정보 섹션에 위치 (사업자 정보와 분리)
       if (selectedType === 'business') {
@@ -966,11 +1018,11 @@
     function buildExtraFields(fields) {
       let html = '';
       const map = {
-        phone:     { label: '연락처',   type: 'tel',  placeholder: '010-0000-0000' },
-        address:   { label: '주소',     type: 'text', placeholder: '주소를 입력하세요' },
-        birthdate: { label: '생년월일', type: 'date', placeholder: '' },
-        referrer:  { label: '추천인',   type: 'text', placeholder: '추천인을 입력하세요' },
-        gender:    { label: '성별',     type: 'select', options: ['선택','남성','여성'] },
+        phone:     { label: '연락처',   type: 'tel',    placeholder: '010-0000-0000',    fieldName: 'phone_num' },
+        address:   { label: '주소',     type: 'text',   placeholder: '주소를 입력하세요', fieldName: 'address' },
+        birthdate: { label: '생년월일', type: 'date',   placeholder: '',                  fieldName: 'birth_date' },
+        referrer:  { label: '추천인',   type: 'text',   placeholder: '추천인을 입력하세요', fieldName: 'referrer' },
+        gender:    { label: '성별',     type: 'select', options: ['선택','남성','여성'],   fieldName: 'gender' },
       };
       ['gender','phone','address','birthdate','referrer'].forEach(key => {
         const f = fields[key];
@@ -980,12 +1032,12 @@
           html += `
             <div class="dibo-su-form-group">
               <label class="dibo-su-label">${f.label || m.label}</label>
-              <select class="dibo-su-select" name="${key}">
+              <select class="dibo-su-select" name="${m.fieldName}">
                 ${m.options.map(o => `<option value="${o === '선택' ? '' : o}">${o}</option>`).join('')}
               </select>
             </div>`;
         } else {
-          html += field(key, m.type, f.label || m.label, m.placeholder, false);
+          html += field(m.fieldName, m.type, f.label || m.label, m.placeholder, false);
         }
       });
       return html;
@@ -1213,6 +1265,91 @@
       return null;
     }
 
+    // ── 이메일 인증 ──────────────────────────────────
+    let _emailVerifyTimer = null;
+    let _emailVerifyExpiry = 0;
+
+    function _startEmailTimer() {
+      _clearEmailTimer();
+      _emailVerifyExpiry = Date.now() + 3 * 60 * 1000;
+      _emailVerifyTimer = setInterval(() => {
+        const remaining = Math.max(0, _emailVerifyExpiry - Date.now());
+        const m = String(Math.floor(remaining / 60000)).padStart(2, '0');
+        const s = String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0');
+        const el = document.getElementById('emailVerifyTimer');
+        if (el) el.textContent = remaining > 0 ? `유효시간: ${m}:${s}` : '';
+        if (remaining === 0) {
+          _clearEmailTimer();
+          _setEmailMsg('인증 시간이 만료되었습니다. 다시 시도해주세요.', 'error');
+        }
+      }, 1000);
+    }
+
+    function _clearEmailTimer() {
+      if (_emailVerifyTimer) { clearInterval(_emailVerifyTimer); _emailVerifyTimer = null; }
+      const el = document.getElementById('emailVerifyTimer');
+      if (el) el.textContent = '';
+    }
+
+    function _setEmailMsg(msg, type) {
+      const el = document.getElementById('emailVerifyMsg');
+      if (!el) return;
+      el.textContent = msg;
+      el.className = 'dibo-su-verify-msg' + (type ? ' ' + type : '');
+    }
+
+    async function sendEmailCode() {
+      const email = document.getElementById('emailInput')?.value.trim();
+      if (!email) { showSignupError('이메일을 입력해주세요.'); return; }
+      if (!/^[^s@]+@[^s@]+.[^s@]+$/.test(email)) { showSignupError('올바른 이메일 형식을 입력해주세요.'); return; }
+      hideSignupError();
+      const btn = document.getElementById('sendCodeBtn');
+      btn.disabled = true;
+      btn.textContent = '발송 중...';
+      try {
+        await axios.post('https://api.di-bo.me/member/email-send', { email }, { headers: { 'access-token': diboToken } });
+        document.getElementById('emailVerifyBox').style.display = '';
+        document.getElementById('emailVerifiedFlag').value = 'false';
+        document.getElementById('emailCodeInput').value = '';
+        document.getElementById('emailCodeInput').disabled = false;
+        document.getElementById('verifyCodeBtn').disabled = false;
+        document.getElementById('verifyCodeBtn').textContent = '인증하기';
+        _setEmailMsg('인증코드가 발송되었습니다. 3분 이내에 입력해주세요.', '');
+        _startEmailTimer();
+        btn.textContent = '재발송';
+      } catch (err) {
+        showSignupError(err.response?.data?.detail || '인증코드 발송에 실패했습니다.');
+        btn.textContent = '인증보내기';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function verifyEmailCode() {
+      const email = document.getElementById('emailInput')?.value.trim();
+      const token = document.getElementById('emailCodeInput')?.value.trim();
+      if (!token) { _setEmailMsg('인증코드를 입력해주세요.', 'error'); return; }
+      if (_emailVerifyExpiry && Date.now() > _emailVerifyExpiry) {
+        _setEmailMsg('인증 시간이 만료되었습니다. 다시 시도해주세요.', 'error'); return;
+      }
+      const btn = document.getElementById('verifyCodeBtn');
+      btn.disabled = true;
+      btn.textContent = '확인 중...';
+      try {
+        await axios.post('https://api.di-bo.me/member/email-verify', { email, token }, { headers: { 'access-token': diboToken } });
+        _clearEmailTimer();
+        document.getElementById('emailVerifiedFlag').value = 'true';
+        document.getElementById('emailCodeInput').disabled = true;
+        document.getElementById('sendCodeBtn').disabled = true;
+        _setEmailMsg('이메일 인증이 완료되었습니다.', 'success');
+        btn.textContent = '인증완료';
+      } catch (err) {
+        _setEmailMsg(err.response?.data?.detail || '인증코드가 올바르지 않습니다.', 'error');
+        btn.disabled = false;
+        btn.textContent = '인증하기';
+      }
+    }
+
     // ── 회원가입 제출 ─────────────────────────────────
     async function handleSignup(e) {
       e.preventDefault();
@@ -1236,6 +1373,9 @@
       if (!loginId) {
         showSignupError(loginType === 'email' ? '이메일을 입력해주세요.' : '아이디를 입력해주세요.');
         return;
+      }
+      if (loginType === 'email' && data.get('email_verified') !== 'true') {
+        showSignupError('이메일 인증을 완료해주세요.'); return;
       }
 
       const pwd = data.get('pwd');
@@ -1262,8 +1402,13 @@
         pwd,
       };
 
-      if (loginType === 'email') reqBody.email = loginId;
-      else reqBody.user_id = loginId;
+      if (loginType === 'email') {
+        reqBody.email = loginId;
+      } else {
+        reqBody.user_id = loginId;
+        const emailVal = data.get('email')?.trim();
+        if (emailVal) reqBody.email = emailVal;
+      }
 
       // 약관
       if (document.getElementById('term_service'))   reqBody.term_service   = document.getElementById('term_service').checked;
@@ -1271,9 +1416,9 @@
       if (document.getElementById('term_marketing')) reqBody.term_marketing = document.getElementById('term_marketing').checked;
 
       // 일반 필드
-      ['gender','phone','address','birth_date','referrer'].forEach(k => {
-        const v = data.get(k === 'birthdate' ? 'birthdate' : k);
-        if (v) reqBody[k === 'birthdate' ? 'birth_date' : k] = v;
+      ['gender','phone_num','address','birth_date','referrer'].forEach(k => {
+        const v = data.get(k);
+        if (v) reqBody[k] = v;
       });
 
       // 사업자 필드
@@ -1314,7 +1459,7 @@
         const res = await axios.post(
           'https://api.di-bo.me/member/signup',
           formData,
-          { headers: { 'access-token': diboToken, 'origin': window.location.origin } }
+          { headers: { 'access-token': diboToken } }
         );
 
         const status = res.data?.status;
@@ -1349,9 +1494,13 @@
       document.getElementById('signupError').classList.remove('show');
     }
 
+    // 링크 변수 → 앵커/버튼 적용
+    document.getElementById('linkLogin').href = LINK_LOGIN;
+    document.getElementById('btnGoLogin').onclick = () => location.href = LINK_LOGIN;
+
     // 이미 로그인 상태라면 마이페이지로
     if (localStorage.getItem('dibo_member_token')) {
-      window.location.href = 'my-page.html';
+      window.location.href = '/';
     }
   </script>
 </body>

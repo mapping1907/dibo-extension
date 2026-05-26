@@ -1,4 +1,43 @@
 ﻿<!DOCTYPE html>
+<!--
+  ================================================================
+  ✦ 디보(dibo) 익스텐션 | 시간대 카드 예약 폼 – 치과·의원·클리닉·뷰티 예약업
+  ================================================================
+
+  【페이지 개요】
+  담당 의사(스태프) 선택 → 날짜 탭 → 시간 슬롯 → 연락처 입력의
+  4단계 순차 흐름으로 예약을 받는 폼입니다. 상단 스텝 인디케이터로 진행 단계를
+  시각화하며, 요일별 시간대 가용 여부를 데이터로 관리해 마감·잔여 자리를 표시합니다.
+  치과·피부과·미용실·네일숍 등 예약 기반 서비스에 최적화되어 있습니다.
+
+  【SEO 키워드】
+  치과 온라인 예약, 담당 의사 선택 폼, 시간대 예약 폼,
+  진료 예약 신청, 클리닉 온라인 예약
+
+  【사용 전 필수 설정】
+  1. 스태프(의사) 카드 수정
+     → .dibo-f10-doctor-card 의 data-doctor, data-spec,
+        .dibo-f10-doc-name, .dibo-f10-doc-spec, .dibo-f10-doc-tag 수정
+
+  2. 시간대 데이터 수정
+     → JS 내 SLOTS 객체(요일 0~6)의 시간 배열(t: 시간, avail: 가용 여부) 수정
+
+  3. 날짜 탭 범위 수정
+     → buildDates() 함수에서 표시 기간(현재: 이번 주 월~일) 조정
+
+  4. 테마 컬러 수정
+     → CSS에서 #0ea5e9 (스카이 블루) 값을 브랜드 컬러로 일괄 변경
+
+  5. 폼 제출 처리 연동  ★ [수정 필수]
+     → diboF10Submit click 핸들러 내부에 실제 API 엔드포인트 연동 코드 추가
+
+  【UX 흐름】
+  ① 담당 의사 카드 클릭 → 날짜 탭 섹션 표시
+  ② 날짜 탭 선택 → 해당 요일 시간 슬롯 그리드 표시
+  ③ 시간 슬롯 선택 → 예약 요약 + 연락처 폼 슬라이드다운
+  ④ 이름·연락처·동의 입력 → 제출 → 예약 내역 포함 완료 화면 전환
+  ================================================================
+-->
 <html lang="ko">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -959,6 +998,7 @@
   /* ── 제출 ── */
   submitEl.addEventListener('click', function () {
     if (this.disabled) return;
+    postEditData();
     formArea.style.display = 'none';
     thanksArea.style.display = 'flex';
     thanksCard.innerHTML =
@@ -968,6 +1008,37 @@
       '<div class="dibo-f10-thanks-card-row"><span>예약 시간</span><span>' + sel.time + '</span></div>' +
       '<div class="dibo-f10-thanks-card-row"><span>예약자</span><span>' + nameEl.value.trim() + '</span></div>';
   });
+
+  /* ── Edit API 연동 ── */
+  var form_id = null;
+
+  (async function () {
+    try {
+      var res = await axios.get('https://api.di-bo.me/edit-set?config_id=copy_config_id', {
+        headers: { 'access-token': diboLoginManager.access_token }
+      });
+      form_id = res.data[0]?.id || null;
+    } catch (e) {}
+  })();
+
+  function postEditData() {
+    if (!form_id) return;
+    var fd = new FormData();
+    fd.append('req_body', JSON.stringify({ config_id: 'copy_config_id' }));
+    fd.append('column_01', sel.doctor + ' 원장');
+    fd.append('column_02', sel.date);
+    fd.append('column_03', sel.time);
+    fd.append('column_04', nameEl.value.trim());
+    fd.append('column_05', telEl.value);
+    fd.append('column_06', '동의');
+    fd.append('column_07', '');
+    fd.append('column_08', '');
+    fd.append('column_09', '');
+    fd.append('column_10', '');
+    axios.post('https://api.di-bo.me/edit-set/' + form_id + '/rows', fd, {
+      headers: { 'access-token': diboLoginManager?.access_token }
+    }).catch(function (e) { console.error('입력폼 데이터 생성 실패:', e); });
+  }
 
 })();
 </script>

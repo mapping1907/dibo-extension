@@ -4,7 +4,7 @@
 =======================================================
 
 【사용 전 필수 설정】
-  1. copy_site_id  : 디보 관리자에서 코드 복사 시 실제 사이트 ID로 자동 치환
+  1. SU6WD411WKPC  : 디보 관리자에서 코드 복사 시 실제 사이트 ID로 자동 치환
   2. diboToken     : 익스텐션 전역 변수로 자동 주입 (별도 선언 불필요)
   3. 로그인 후 localStorage의 'dibo_member_token' 에서 토큰을 읽습니다.
 
@@ -37,7 +37,9 @@
     /* Layout */
     .dibo-mp-layout {
       max-width: 960px;
+      min-height: 100vh;
       margin: 0 auto;
+      color: #111;
       padding: 40px 20px;
       display: flex;
       gap: 28px;
@@ -471,6 +473,8 @@
       z-index: 9999;
       align-items: center;
       justify-content: center;
+      width: 100%;
+      height: 100vh;
     }
 
     .dibo-withdraw-overlay.show {
@@ -660,7 +664,7 @@
     <!-- 사이드바 (PC) -->
     <aside class="dibo-mp-sidebar">
       <div class="dibo-mp-profile-mini">
-        <div class="dibo-mp-avatar" id="sidebarAvatar">
+        <div class="dibo-mp-avatar" id="sidebarAvatar" style="display:none">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
             <circle cx="12" cy="7" r="4"/>
@@ -780,7 +784,14 @@
 
   <script>
     // ★ [필수 설정] 사이트 ID
-    const MY_SITE_ID = 'copy_site_id';
+    const MY_SITE_ID = 'SU6WD411WKPC';
+
+    // ★ [수정 가능] 미로그인/토큰 만료 시 이동할 로그인 페이지 설정
+    // LOGIN_PAGE  : 로그인 페이지 경로 (예: 'log-in.html', '/login', 'https://example.com/login')
+    // LOGIN_RETURN: true  → 로그인 성공 후 현재 페이지로 자동 복귀 (?return=... 파라미터 추가)
+    //              false → 로그인 페이지로만 이동 (복귀 없음)
+    const LOGIN_PAGE   = '/';
+    const LOGIN_RETURN = true;
 
     const memberToken = localStorage.getItem('dibo_member_token');
     let   memberId    = '';
@@ -792,7 +803,9 @@
 
     // ── 로그인 체크 ───────────────────────────────────
     if (!memberToken) {
-      window.location.href = 'log-in.html?return=' + encodeURIComponent(window.location.href);
+      window.location.href = LOGIN_RETURN
+        ? LOGIN_PAGE + '?return=' + encodeURIComponent(window.location.href)
+        : LOGIN_PAGE;
     }
 
     // ── JWT 디코드 ────────────────────────────────────
@@ -806,10 +819,12 @@
     async function init() {
       const payload = decodeJWT(memberToken);
       memberId = payload.member_id || '';
-
+      console.log(payload.exp);
       if (payload.exp && Date.now() / 1000 > payload.exp) {
         localStorage.removeItem('dibo_member_token');
-        window.location.href = 'log-in.html';
+        window.location.href = LOGIN_RETURN
+          ? LOGIN_PAGE + '?return=' + encodeURIComponent(window.location.href)
+          : LOGIN_PAGE;
         return;
       }
 
@@ -826,10 +841,9 @@
         memberId    = memberData.id || memberId;
         memberEmail = memberData.email || '';
 
-        // 그룹 정보 조회 (약관 확인용)
-        if (memberData.group_id) {
-          await loadGroupInfo(memberData.group_id);
-        }
+        // 그룹 정보 조회: group_id(단일) 또는 group_ids(배열) 모두 대응
+        const gid = memberData.group_id || (Array.isArray(memberData.group_ids) ? memberData.group_ids[0] : null);
+        if (gid) await loadGroupInfo(gid);
 
         updateSidebar(memberData);
         renderInfoPanel(memberData);
@@ -837,6 +851,15 @@
         document.getElementById('pwEmail').value = memberEmail;
 
       } catch (err) {
+        const status = err.response?.status;
+        const detail = err.response?.data?.detail || '';
+        if (status === 401 || status === 403 || detail.toLowerCase().includes('token')) {
+          localStorage.removeItem('dibo_member_token');
+          window.location.href = LOGIN_RETURN
+            ? LOGIN_PAGE + '?return=' + encodeURIComponent(window.location.href)
+            : LOGIN_PAGE;
+          return;
+        }
         const payload = decodeJWT(memberToken);
         memberEmail = payload.email || '';
         renderInfoFallback(payload);
@@ -860,89 +883,97 @@
     function updateSidebar(data) {
       document.getElementById('sidebarName').textContent  = data.name  || '회원';
       document.getElementById('sidebarEmail').textContent = data.email || data.user_id || '';
-      if (data.profile_img) {
-        document.getElementById('sidebarAvatar').innerHTML = `<img src="${data.profile_img}" alt="프로필">`;
+      const useSidebarProfile = groupData ? (groupData.profile_field?.use ?? false) : true;
+      if (useSidebarProfile) {
+        const el = document.getElementById('sidebarAvatar');
+        el.style.display = '';
+        if (data.profile_img) el.innerHTML = `<img src="${data.profile_img}" alt="프로필">`;
       }
     }
 
     // ── 내 정보 패널 렌더링 ───────────────────────────
+    // groupData 있음 → use 기준으로 항목 결정 / 없음 → memberData에 값 있는 항목 표시
     function renderInfoPanel(data) {
-      // 프로필 이미지
-      const avatarHtml = data.profile_img
-        ? `<img src="${data.profile_img}" alt="프로필">`
-        : `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+      const isBiz = data.member_type === 'business';
+      const gf    = groupData
+        ? (isBiz ? (groupData.business_fields || {}) : (groupData.general_fields || {}))
+        : null;
+      // groupData 있으면 use 값 사용, 없으면 항목 존재 여부로 판단
+      const show = (key, dataVal) => gf ? gf[key]?.use : (dataVal !== undefined && dataVal !== null && dataVal !== '');
+      const showProfile = groupData ? (groupData.profile_field?.use ?? false) : !!data.profile_img;
 
-      const profileHeader = `
-        <div class="dibo-mp-profile-header">
-          <div class="dibo-mp-profile-img">${avatarHtml}</div>
-          <div class="dibo-mp-profile-header-info">
-            <div class="dibo-mp-profile-header-name">${escHtml(data.name || '회원')}</div>
-            <div class="dibo-mp-profile-header-email">${escHtml(data.email || data.user_id || '')}</div>
-          </div>
-        </div>`;
+      // 프로필 헤더
+      const profileHeader = showProfile
+        ? `<div class="dibo-mp-profile-header">
+            <div class="dibo-mp-profile-img">${data.profile_img ? `<img src="${data.profile_img}" alt="프로필">` : `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`}</div>
+            <div class="dibo-mp-profile-header-info">
+              <div class="dibo-mp-profile-header-name">${escHtml(data.name || '회원')}</div>
+              <div class="dibo-mp-profile-header-email">${escHtml(data.email || data.user_id || '')}</div>
+            </div>
+          </div>`
+        : `<div style="padding-bottom:20px;margin-bottom:4px;border-bottom:1px solid #f0f0f0">
+            <div style="font-size:18px;font-weight:700;color:#000;letter-spacing:-0.02em;margin-bottom:4px">${escHtml(data.name || '회원')}</div>
+            <div style="font-size:13px;color:#999;letter-spacing:-0.01em">${escHtml(data.email || data.user_id || '')}</div>
+          </div>`;
 
       // 상태 뱃지
       const statusBadge = data.status === 'approved'
         ? '<span class="dibo-mp-badge approved">승인</span>'
         : '<span class="dibo-mp-badge pending">승인 대기</span>';
 
-      // 약관동의 여부
-      let termsBadge = '<span class="dibo-mp-badge na">해당 없음</span>';
-      if (groupData && groupData.terms_enabled) {
-        if (data.terms_agreed_at) {
-          const agreedDate = new Date(data.terms_agreed_at).toLocaleDateString('ko-KR');
-          termsBadge = `<span class="dibo-mp-badge agreed">동의</span> <span style="font-size:13px;color:#888;margin-left:6px">${agreedDate}</span>`;
-        } else {
-          termsBadge = '<span class="dibo-mp-badge disagreed">미동의</span>';
-        }
+      // 마케팅 수신 동의 (terms_enabled 사용 시 항상 표시)
+      let marketingBadge = '';
+      if (groupData ? groupData.terms_enabled : (data.term_marketing !== undefined)) {
+        marketingBadge = data.term_marketing
+          ? '<span class="dibo-mp-badge agreed">동의</span>'
+          : '<span class="dibo-mp-badge disagreed">미동의</span>';
       }
 
-      const typeLabel = data.member_type === 'business' ? '사업자 회원' : '일반 회원';
-
+      // 고정 항목
       let rows = `
         <div class="dibo-mp-info-row">
-          <div class="dibo-mp-info-label">이메일</div>
-          <div class="dibo-mp-info-value">${escHtml(data.email || '-')}</div>
+          <div class="dibo-mp-info-label">${groupData?.login_type === 'id' ? '아이디' : '이메일'}</div>
+          <div class="dibo-mp-info-value">${escHtml(data.email || data.user_id || '-')}</div>
         </div>
         <div class="dibo-mp-info-row">
           <div class="dibo-mp-info-label">회원 유형</div>
-          <div class="dibo-mp-info-value">${typeLabel}</div>
+          <div class="dibo-mp-info-value">${isBiz ? '사업자 회원' : '일반 회원'}</div>
         </div>
         <div class="dibo-mp-info-row">
           <div class="dibo-mp-info-label">상태</div>
           <div class="dibo-mp-info-value">${statusBadge}</div>
         </div>`;
 
-      if (data.phone_num) rows += infoRow('연락처', data.phone_num);
-      if (data.address)   rows += infoRow('주소',   data.address);
-      if (data.birth_date)rows += infoRow('생년월일', data.birth_date);
-      if (data.gender)    rows += infoRow('성별',   data.gender);
-
-      if (data.member_type === 'business') {
-        if (data.business_name)   rows += infoRow('사업자명',       data.business_name);
-        if (data.business_number) rows += infoRow('사업자등록번호', data.business_number);
-        if (data.representative)  rows += infoRow('대표자명',       data.representative);
-        if (data.business_phone)  rows += infoRow('사업장 연락처',  data.business_phone);
-        if (data.business_address)rows += infoRow('사업장 주소',    data.business_address);
+      // 가변 항목: groupData.*.use 기준(있을 때) / 값 존재 기준(없을 때)
+      if (!isBiz) {
+        if (show('gender',    data.gender))    rows += infoRow('성별',    data.gender    || '-');
+        if (show('phone',     data.phone_num)) rows += infoRow('연락처',  data.phone_num || '-');
+        if (show('address',   data.address))   rows += infoRow('주소',    data.address   || '-');
+        if (show('birthdate', data.birth_date))rows += infoRow('생년월일', data.birth_date || '-');
+        if (show('referrer',  data.referrer))  rows += infoRow('추천인',  data.referrer  || '-');
+      } else {
+        rows += infoRow('사업자명',       data.business_name   || '-');
+        rows += infoRow('사업자등록번호', data.business_number || '-');
+        if (show('ceo',      data.representative))  rows += infoRow('대표자명',      data.representative   || '-');
+        if (show('phone',    data.business_phone))  rows += infoRow('사업장 연락처', data.business_phone   || '-');
+        if (show('address',  data.business_address))rows += infoRow('사업장 주소',   data.business_address || '-');
+        if (show('manager',  data.business_manager))rows += infoRow('담당자명',      data.business_manager || '-');
+        if (show('referrer', data.referrer))        rows += infoRow('추천인',        data.referrer         || '-');
       }
 
       // 커스텀 필드
       if (data.custom_fields_display) {
         data.custom_fields_display.forEach(cf => {
-          if (cf.name && cf.value) rows += infoRow(cf.name, cf.value);
+          if (cf.name) rows += infoRow(cf.name, cf.value || '-');
         });
       }
 
-      // 가입일
-      if (data.created_at) {
-        rows += infoRow('가입일', new Date(data.created_at).toLocaleDateString('ko-KR'));
-      }
+      if (data.created_at) rows += infoRow('가입일', new Date(data.created_at).toLocaleDateString('ko-KR'));
 
-      // 약관동의
-      if (groupData && groupData.terms_enabled) {
+      if (marketingBadge) {
         rows += `<div class="dibo-mp-info-row">
-          <div class="dibo-mp-info-label">약관 동의</div>
-          <div class="dibo-mp-info-value">${termsBadge}</div>
+          <div class="dibo-mp-info-label">마케팅 수신 동의</div>
+          <div class="dibo-mp-info-value">${marketingBadge}</div>
         </div>`;
       }
 
@@ -969,12 +1000,23 @@
 
     // ── 정보 수정 패널 렌더링 ─────────────────────────
     function renderEditPanel(data) {
-      const avatarHtml = data.profile_img
-        ? `<img src="${data.profile_img}" alt="프로필">`
-        : `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+      // groupData → 표시할 항목 결정 / data(memberData) → 값 채우기
+      const isBizEdit = data.member_type === 'business';
+      // groupData 있으면 설정값 기준, 없으면 데이터 존재 여부 기준
+      const showProfileEdit = groupData ? (groupData.profile_field?.use ?? false) : !!data.profile_img;
+      const gfe = groupData
+        ? (isBizEdit ? (groupData.business_fields || {}) : (groupData.general_fields || {}))
+        : null;
+      const showField = (key, dataVal) => gfe ? gfe[key]?.use : (dataVal !== undefined && dataVal !== null && dataVal !== '');
 
-      let html = `
-        <form id="editForm" onsubmit="submitEdit(event)">
+      let html = `<form id="editForm" onsubmit="submitEdit(event)">`;
+
+      // 프로필 사진 (groupData.profile_field.use 일 때만)
+      if (showProfileEdit) {
+        const avatarHtml = data.profile_img
+          ? `<img src="${data.profile_img}" alt="프로필">`
+          : `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+        html += `
           <div class="dibo-mp-avatar-edit">
             <div class="dibo-mp-avatar-lg" id="editAvatar">${avatarHtml}</div>
             <div class="dibo-mp-avatar-edit-btns">
@@ -982,55 +1024,90 @@
               <input type="file" id="profileImageInput" accept="image/*" style="display:none" onchange="previewAvatar(this)">
               <div style="font-size:12px;color:#aaa;letter-spacing:-0.01em">JPG, PNG, GIF (최대 5MB)</div>
             </div>
-          </div>
+          </div>`;
+      }
 
+      // 이름 (수정 가능)
+      html += `
           <div class="dibo-mp-form-group">
             <label class="dibo-mp-label">이름</label>
             <input type="text" class="dibo-mp-input" name="name" value="${escHtml(data.name || '')}" placeholder="이름을 입력하세요">
-          </div>
-          <div class="dibo-mp-form-group">
-            <label class="dibo-mp-label">이메일</label>
-            <input type="email" class="dibo-mp-input" value="${escHtml(data.email || '')}" disabled>
           </div>`;
 
-      if (data.phone_num !== undefined) {
-        html += `<div class="dibo-mp-form-group">
-          <label class="dibo-mp-label">연락처</label>
-          <input type="tel" class="dibo-mp-input" name="phone_num" value="${escHtml(data.phone_num || '')}" placeholder="010-0000-0000">
-        </div>`;
+      // 읽기 전용 고정 항목
+      html += `
+          <div class="dibo-mp-form-group">
+            <label class="dibo-mp-label">${groupData?.login_type === 'id' ? '아이디' : '이메일'}</label>
+            <input type="text" class="dibo-mp-input" value="${escHtml(data.email || data.user_id || '')}" disabled>
+          </div>
+          <div class="dibo-mp-form-group">
+            <label class="dibo-mp-label">회원 유형</label>
+            <input type="text" class="dibo-mp-input" value="${isBizEdit ? '사업자 회원' : '일반 회원'}" disabled>
+          </div>
+          <div class="dibo-mp-form-group">
+            <label class="dibo-mp-label">상태</label>
+            <input type="text" class="dibo-mp-input" value="${data.status === 'approved' ? '승인' : '승인 대기'}" disabled>
+          </div>`;
+      if (data.created_at) {
+        html += `
+          <div class="dibo-mp-form-group">
+            <label class="dibo-mp-label">가입일</label>
+            <input type="text" class="dibo-mp-input" value="${new Date(data.created_at).toLocaleDateString('ko-KR')}" disabled>
+          </div>`;
       }
 
-      if (data.address !== undefined) {
-        html += `<div class="dibo-mp-form-group">
-          <label class="dibo-mp-label">주소</label>
-          <input type="text" class="dibo-mp-input" name="address" value="${escHtml(data.address || '')}" placeholder="주소를 입력하세요">
-        </div>`;
-      }
-
-      if (data.birth_date !== undefined) {
-        html += `<div class="dibo-mp-form-group">
-          <label class="dibo-mp-label">생년월일</label>
-          <input type="date" class="dibo-mp-input" name="birth_date" value="${escHtml(data.birth_date || '')}">
-        </div>`;
-      }
-
-      if (data.gender !== undefined) {
-        html += `<div class="dibo-mp-form-group">
-          <label class="dibo-mp-label">성별</label>
-          <select class="dibo-mp-select" name="gender">
-            <option value="">선택</option>
-            <option value="남성" ${data.gender === '남성' ? 'selected' : ''}>남성</option>
-            <option value="여성" ${data.gender === '여성' ? 'selected' : ''}>여성</option>
-          </select>
-        </div>`;
-      }
-
-      if (data.member_type === 'business') {
+      // groupData 기준 가변 항목 → 값은 memberData
+      if (!isBizEdit) {
+        if (showField('gender', data.gender)) {
+          html += `<div class="dibo-mp-form-group">
+            <label class="dibo-mp-label">성별</label>
+            <select class="dibo-mp-select" name="gender">
+              <option value="">선택</option>
+              <option value="남성" ${data.gender === '남성' ? 'selected' : ''}>남성</option>
+              <option value="여성" ${data.gender === '여성' ? 'selected' : ''}>여성</option>
+            </select>
+          </div>`;
+        }
+        if (showField('phone',     data.phone_num))  html += editField('연락처',  'phone_num',  data.phone_num  || '', 'tel');
+        if (showField('address',   data.address))    html += editField('주소',    'address',    data.address    || '', 'text');
+        if (showField('birthdate', data.birth_date)) html += editField('생년월일', 'birth_date', data.birth_date || '', 'date');
+        if (showField('referrer',  data.referrer))   html += editField('추천인',  'referrer',   data.referrer   || '', 'text');
+      } else {
         html += `<div class="dibo-mp-section-title">사업자 정보</div>`;
-        if (data.business_name      !== undefined) html += editField('사업자명',      'business_name',    data.business_name    || '', 'text');
-        if (data.representative     !== undefined) html += editField('대표자명',      'representative',   data.representative   || '', 'text');
-        if (data.business_phone     !== undefined) html += editField('사업장 연락처', 'business_phone',   data.business_phone   || '', 'tel');
-        if (data.business_address   !== undefined) html += editField('사업장 주소',   'business_address', data.business_address || '', 'text');
+        html += editField('사업자명',       'business_name',   data.business_name   || '', 'text');
+        html += editField('사업자등록번호', 'business_number', data.business_number || '', 'text');
+        if (showField('ceo',     data.representative))   html += editField('대표자명',      'representative',   data.representative   || '', 'text');
+        if (showField('phone',   data.business_phone))   html += editField('사업장 연락처', 'business_phone',   data.business_phone   || '', 'tel');
+        if (showField('address', data.business_address)) html += editField('사업장 주소',   'business_address', data.business_address || '', 'text');
+        if (showField('manager', data.business_manager)) html += editField('담당자명',      'business_manager', data.business_manager || '', 'text');
+        if (showField('referrer', data.referrer))        html += editField('추천인',        'referrer',         data.referrer         || '', 'text');
+      }
+
+      // 사용자 정의 항목
+      const customFields = groupData
+        ? (groupData.custom_fields || [])
+            .map((cf, i) => ({ ...cf, idx: i + 1 }))
+            .filter(cf => cf.use && cf.type !== 'default')
+        : [];
+      if (customFields.length > 0) {
+        html += `<div class="dibo-mp-section-title">사용자 정의 항목</div>`;
+        customFields.forEach(cf => {
+          const val = data[`custom_${cf.idx}`] || '';
+          html += buildEditCustomField(cf, val);
+        });
+      }
+
+      // 마케팅 수신 동의 (terms_enabled 사용 시 항상 표시)
+      if (groupData ? groupData.terms_enabled : true) {
+        const mktAgreed = data.term_marketing ?? false;
+        html += `
+          <div class="dibo-mp-form-group">
+            <label class="dibo-mp-label">마케팅 수신 동의</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0">
+              <input type="checkbox" name="term_marketing" value="true" ${mktAgreed ? 'checked' : ''} style="accent-color:#000;width:16px;height:16px">
+              <span style="font-size:14px;color:#333">마케팅 정보 수신에 동의합니다</span>
+            </label>
+          </div>`;
       }
 
       html += `
@@ -1049,6 +1126,52 @@
         <label class="dibo-mp-label">${label}</label>
         <input type="${type}" class="dibo-mp-input" name="${name}" value="${escHtml(value)}" placeholder="${label}을(를) 입력하세요">
       </div>`;
+    }
+
+    function buildEditCustomField(cf, val) {
+      const name = `custom_${cf.idx}`;
+      switch (cf.type) {
+        case 'phone':
+        case 'email':
+        case 'single_line':
+          return `<div class="dibo-mp-form-group">
+            <label class="dibo-mp-label">${escHtml(cf.name)}</label>
+            <input type="${cf.type === 'email' ? 'email' : cf.type === 'phone' ? 'tel' : 'text'}" class="dibo-mp-input" name="${name}" value="${escHtml(val)}" placeholder="${escHtml(cf.name)}을(를) 입력하세요">
+          </div>`;
+        case 'multi_line':
+          return `<div class="dibo-mp-form-group">
+            <label class="dibo-mp-label">${escHtml(cf.name)}</label>
+            <textarea class="dibo-mp-input" name="${name}" rows="3" style="resize:vertical;min-height:80px" placeholder="${escHtml(cf.name)}을(를) 입력하세요">${escHtml(val)}</textarea>
+          </div>`;
+        case 'date':
+          return `<div class="dibo-mp-form-group">
+            <label class="dibo-mp-label">${escHtml(cf.name)}</label>
+            <input type="date" class="dibo-mp-input" name="${name}" value="${escHtml(val)}">
+          </div>`;
+        case 'single_selection':
+        case 'list_selection':
+          return `<div class="dibo-mp-form-group">
+            <label class="dibo-mp-label">${escHtml(cf.name)}</label>
+            <select class="dibo-mp-select" name="${name}">
+              <option value="">선택하세요</option>
+              ${(cf.options || []).map(o => `<option value="${escHtml(o)}" ${val === o ? 'selected' : ''}>${escHtml(o)}</option>`).join('')}
+            </select>
+          </div>`;
+        case 'checkbox': {
+          const checked = val ? val.split(',').map(v => v.trim()) : [];
+          return `<div class="dibo-mp-form-group">
+            <label class="dibo-mp-label">${escHtml(cf.name)}</label>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;padding:4px 0">
+              ${(cf.options || []).map(o => `
+                <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer">
+                  <input type="checkbox" name="${name}_cb" value="${escHtml(o)}" ${checked.includes(o) ? 'checked' : ''} style="accent-color:#000;width:16px;height:16px"> ${escHtml(o)}
+                </label>`).join('')}
+            </div>
+          </div>`;
+        }
+        default:
+          return '';
+      }
     }
 
     // ── 프로필 이미지 미리보기 ────────────────────────
@@ -1074,6 +1197,25 @@
         const v = data.get(k);
         if (v !== null) reqBody[k] = v;
       });
+
+      // 사용자 정의 항목 (custom_1 ~ custom_5)
+      for (let i = 1; i <= 5; i++) {
+        const plain = data.get(`custom_${i}`);
+        if (plain !== null) {
+          reqBody[`custom_${i}`] = plain;
+        } else {
+          // 체크박스형: custom_N_cb 로 여러 값 수집 → 콤마 구분 문자열
+          const cbVals = data.getAll(`custom_${i}_cb`);
+          if (data.has(`custom_${i}_cb`) || cbVals.length > 0) {
+            reqBody[`custom_${i}`] = cbVals.join(',');
+          }
+        }
+      }
+
+      // 마케팅 수신 동의 (체크박스 — 미체크 시 FormData에서 누락되므로 명시적 처리)
+      if (groupData ? groupData.terms_enabled : true) {
+        reqBody['term_marketing'] = data.get('term_marketing') === 'true';
+      }
 
       const formData = new FormData();
       formData.append('req_body', JSON.stringify(reqBody));
@@ -1119,7 +1261,7 @@
         await axios.post(
           'https://api.di-bo.me/member/email-send',
           { email },
-          { headers: { 'access-token': diboToken } }
+          { headers: { 'access-token': diboToken, 'member-token': memberToken } }
         );
         document.getElementById('pwStepSend').style.display = 'none';
         document.getElementById('pwStepCode').style.display = '';
@@ -1160,7 +1302,7 @@
         await axios.post(
           'https://api.di-bo.me/member/email-verify',
           { email: memberEmail, token: code },
-          { headers: { 'access-token': diboToken } }
+          { headers: { 'access-token': diboToken, 'member-token': memberToken } }
         );
         pwVerifiedToken = code;
         if (pwTimer) clearInterval(pwTimer);
@@ -1190,7 +1332,7 @@
         await axios.put(
           'https://api.di-bo.me/member/update-password',
           { login_id: memberEmail, pwd: newPwd, token: pwVerifiedToken },
-          { headers: { 'access-token': diboToken } }
+          { headers: { 'access-token': diboToken, 'member-token': memberToken } }
         );
         showPwSuccess('비밀번호가 성공적으로 변경되었습니다.');
         document.getElementById('pwStepNew').style.display  = 'none';
@@ -1208,7 +1350,8 @@
 
     // ── 회원 탈퇴 모달 ────────────────────────────────
     function openWithdrawModal() {
-      document.getElementById('withdrawModal').classList.add('show');
+      const overlay = document.getElementById('withdrawModal');
+      overlay.style.cssText = 'display:flex !important; align-items:center !important; justify-content:center !important; position:fixed !important; top:0 !important; left:0 !important; width:100% !important; height:100% !important; background:rgba(0,0,0,0.5) !important; z-index:9999 !important;';
       document.getElementById('withdrawModalAlert').classList.remove('show');
       document.getElementById('withdrawModalAlert').textContent = '';
       const btn = document.getElementById('withdrawConfirmBtn');
@@ -1218,7 +1361,7 @@
 
     function closeWithdrawModal(event) {
       if (event && event.target !== document.getElementById('withdrawModal')) return;
-      document.getElementById('withdrawModal').classList.remove('show');
+      document.getElementById('withdrawModal').style.cssText = 'display:none !important;';
     }
 
     async function withdraw() {

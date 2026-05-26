@@ -8,19 +8,97 @@
 
 - `axios`와 인증 토큰은 이미 전역에 설정되어 있으므로 별도 추가 불필요
 - `copy_config_id`는 그대로 유지 — 디보 백오피스에서 코드 복사 시 실제 `config_id`로 자동 치환되어 클립보드에 복사됨
-- **데이터 우선순위**: API 패치 성공 시 API 데이터 사용, 실패하거나 패치하지 않을 경우 로컬 데이터(변수) 사용
+- **데이터 우선순위**: API 패치 성공 시 API 데이터 사용, 실패하거나 패치하지 않을 경우 로컬 샘플 데이터(변수) 사용
+
+### 상단 주석 작성 규칙
+
+모든 익스텐션 파일은 `<!DOCTYPE html>` 바로 아래에 아래 형식의 주석 블록을 작성합니다.
+해당 익스텐션이 무엇인지, 어떻게 설정하는지를 한눈에 파악할 수 있도록 작성합니다.
+
+```html
+<!--
+  ================================================================
+  ✦ 디보(dibo) 익스텐션 | [익스텐션 이름] – [대상 업종/용도]
+  ================================================================
+
+  【페이지 개요】
+  이 익스텐션이 어떤 UI이고, 어떤 환경(모바일/PC)에서 어떻게 동작하며,
+  어떤 목적(전환율, 이탈 방지 등)에 최적화되어 있는지 2~4줄로 설명합니다.
+  적합한 업종이나 사용 시나리오가 있다면 함께 명시합니다.
+
+  【SEO 키워드】
+  이 익스텐션을 검색할 때 사용할 핵심 키워드를 쉼표로 나열합니다.
+  (예: 피부과 무료 상담 신청, 우측 고정 CTA 폼, 이탈 방지 상담폼)
+
+  【사용 전 필수 설정】
+  1. [설정 항목명]
+     → 구체적인 수정 위치 및 방법 안내
+
+  2. [설정 항목명]
+     → 구체적인 수정 위치 및 방법 안내
+
+  (필요에 따라 항목 추가. API 연동 항목은 ★ [수정 필수] 표시)
+
+  【동작 방식】  ← 인터랙션이 있는 경우 작성, 없으면 생략 가능
+  - [트리거] : [결과 동작] 설명
+  ================================================================
+-->
+```
+
+**작성 기준**
+
+| 항목 | 내용 |
+|------|------|
+| 익스텐션 이름 | 위젯의 핵심 기능을 명사형으로 (예: 우측 고정 상담 신청 폼, 배너 슬라이더) |
+| 대상 업종/용도 | 주요 사용처 (예: 피부과·의원·클리닉 / 쇼핑몰 프로모션) |
+| 페이지 개요 | 2~4줄. UI 형태 + 반응형 동작 + 목적 + 적합 업종 순으로 기술 |
+| SEO 키워드 | 5개 내외, 실제 검색어 기준으로 작성 |
+| 필수 설정 | 코드를 수정해야만 동작하는 항목 우선. API 연동은 반드시 ★ 표시 |
+| 동작 방식 | 열기/닫기, 트리거, 전환 조건 등 인터랙션이 있을 때만 작성 |
+
+### 샘플 데이터 폴백 패턴
+
+모든 위젯은 **파일 상단에 샘플 데이터를 상수로 정의**하고, API 호출 실패 시 이를 그대로 렌더링합니다.
+네트워크 오류, config_id 미설정, 개발 환경 등 어떤 상황에서도 UI가 비어 보이지 않도록 합니다.
 
 ```js
-// 데이터 우선순위 패턴 예시
-let data = LOCAL_DATA; // 로컬 기본값
+// 1) 파일 상단에 샘플 데이터 정의
+const SAMPLE_DATA = [
+  {
+    id: 'sample-1',
+    main_img_url: 'https://placehold.co/800x400',
+    title: '샘플 제목 1',
+    content: '샘플 설명 텍스트입니다.',
+    link: '#'
+  },
+  {
+    id: 'sample-2',
+    main_img_url: 'https://placehold.co/800x400',
+    title: '샘플 제목 2',
+    content: '샘플 설명 텍스트입니다.',
+    link: '#'
+  }
+];
 
-try {
-  const res = await axios.get(`https://api.di-bo.me/block?config_id=copy_config_id`);
-  if (res.data?.length) data = res.data;
-} catch (e) {
-  // 로컬 데이터 유지
+// 2) API 호출 — 실패 시 샘플 데이터로 폴백
+async function fetchData() {
+  let data = SAMPLE_DATA; // 기본값: 샘플 데이터
+
+  try {
+    const res = await axios.get('https://api.di-bo.me/block?config_id=copy_config_id', {
+      headers: { 'access-token': diboToken }
+    });
+    if (res.data?.length) data = res.data; // API 성공 시 실제 데이터로 교체
+  } catch (e) {
+    // API 실패 → SAMPLE_DATA 그대로 유지, 렌더링 계속 진행
+  }
+
+  render(data); // 항상 렌더링 실행
 }
 ```
+
+> **원칙**: `catch` 블록에서 렌더링을 중단하지 않습니다. 에러 로그만 남기고 샘플 데이터로 UI를 구성합니다.  
+> **샘플 데이터 기준**: API Response 스펙과 동일한 구조로 작성하며, 실제 서비스 디자인을 확인할 수 있을 만큼 2~4개 항목을 포함합니다.
 
 ### 토큰 변수명 참고
 
@@ -72,20 +150,40 @@ try {
 
 **사용 예시**
 ```js
+const SAMPLE_DATA = [
+  {
+    id: 'sample-1',
+    main_img_url: 'https://placehold.co/800x400',
+    sub_img_url: '',
+    title: '샘플 제목 1',
+    content: '샘플 설명 텍스트입니다.',
+    link: '#',
+    display_order: 1
+  },
+  {
+    id: 'sample-2',
+    main_img_url: 'https://placehold.co/800x400',
+    sub_img_url: '',
+    title: '샘플 제목 2',
+    content: '샘플 설명 텍스트입니다.',
+    link: '#',
+    display_order: 2
+  }
+];
+
 async function fetchData() {
+  let instData = SAMPLE_DATA;
+
   try {
     const response = await axios.get('https://api.di-bo.me/block?config_id=copy_config_id', {
-      headers: {
-        'access-token': diboToken
-      }
+      headers: { 'access-token': diboToken }
     });
-
-    const instData = response.data;
-    // instData를 이용해 UI 렌더링
-
+    if (response.data?.length) instData = response.data;
   } catch (error) {
-    console.error('Error fetching data:', error);
+    console.error('Block API 호출 실패, 샘플 데이터로 렌더링:', error);
   }
+
+  // instData를 이용해 UI 렌더링
 }
 ```
 
@@ -129,18 +227,28 @@ async function fetchData() {
 
 **사용 예시**
 ```js
+const SAMPLE_TIMER = {
+  id: 'sample-timer-1',
+  started_at: new Date(Date.now() - 86400000).toISOString(), // 어제
+  start_title: '이벤트 시작 전',
+  ended_at: new Date(Date.now() + 7 * 86400000).toISOString(), // 7일 후
+  end_title: '이벤트가 종료되었습니다.',
+  display_order: 1
+};
+
 const fetchData = async () => {
+  let instData = SAMPLE_TIMER;
+
   try {
     const res = await axios.get(`https://api.di-bo.me/timer?config_id=copy_config_id`, {
       headers: { 'access-token': diboToken }
     });
-
-    let instData = res.data[0]; // [0]번째 타이머 선택 — 여러 개일 경우 인덱스 변경
-    // instData를 이용해 카운트다운 UI 렌더링
-
+    if (res.data?.length) instData = res.data[0]; // [0]번째 타이머 선택 — 여러 개일 경우 인덱스 변경
   } catch (error) {
-    console.log(error);
+    console.error('Timer API 호출 실패, 샘플 데이터로 렌더링:', error);
   }
+
+  // instData를 이용해 카운트다운 UI 렌더링
 }
 ```
 
@@ -194,6 +302,7 @@ const fetchData = async () => {
 
 **사용 예시**
 ```js
+// Edit API는 POST 전송용이므로 form_id 미확보 시 제출 버튼 비활성화로 처리
 const fetchIdData = async () => {
   try {
     const res = await axios.get(`https://api.di-bo.me/edit-set?config_id=copy_config_id`, {
@@ -201,8 +310,10 @@ const fetchIdData = async () => {
     });
     const instData = res.data;
     const form_id = instData[0]?.id; // 첫 번째 입력폼의 id 추출
+    return form_id;
   } catch (error) {
     console.error("입력폼 목록 조회 실패:", error);
+    return null; // null 반환 → 호출부에서 제출 버튼 비활성화 등 처리
   }
 }
 ```
@@ -217,17 +328,24 @@ const fetchIdData = async () => {
 
 **사용 예시**
 ```js
+const SAMPLE_ROWS = [
+  { id: 'sample-row-1', column_01: '홍길동', column_02: '문의 내용 샘플입니다.', column_03: '' },
+  { id: 'sample-row-2', column_01: '김철수', column_02: '두 번째 샘플 문의입니다.', column_03: '' }
+];
+
 const fetchListData = async () => {
+  let instData = SAMPLE_ROWS;
+
   try {
     const res = await axios.get(`https://api.di-bo.me/edit-set/${'입력폼_아이디'}/rows?config_id=copy_config_id`, {
       headers: { 'access-token': diboToken }
     });
-    const instData = res.data;
-    // instData를 이용해 리스트 UI 렌더링
-
+    if (res.data?.length) instData = res.data;
   } catch (error) {
-    console.error("입력폼 데이터 조회 실패:", error);
+    console.error("입력폼 데이터 조회 실패, 샘플 데이터로 렌더링:", error);
   }
+
+  // instData를 이용해 리스트 UI 렌더링
 }
 ```
 
@@ -366,6 +484,30 @@ const postEditData = async () => {
 | `caption` | string | 게시물 캡션 |
 | `timestamp` | ISO 8601 | 게시물 작성 일시 |
 
+**사용 예시**
+```js
+const SAMPLE_INSTAGRAM = [
+  { id: 'sample-ig-1', imageUrl: 'https://placehold.co/600x600', permalink: '#', caption: '샘플 게시물 캡션 1', timestamp: '2026-01-01T00:00:00' },
+  { id: 'sample-ig-2', imageUrl: 'https://placehold.co/600x600', permalink: '#', caption: '샘플 게시물 캡션 2', timestamp: '2026-01-02T00:00:00' },
+  { id: 'sample-ig-3', imageUrl: 'https://placehold.co/600x600', permalink: '#', caption: '샘플 게시물 캡션 3', timestamp: '2026-01-03T00:00:00' }
+];
+
+const fetchData = async () => {
+  let instData = SAMPLE_INSTAGRAM;
+
+  try {
+    const res = await axios.get('https://api.di-bo.me/instagram/gallery?config_id=copy_config_id', {
+      headers: { 'access-token': diboToken }
+    });
+    if (res.data?.length) instData = res.data;
+  } catch (error) {
+    console.error('Instagram API 호출 실패, 샘플 데이터로 렌더링:', error);
+  }
+
+  // instData를 이용해 갤러리 UI 렌더링
+}
+```
+
 ---
 
 ## 5. YouTube Gallery API
@@ -396,13 +538,40 @@ API Key는 디보 서버에 보관되며 프론트에 노출되지 않습니다.
 | `videoUrl` | string | 유튜브 영상 링크 |
 | `publishedAt` | ISO 8601 | 영상 게시 일시 |
 
+**사용 예시**
+```js
+const SAMPLE_YOUTUBE = [
+  { id: 'sample-yt-1', title: '샘플 영상 제목 1', thumbnailUrl: 'https://placehold.co/480x270', videoUrl: '#', publishedAt: '2026-01-01T00:00:00' },
+  { id: 'sample-yt-2', title: '샘플 영상 제목 2', thumbnailUrl: 'https://placehold.co/480x270', videoUrl: '#', publishedAt: '2026-01-02T00:00:00' },
+  { id: 'sample-yt-3', title: '샘플 영상 제목 3', thumbnailUrl: 'https://placehold.co/480x270', videoUrl: '#', publishedAt: '2026-01-03T00:00:00' }
+];
+
+const fetchData = async () => {
+  let instData = SAMPLE_YOUTUBE;
+
+  try {
+    const res = await axios.get('https://api.di-bo.me/youtube/gallery?config_id=copy_config_id', {
+      headers: { 'access-token': diboToken }
+    });
+    if (res.data?.length) instData = res.data;
+  } catch (error) {
+    console.error('YouTube API 호출 실패, 샘플 데이터로 렌더링:', error);
+  }
+
+  // instData를 이용해 갤러리 UI 렌더링
+}
+```
+
 ---
 
 ## 6. Popup API
 
-모달 팝업 데이터를 반환합니다. 서버에서 `schedule` 기간을 체크하여 현재 노출 가능한 팝업만 내려줍니다.
+모달 팝업 데이터를 반환합니다. 서버에서 `status=active` 조건과 `schedule` 기간을 동시에 체크하여 현재 노출 가능한 팝업만 내려줍니다(`schedule_type=always`이거나, `period`이면서 현재 시각이 시작~종료 범위 안인 경우).
 "오늘 하루 보지 않기" 기능은 프론트에서 Cookie로 처리하며 DB 저장이 필요 없습니다.
 토스트 알림(우측하단에 나오는 토스트 알림창)도 해당 내용으로 설정 가능
+
+> **인증 참고**: subscribe-token으로 호출 시, 토큰의 `site_id`와 `config_id`의 `site_id`가 다르면 403을 반환합니다 (cross-site 차단).
+> 관리자용 `GET /popup/admin?config_id=`은 상태·일정 필터 없이 전체 팝업 목록을 반환합니다.
 
 ### GET `/popup?config_id=copy_config_id`
 
@@ -443,6 +612,38 @@ API Key는 디보 서버에 보관되며 프론트에 노출되지 않습니다.
 | `linkTarget` | string | `_self` \| `_blank` |
 | `showPages` | array | 특정 페이지만 노출 시 경로 배열, 빈 배열이면 전체 페이지 |
 
+**사용 예시**
+```js
+const SAMPLE_POPUP = [
+  {
+    id: 'sample-popup-1',
+    status: 'active',
+    schedule: { type: 'always', startAt: null, endAt: null },
+    title: '샘플 팝업 제목',
+    description: '샘플 팝업 설명 텍스트입니다.',
+    imageUrl: 'https://placehold.co/600x400',
+    linkUrl: '#',
+    linkTarget: '_blank',
+    showPages: []
+  }
+];
+
+const fetchData = async () => {
+  let instData = SAMPLE_POPUP;
+
+  try {
+    const res = await axios.get('https://api.di-bo.me/popup?config_id=copy_config_id', {
+      headers: { 'access-token': diboToken }
+    });
+    if (res.data?.length) instData = res.data;
+  } catch (error) {
+    console.error('Popup API 호출 실패, 샘플 데이터로 렌더링:', error);
+  }
+
+  // instData를 이용해 팝업 UI 렌더링
+}
+```
+
 ### 오늘 하루 보지 않기 — 프론트 Cookie 처리
 
 ```js
@@ -467,6 +668,8 @@ document.cookie = `${key}=1; expires=${expires.toUTCString()}; path=/`;
 ## 7. Floating Button API
 
 플로팅 버튼 데이터를 반환합니다. `mode`가 `single`이면 단일 버튼, `expandable`이면 클릭 시 메뉴가 펼쳐집니다.
+
+> **인증 참고**: subscribe-token으로 호출 시, 토큰의 `site_id`와 `config_id`의 `site_id`가 다르면 403을 반환합니다 (cross-site 차단).
 
 ### GET `/floating?config_id=copy_config_id`
 
@@ -526,7 +729,9 @@ document.cookie = `${key}=1; expires=${expires.toUTCString()}; path=/`;
 | `horizontal` | string | `left` \| `right` |
 | `offsetX` | number | 가장자리로부터 X 거리 (px) |
 | `offsetY` | number | 가장자리로부터 Y 거리 (px) |
-| `borderRadius` | number | 프로그레스 바로 시각화 |
+| `width` | number | 버튼 너비 (px) |
+| `height` | number | 버튼 높이 (px) |
+| `borderRadius` | number | 버튼 모서리 반경 (px) |
 | `triggerIcon` | string | 닫힌 상태 아이콘 (`expandable` 전용) |
 | `triggerIconOpen` | string | 펼쳐진 상태 아이콘 (`expandable` 전용) |
 
@@ -543,11 +748,40 @@ document.cookie = `${key}=1; expires=${expires.toUTCString()}; path=/`;
 
 > `mode=single` 이면 `items[0]`만 사용, `mode=expandable` 이면 `items` 전체를 메뉴로 렌더링
 
+**사용 예시**
+```js
+const SAMPLE_FLOATING = {
+  display: { showOn: 'all', showPages: [], showDelay: 0, hideOnMobile: false, hideOnDesktop: false },
+  design: { mode: 'expandable', vertical: 'bottom', horizontal: 'right', offsetX: 24, offsetY: 24, width: 48, height: 48, borderRadius: 24, triggerIcon: 'plus', triggerIconOpen: 'x' },
+  items: [
+    { id: 'sample-float-1', order: 1, label: '카카오톡 문의', iconUrl: 'https://placehold.co/48x48', linkUrl: '#', linkTarget: '_blank' },
+    { id: 'sample-float-2', order: 2, label: '전화 문의', iconUrl: 'https://placehold.co/48x48', linkUrl: 'tel:010-0000-0000', linkTarget: '_self' }
+  ]
+};
+
+const fetchData = async () => {
+  let instData = SAMPLE_FLOATING;
+
+  try {
+    const res = await axios.get('https://api.di-bo.me/floating?config_id=copy_config_id', {
+      headers: { 'access-token': diboToken }
+    });
+    if (res.data) instData = res.data;
+  } catch (error) {
+    console.error('Floating API 호출 실패, 샘플 데이터로 렌더링:', error);
+  }
+
+  // instData를 이용해 플로팅 버튼 UI 렌더링
+}
+```
+
 ---
 
 ## 8. Rolling Banner API
 
-롤링 배너 데이터를 반환합니다. 롤링 동작 설정과 슬라이드 아이템을 함께 반환합니다.
+롤링 배너 데이터를 반환합니다. 롤링 동작 설정(`rolling`)과 슬라이드 아이템(`items`)을 함께 반환합니다.
+
+> **인증 참고**: subscribe-token으로 호출 시, 토큰의 `site_id`와 `config_id`의 `site_id`가 다르면 403을 반환합니다 (cross-site 차단).
 
 ### GET `/rolling-banner?config_id=copy_config_id`
 
@@ -610,6 +844,35 @@ document.cookie = `${key}=1; expires=${expires.toUTCString()}; path=/`;
 | `buttonLabel` | string | CTA 버튼 텍스트 |
 | `linkUrl` | string | 클릭 시 이동 URL |
 | `linkTarget` | string | `_self` \| `_blank` |
+
+**사용 예시**
+```js
+const SAMPLE_ROLLING = {
+  rolling: {
+    autoPlay: true, interval: 3000, pauseOnHover: true, loop: true, direction: 'horizontal',
+    transition: { style: 'slide', duration: 500, easing: 'ease-in-out' }
+  },
+  items: [
+    { id: 'sample-roll-1', imageUrl: 'https://placehold.co/1200x500', mobileImageUrl: 'https://placehold.co/600x400', videoUrl: null, title: '샘플 슬라이드 1', description: '슬라이드 설명 텍스트입니다.', buttonLabel: '자세히 보기', linkUrl: '#', linkTarget: '_blank' },
+    { id: 'sample-roll-2', imageUrl: 'https://placehold.co/1200x500', mobileImageUrl: 'https://placehold.co/600x400', videoUrl: null, title: '샘플 슬라이드 2', description: '슬라이드 설명 텍스트입니다.', buttonLabel: '자세히 보기', linkUrl: '#', linkTarget: '_blank' }
+  ]
+};
+
+const fetchData = async () => {
+  let instData = SAMPLE_ROLLING;
+
+  try {
+    const res = await axios.get('https://api.di-bo.me/rolling-banner?config_id=copy_config_id', {
+      headers: { 'access-token': diboToken }
+    });
+    if (res.data) instData = res.data;
+  } catch (error) {
+    console.error('Rolling Banner API 호출 실패, 샘플 데이터로 렌더링:', error);
+  }
+
+  // instData를 이용해 롤링 배너 UI 렌더링
+}
+```
 
 ---
 

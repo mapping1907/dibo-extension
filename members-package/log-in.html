@@ -29,16 +29,17 @@
     body {
       font-family: 'Noto Sans KR', sans-serif;
       background: #f5f5f5;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+      color: #111;
     }
 
     .dibo-auth-wrap {
       width: 100%;
-      max-width: 440px;
+      max-width: 480px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 40px 20px;
+      box-sizing: border-box;
+      color: #111 !important;
     }
 
     .dibo-auth-logo {
@@ -47,7 +48,7 @@
       font-size: 26px;
       font-weight: 700;
       letter-spacing: -0.03em;
-      color: #000;
+      color: #000 !important;
     }
 
     .dibo-auth-card {
@@ -55,12 +56,13 @@
       border-radius: 16px;
       padding: 40px;
       box-shadow: 0 2px 24px rgba(0,0,0,0.08);
+      max-width: 640px;
     }
 
     .dibo-auth-title {
       font-size: 22px;
       font-weight: 700;
-      color: #000;
+      color: #000 !important;
       margin-bottom: 28px;
       letter-spacing: -0.02em;
     }
@@ -74,7 +76,7 @@
       display: block;
       font-size: 13px;
       font-weight: 600;
-      color: #333;
+      color: #333 !important;
       margin-bottom: 7px;
       letter-spacing: -0.01em;
     }
@@ -88,7 +90,7 @@
       border-radius: 10px;
       outline: none;
       transition: border-color 0.2s;
-      color: #111;
+      color: #111 !important;
       letter-spacing: -0.01em;
       background: #fff;
     }
@@ -147,19 +149,19 @@
 
     .dibo-auth-remember span {
       font-size: 13px;
-      color: #666;
+      color: #666 !important;
       letter-spacing: -0.01em;
     }
 
     .dibo-auth-forgot {
       font-size: 13px;
-      color: #666;
+      color: #666 !important;
       text-decoration: none;
       letter-spacing: -0.01em;
       transition: color 0.2s;
     }
 
-    .dibo-auth-forgot:hover { color: #000; }
+    .dibo-auth-forgot:hover { color: #000 !important; }
 
     /* Primary button */
     .dibo-auth-btn {
@@ -194,7 +196,7 @@
     .dibo-auth-alert.error {
       background: #fff5f5;
       border: 1px solid #ffcdd2;
-      color: #c62828;
+      color: #c62828 !important;
     }
 
     .dibo-auth-alert.error.show { display: block; }
@@ -218,7 +220,7 @@
     .dibo-auth-notice-title {
       font-size: 15px;
       font-weight: 700;
-      color: #00796b;
+      color: #00796b !important;
       margin-bottom: 8px;
       text-align: center;
       letter-spacing: -0.01em;
@@ -226,7 +228,7 @@
 
     .dibo-auth-notice-desc {
       font-size: 13px;
-      color: #555;
+      color: #555 !important;
       line-height: 1.7;
       letter-spacing: -0.01em;
       text-align: center;
@@ -306,7 +308,7 @@
     /* Hint text */
     .dibo-auth-hint {
       font-size: 13px;
-      color: #888;
+      color: #888 !important;
       line-height: 1.6;
       margin-bottom: 20px;
       letter-spacing: -0.01em;
@@ -354,23 +356,23 @@
 
     .dibo-auth-link {
       font-size: 14px;
-      color: #888;
+      color: #888 !important;
       text-decoration: none;
       letter-spacing: -0.01em;
       transition: color 0.2s;
       padding: 2px 4px;
     }
 
-    .dibo-auth-link:hover { color: #000; }
+    .dibo-auth-link:hover { color: #000 !important; }
 
     .dibo-auth-link.primary {
-      color: #000;
+      color: #000 !important;
       font-weight: 700;
     }
 
     .dibo-auth-sep {
       font-size: 13px;
-      color: #ddd;
+      color: #ddd !important;
     }
 
     @media (max-width: 480px) {
@@ -401,22 +403,19 @@
             placeholder="비밀번호를 입력하세요" autocomplete="current-password">
         </div>
         <div class="dibo-auth-options">
-          <label class="dibo-auth-remember">
-            <input type="checkbox" id="rememberMe">
-            <span>로그인 상태 유지</span>
-          </label>
-          <a href="find-pwd.html" class="dibo-auth-forgot">비밀번호 찾기</a>
+          <a href="find-pwd.html" class="dibo-auth-forgot" id="linkForgotPwd">비밀번호 찾기</a>
+          <a href="#" class="dibo-auth-forgot" id="linkForgotSignup">회원가입</a>
         </div>
         <button type="submit" class="dibo-auth-btn" id="loginBtn">로그인</button>
       </form>
 
       <div class="dibo-auth-divider"><span>또는</span></div>
       <div class="dibo-auth-links">
-        <a href="sign-up.html" class="dibo-auth-link primary">회원가입</a>
+        <a href="sign-up.html" class="dibo-auth-link primary" id="linkSignup">회원가입</a>
         <span class="dibo-auth-sep">|</span>
-        <a href="find-id.html" class="dibo-auth-link">아이디 찾기</a>
+        <a href="find-id.html" class="dibo-auth-link" id="linkFindId">아이디 찾기</a>
         <span class="dibo-auth-sep">|</span>
-        <a href="find-pwd.html" class="dibo-auth-link">비밀번호 찾기</a>
+        <a href="find-pwd.html" class="dibo-auth-link" id="linkFindPwd">비밀번호 찾기</a>
       </div>
     </div>
 
@@ -517,6 +516,13 @@
     // 'id'    → 아이디 + 비밀번호
     const LOGIN_TYPE = 'email';
 
+    // ★ [수정 가능] 페이지 링크 설정
+    // 아임웹: 페이지명.html 형식으로 입력 (예: 'sign-up.html')
+    // 외부 URL: 'https://example.com/signup' 형식으로 입력
+    const LINK_SIGNUP   = '/';   // 회원가입 페이지
+    const LINK_FIND_ID  = '/';   // 아이디 찾기 페이지 (login_type이 'id'일 때만 노출)
+    const LINK_FIND_PWD = '/';  // 비밀번호 찾기 페이지
+
     // ── 내부 상태 ─────────────────────────────────────
     let _memberToken = '';   // 로그인 후 임시 보관 (비밀번호 변경용)
     let _loginId     = '';   // 로그인 ID (재로그인용)
@@ -533,6 +539,20 @@
         input.type         = 'text';
         input.placeholder  = '아이디를 입력하세요';
         input.autocomplete = 'username';
+      }
+
+      // 링크 변수 → 각 앵커 href 적용
+      document.getElementById('linkSignup').href      = LINK_SIGNUP;
+      document.getElementById('linkForgotSignup').href = LINK_SIGNUP;
+      document.getElementById('linkFindPwd').href    = LINK_FIND_PWD;
+      document.getElementById('linkForgotPwd').href  = LINK_FIND_PWD;
+      // 아이디 찾기: login_type이 'email'이면 숨김
+      const findIdEl = document.getElementById('linkFindId').parentElement;
+      if (LOGIN_TYPE === 'email') {
+        findIdEl.previousElementSibling.style.display = 'none'; // | 구분자
+        findIdEl.style.display = 'none';
+      } else {
+        document.getElementById('linkFindId').href = LINK_FIND_ID;
       }
     })();
 
@@ -576,7 +596,7 @@
         const res = await axios.post(
           'https://api.di-bo.me/member/login',
           body,
-          { headers: { 'access-token': diboToken, 'origin': window.location.origin } }
+          { headers: { 'access-token': diboToken } }
         );
 
         const { member_token, pwd_change_required, email_verified } = res.data;
@@ -584,9 +604,6 @@
         // 비밀번호 변경 불필요 → 정상 로그인
         if (!pwd_change_required) {
           localStorage.setItem('dibo_member_token', member_token);
-          if (document.getElementById('rememberMe').checked) {
-            localStorage.setItem('dibo_remember_id', loginId);
-          }
           const returnUrl = new URLSearchParams(window.location.search).get('return') || '/';
           window.location.href = returnUrl;
           return;
@@ -610,9 +627,9 @@
         const status = err.response?.status;
         const detail = err.response?.data?.detail || '';
         if (status === 400) {
-          showError('loginError', LOGIN_TYPE === 'email'
+          showError('loginError', detail || (LOGIN_TYPE === 'email'
             ? '이메일 또는 비밀번호가 일치하지 않습니다.'
-            : '아이디 또는 비밀번호가 일치하지 않습니다.');
+            : '아이디 또는 비밀번호가 일치하지 않습니다.'));
         } else if (status === 403) {
           showError('loginError', detail || '승인 대기 중인 계정입니다. 관리자에게 문의해주세요.');
         } else {
@@ -751,14 +768,7 @@
       }
     }
 
-    // ── 자동 입력 복원 ────────────────────────────────
-    const savedId = localStorage.getItem('dibo_remember_id');
-    if (savedId) {
-      document.getElementById('inputLoginId').value = savedId;
-      document.getElementById('rememberMe').checked = true;
-    }
-
-    // ── 이미 로그인 상태라면 마이페이지로 ──────────────
+    // ── 이미 로그인 상태라면 메인페이지로 ──────────────
     if (localStorage.getItem('dibo_member_token')) {
       window.location.href = '/';
     }

@@ -27,7 +27,7 @@ const BOARD_DATA = [
     views: 342,
     thumbnail: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80',
     tags: ['공지', '업데이트'],
-    pinned: true
+    pinned: true, likes: 47, dislikes: 2
   },
   {
     id: 2,
@@ -47,7 +47,7 @@ const BOARD_DATA = [
     views: 218,
     thumbnail: '',
     tags: ['공지', '점검'],
-    pinned: true
+    pinned: true, likes: 23, dislikes: 1
   },
   {
     id: 3,
@@ -70,7 +70,7 @@ const BOARD_DATA = [
     views: 891,
     thumbnail: 'https://images.unsplash.com/photo-1490750967868-88df5691cc5d?w=800&q=80',
     tags: ['이벤트', '무료', '템플릿'],
-    pinned: false
+    pinned: false, likes: 89, dislikes: 5
   },
   {
     id: 4,
@@ -93,7 +93,7 @@ CSS의 --apple-blue 변수를 원하는 컬러로 교체하세요.
     views: 156,
     thumbnail: 'https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=800&q=80',
     tags: ['팁', '배너', '커스터마이징'],
-    pinned: false
+    pinned: false, likes: 34, dislikes: 0
   },
   {
     id: 5,
@@ -112,7 +112,7 @@ LOCAL_DATA에서 sub_img_url을 반드시 채워주세요.
     views: 87,
     thumbnail: '',
     tags: ['질문', '카드그리드', '버그'],
-    pinned: false
+    pinned: false, likes: 12, dislikes: 3
   },
   {
     id: 6,
@@ -133,7 +133,7 @@ LOCAL_DATA에서 sub_img_url을 반드시 채워주세요.
     views: 203,
     thumbnail: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
     tags: ['후기', '갤러리', '포트폴리오'],
-    pinned: false
+    pinned: false, likes: 56, dislikes: 1
   },
   {
     id: 7,
@@ -155,7 +155,7 @@ LOCAL_DATA에서 sub_img_url을 반드시 채워주세요.
     views: 445,
     thumbnail: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80',
     tags: ['이벤트', '공모전', '시상'],
-    pinned: false
+    pinned: false, likes: 71, dislikes: 4
   },
   {
     id: 8,
@@ -174,7 +174,7 @@ LOCAL_DATA에서 sub_img_url을 반드시 채워주세요.
     views: 134,
     thumbnail: '',
     tags: ['질문', 'API', '연동'],
-    pinned: false
+    pinned: false, likes: 8, dislikes: 0
   },
   {
     id: 9,
@@ -200,7 +200,7 @@ Google Fonts 링크를 원하는 폰트로 교체하면 완성입니다.
     views: 312,
     thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80',
     tags: ['가이드', '히어로', '랜딩페이지'],
-    pinned: false
+    pinned: false, likes: 43, dislikes: 2
   },
   {
     id: 10,
@@ -223,6 +223,42 @@ Unsplash 등에서 이미지를 가져올 때 ?w=400&q=70 파라미터로 최적
     views: 189,
     thumbnail: '',
     tags: ['팁', '3D캐러셀', '최적화'],
-    pinned: false
+    pinned: false, likes: 29, dislikes: 1
   }
+];
+
+/**
+ * COMMENT_DATA — 댓글 샘플 데이터
+ * post_id: BOARD_DATA[].id 와 매핑
+ */
+const COMMENT_DATA = [
+  { id: 1,  post_id: 1,  author: '홍길동',  date: '2026-04-11', content: '정말 기대되는 업데이트네요! 특히 배너 슬라이더 신규 블록이 기다려집니다.', images: [], likes: 12, pinned: false },
+  { id: 2,  post_id: 1,  author: '김지원',  date: '2026-04-12', content: '다크 모드 강화 정말 기다렸어요. 밤에 작업할 때 눈이 편해질 것 같아요 :)', images: [], likes: 8, pinned: false },
+  { id: 3,  post_id: 1,  author: '박서연',  date: '2026-04-13', content: '모바일 반응형 전면 개선이라니 정말 반갑습니다. 최근에 모바일에서 레이아웃이 깨지는 경우가 종종 있었거든요.', images: [], likes: 5, pinned: false },
+  { id: 4,  post_id: 3,  author: '이준혁',  date: '2026-04-02', content: '이벤트 참여 완료했습니다! 템플릿 퀄리티가 정말 좋더라고요. 무료로 받을 수 있다니 감사해요.', images: [], likes: 3, pinned: false },
+  { id: 5,  post_id: 3,  author: '최수민',  date: '2026-04-03', content: '프리미엄 블록 15종이 전부 무료라니 놀랍네요. 이번 이벤트 놓치면 후회할 것 같아서 바로 참여했어요!', images: [], likes: 7, pinned: false },
+  { id: 6,  post_id: 4,  author: '정유나',  date: '2026-04-06', content: '배너 슬라이더 팁 정말 유용했어요. 진행 바 색상 변경 바로 적용해봤는데 훨씬 예뻐졌습니다!', images: [], likes: 4, pinned: false },
+  { id: 7,  post_id: 5,  author: '강민준',  date: '2026-04-04', content: '저도 같은 문제 겪었는데 sub_img_url 채워주니 바로 해결됐어요. 덕분에 빠르게 해결했습니다, 감사합니다!', images: [], likes: 6, pinned: false },
+  { id: 8,  post_id: 5,  author: '윤소현',  date: '2026-04-05', content: 'sub_img_url에 어떤 형식의 이미지를 넣어야 하나요? jpg만 지원되는 건지 궁금합니다.', images: [], likes: 2, pinned: false },
+  { id: 9,  post_id: 4,  author: '임태양',  date: '2026-04-07', content: 'INTERVAL 값은 어디서 수정하면 되나요? LOCAL_DATA 파일을 찾아봤는데 잘 모르겠어요.', images: [], likes: 1, pinned: false },
+  { id: 10, post_id: 6,  author: '오하은',  date: '2026-03-29', content: '포트폴리오 후기 잘 읽었습니다! 저도 메이슨리 갤러리로 만들어보려고 하는데 많은 참고가 됐어요.', images: [], likes: 9, pinned: false },
+  { id: 11, post_id: 10, author: '박지훈',  date: '2026-03-06', content: 'will-change 속성 적용해봤는데 정말 효과 있네요! 모바일에서 훨씬 부드러워졌습니다.', images: [], likes: 11, pinned: false },
+  { id: 12, post_id: 10, author: '이수진',  date: '2026-03-07', content: '카드 수 7~8개 제한 팁 감사합니다. 저는 12개 넣었다가 모바일에서 버벅였는데 줄이니 바로 해결됐어요!', images: [], likes: 3, pinned: false },
+  { id: 13, post_id: 9,  author: '송예린',  date: '2026-03-11', content: '히어로 스플릿 블록으로 30분 만에 랜딩페이지 완성했어요. 정말 유용한 가이드 감사합니다!', images: [], likes: 15, pinned: false },
+];
+
+/**
+ * REPLY_DATA — 대댓글 샘플 데이터
+ * comment_id: COMMENT_DATA[].id 와 매핑
+ */
+const REPLY_DATA = [
+  { id: 1, comment_id: 1,  author: '관리자', date: '2026-04-11', content: '감사합니다! 배너 슬라이더 업그레이드도 많이 신경 쓴 기능이에요. 많은 기대 부탁드립니다 :)', images: [], likes: 5 },
+  { id: 2, comment_id: 2,  author: '관리자', date: '2026-04-12', content: '다크 모드는 이번 업데이트에서 가장 많이 개선되는 부분 중 하나입니다! 곧 만나보실 수 있어요.', images: [], likes: 3 },
+  { id: 3, comment_id: 4,  author: '운영팀', date: '2026-04-02', content: '감사합니다! 이벤트 기간이 끝나기 전에 주변에도 많이 알려주세요~', images: [], likes: 2 },
+  { id: 4, comment_id: 6,  author: '홍길동', date: '2026-04-06', content: '저도요! CSS 변수 하나만 바꾸면 되니까 너무 편하더라고요. 다른 팁도 적용해봐야겠어요.', images: [], likes: 1 },
+  { id: 5, comment_id: 7,  author: '김철수', date: '2026-04-04', content: '맞아요, sub_img_url 비워두면 hover 효과가 아예 안 나오더라고요. 저도 같은 문제였어요.', images: [], likes: 4 },
+  { id: 6, comment_id: 8,  author: '홍길동', date: '2026-04-05', content: 'jpg, png, webp 모두 지원됩니다! 저는 webp로 사용 중인데 잘 동작해요.', images: [], likes: 6 },
+  { id: 7, comment_id: 9,  author: '홍길동', date: '2026-04-07', content: '파일 상단에 `const INTERVAL = 5000;` 이렇게 선언되어 있을 거예요. 숫자(밀리초)를 원하는 값으로 바꾸시면 됩니다!', images: [], likes: 2 },
+  { id: 8, comment_id: 11, author: '강다은', date: '2026-03-06', content: '맞아요! 특히 transform 애니메이션에서 will-change가 정말 효과적이에요. GPU 레이어로 분리되거든요.', images: [], likes: 7 },
+  { id: 9, comment_id: 12, author: '강다은', date: '2026-03-07', content: '이미지 용량 줄이기도 같이 적용하면 더 효과 좋아요. 두 가지 모두 해보세요!', images: [], likes: 3 },
 ];

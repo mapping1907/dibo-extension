@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DIBO 서비스 소개서 v0.2</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent: #4F52E8;
+      --accent-light: #EEEFFE;
+      --text-primary: #111118;
+      --text-secondary: #52525B;
+      --text-tertiary: #A1A1AA;
+      --border: #E4E4E7;
+      --bg: #FFFFFF;
+      --bg-sub: #FAFAFA;
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── TYPE SCALE ── */
+    /* L1 — Page title    : 52px / 300 */
+    /* L2 — Section title : 32px / 400 */
+    /* L3 — Card title    : 17px / 500 */
+    /* L4 — Body          : 14px / 400 */
+    /* L5 — Label         : 11px / 600 uppercase */
+
+    /* ── LAYOUT ── */
+    .page { max-width: 960px; margin: 0 auto; padding: 80px 48px; }
+    .section { padding: 72px 0; border-top: 1px solid var(--border); }
+    .section:first-of-type { border-top: none; }
+
+    /* ── LABEL ── */
+    .label {
+      display: inline-block;
+      font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 16px;
+    }
+
+    /* ── SECTION TITLE ── */
+    .sec-title {
+      font-size: 32px; font-weight: 400; letter-spacing: -.5px;
+      line-height: 1.25; color: var(--text-primary); margin-bottom: 10px;
+    }
+    .sec-desc {
+      font-size: 14px; font-weight: 400; color: var(--text-secondary);
+      line-height: 1.8; max-width: 480px;
+    }
+    .sec-head { margin-bottom: 40px; }
+
+    /* ════════════════════════════════════
+       HERO
+    ════════════════════════════════════ */
+    #hero {
+      padding: 96px 0 80px;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--text-tertiary); margin-bottom: 28px;
+    }
+    h1 {
+      font-size: 52px; font-weight: 300; letter-spacing: -1.5px;
+      line-height: 1.15; color: var(--text-primary); margin-bottom: 20px;
+    }
+    h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+    .hero-sub {
+      font-size: 15px; font-weight: 400; color: var(--text-secondary);
+      line-height: 1.8; max-width: 480px; margin-bottom: 40px;
+    }
+    .hero-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+    .hero-tag {
+      padding: 6px 14px; border-radius: 4px;
+      border: 1px solid var(--border);
+      font-size: 12px; font-weight: 400; color: var(--text-secondary);
+    }
+
+    /* ════════════════════════════════════
+       WHO
+    ════════════════════════════════════ */
+    .who-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .who-card {
+      padding: 32px; border: 1px solid var(--border); border-radius: var(--radius-lg);
+      background: var(--bg-sub);
+    }
+    .who-card-name {
+      font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--text-tertiary); margin-bottom: 10px;
+    }
+    .who-card.main-card { border-color: var(--accent); }
+    .who-card.main-card .who-card-name { color: var(--accent); }
+    .who-card h3 {
+      font-size: 17px; font-weight: 500; color: var(--text-primary); margin-bottom: 16px;
+    }
+    .who-quote {
+      font-size: 13px; font-weight: 400; color: var(--text-secondary); line-height: 1.8;
+      border-left: 2px solid var(--accent-light); padding-left: 14px; margin-bottom: 20px;
+    }
+    .who-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .who-list li {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 13px; font-weight: 400; color: var(--text-secondary); line-height: 1.6;
+    }
+    .who-list li::before {
+      content: ''; flex-shrink: 0;
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--accent); margin-top: 8px;
+    }
+
+    /* ── 메인/서브 구분 라벨 ── */
+    .tier-label {
+      display: inline-block; margin: 16px 0 8px;
+      font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 4px;
+    }
+    .tier-label.main { background: var(--accent-light); color: var(--accent); }
+    .tier-label.sub { background: var(--bg-sub); border: 1px solid var(--border); color: var(--text-tertiary); }
+    .tier-label:first-child { margin-top: 0; }
+
+    /* ════════════════════════════════════
+       VALUES
+    ════════════════════════════════════ */
+    .cmp-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 14px;
+    }
+    .cmp-table thead th {
+      padding: 12px 20px; text-align: left;
+      font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-tertiary); border-bottom: 2px solid var(--border);
+    }
+    .cmp-table thead th:last-child { color: var(--accent); }
+    .cmp-table td {
+      padding: 14px 20px; border-bottom: 1px solid var(--border);
+      font-weight: 400; line-height: 1.6;
+    }
+    .cmp-table tr:last-child td { border-bottom: none; }
+    .cmp-table td:first-child { color: var(--text-tertiary); width: 28%; font-size: 13px; }
+    .cmp-table td:nth-child(2) { color: var(--text-tertiary); text-decoration: line-through; font-size: 13px; }
+    .cmp-table td:last-child { color: var(--text-primary); font-weight: 500; }
+
+    /* ════════════════════════════════════
+       AI ERA
+    ════════════════════════════════════ */
+    .ai-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+    .ai-problems { margin-top: 24px; display: flex; flex-direction: column; gap: 8px; }
+    .ai-problem {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; border-radius: var(--radius);
+      border: 1px solid #FDE68A; background: #FFFBEB;
+      font-size: 13px; font-weight: 500; color: #78350F;
+    }
+    .ai-problem::before { content: '?'; font-weight: 700; color: #D97706; flex-shrink: 0; }
+    .ai-answer {
+      padding: 32px; border: 1px solid var(--border); border-radius: var(--radius-lg);
+      background: var(--bg-sub);
+    }
+    .ai-answer h3 {
+      font-size: 17px; font-weight: 500; color: var(--text-primary);
+      margin-bottom: 24px; line-height: 1.5;
+    }
+    .ai-roles { display: flex; flex-direction: column; gap: 0; }
+    .ai-role {
+      display: flex; align-items: flex-start; gap: 0;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .ai-role:last-child { border-bottom: none; }
+    .ai-role-key {
+      font-size: 12px; font-weight: 400; color: var(--text-tertiary);
+      width: 44%; flex-shrink: 0;
+    }
+    .ai-role-val { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .ai-role-val small { display: block; font-size: 11px; font-weight: 400; color: var(--text-tertiary); margin-top: 2px; }
+    .ai-callout {
+      margin-top: 20px; padding: 14px 16px; border-radius: var(--radius);
+      background: var(--accent-light);
+      font-size: 13px; font-weight: 500; color: var(--accent); line-height: 1.7;
+    }
+
+    /* ════════════════════════════════════
+       COST
+    ════════════════════════════════════ */
+    .cost-stat {
+      display: flex; align-items: baseline; gap: 8px; margin-bottom: 32px;
+    }
+    .cost-stat .num {
+      font-size: 44px; font-weight: 300; letter-spacing: -1.5px; color: var(--accent);
+    }
+    .cost-stat .unit { font-size: 14px; color: var(--text-tertiary); font-weight: 400; }
+
+    /* ════════════════════════════════════
+       FLOW
+    ════════════════════════════════════ */
+    .flow-list { display: flex; flex-direction: column; gap: 0; }
+    .flow-item {
+      display: grid; grid-template-columns: 48px 1fr;
+      gap: 24px; padding: 28px 0; border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .flow-item:last-child { border-bottom: none; }
+    .flow-step {
+      font-size: 11px; font-weight: 600; letter-spacing: 1px;
+      color: var(--accent); text-transform: uppercase; padding-top: 2px;
+    }
+    .flow-body h3 {
+      font-size: 17px; font-weight: 500; color: var(--text-primary); margin-bottom: 8px;
+    }
+    .flow-body p {
+      font-size: 13px; font-weight: 400; color: var(--text-secondary); line-height: 1.8; margin-bottom: 12px;
+    }
+    .flow-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .flow-tag {
+      padding: 3px 10px; border-radius: 4px;
+      border: 1px solid var(--border);
+      font-size: 11px; font-weight: 400; color: var(--text-tertiary);
+    }
+    .flow-tag.main-tag { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+    /* ════════════════════════════════════
+       SCENARIOS
+    ════════════════════════════════════ */
+    .sc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .sc-card {
+      padding: 32px; border: 1px solid var(--border); border-radius: var(--radius-lg);
+    }
+    .sc-card.main-card { border-color: var(--accent); }
+    .sc-tag {
+      font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-tertiary); margin-bottom: 8px; display: block;
+    }
+    .sc-card.main-card .sc-tag { color: var(--accent); }
+    .sc-card h3 {
+      font-size: 17px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px;
+    }
+    .sc-situation {
+      font-size: 12px; font-weight: 400; color: var(--text-tertiary); margin-bottom: 20px;
+    }
+    .sc-steps { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .sc-steps li {
+      display: flex; gap: 10px;
+      font-size: 13px; font-weight: 400; color: var(--text-secondary); line-height: 1.6;
+    }
+    .sc-steps li .n {
+      flex-shrink: 0; font-size: 11px; font-weight: 600; color: var(--accent);
+      width: 16px; padding-top: 1px;
+    }
+    .sc-result {
+      padding: 14px 16px; border-radius: var(--radius);
+      border-left: 3px solid var(--accent);
+      background: var(--accent-light);
+      font-size: 12px; font-weight: 400; color: var(--text-secondary); line-height: 1.75;
+    }
+    .sc-result strong { display: block; margin-top: 6px; font-weight: 500; color: var(--accent); }
+
+    /* ════════════════════════════════════
+       PRICING
+    ════════════════════════════════════ */
+    .plan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .plan-card {
+      padding: 28px 24px; border: 1px solid var(--border); border-radius: var(--radius-lg);
+      position: relative;
+    }
+    .plan-card.featured { border-color: var(--accent); }
+    .plan-best {
+      position: absolute; top: -11px; left: 24px;
+      padding: 3px 12px; border-radius: 4px;
+      background: var(--accent); color: white;
+      font-size: 10px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase;
+    }
+    .plan-name {
+      font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--text-tertiary); margin-bottom: 12px;
+    }
+    .plan-card.featured .plan-name { color: var(--accent); }
+    .plan-price {
+      font-size: 34px; font-weight: 300; letter-spacing: -1px;
+      color: var(--text-primary); margin-bottom: 2px;
+    }
+    .plan-price sup { font-size: 14px; font-weight: 400; vertical-align: super; }
+    .plan-period { font-size: 12px; color: var(--text-tertiary); margin-bottom: 20px; }
+    .plan-divider { height: 1px; background: var(--border); margin-bottom: 18px; }
+    .plan-features { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .plan-features li {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 13px; font-weight: 400; color: var(--text-secondary); line-height: 1.5;
+    }
+    .plan-features li::before {
+      content: '—'; color: var(--accent); flex-shrink: 0; font-size: 12px;
+    }
+    .free-note {
+      display: inline-block; margin-top: 14px; padding: 3px 10px; border-radius: 4px;
+      background: #D1FAE5; color: #065F46; font-size: 11px; font-weight: 600;
+    }
+    .plan-note {
+      margin-top: 20px; font-size: 12px; color: var(--text-tertiary); line-height: 1.85;
+    }
+
+    /* ════════════════════════════════════
+       REVENUE
+    ════════════════════════════════════ */
+    .rev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+    .rev-table { width: 100%; border-collapse: collapse; }
+    .rev-table th {
+      padding: 10px 16px; font-size: 11px; font-weight: 600;
+      letter-spacing: .8px; text-transform: uppercase;
+      color: var(--text-tertiary); border-bottom: 2px solid var(--border); text-align: left;
+    }
+    .rev-table td {
+      padding: 14px 16px; font-size: 13px; border-bottom: 1px solid var(--border);
+      vertical-align: top; line-height: 1.5;
+    }
+    .rev-table tr:last-child td { border-bottom: none; }
+    .rev-table td small { display: block; font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+    .rev-stat {
+      padding: 28px; border: 1px solid var(--border); border-radius: var(--radius-lg);
+      background: var(--bg-sub);
+    }
+    .rev-stat h3 {
+      font-size: 13px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase;
+      color: var(--text-tertiary); margin-bottom: 16px;
+    }
+    .rev-stat .big {
+      font-size: 36px; font-weight: 300; letter-spacing: -1px; color: var(--accent); margin-bottom: 4px;
+    }
+    .rev-stat .sub { font-size: 12px; color: var(--text-tertiary); margin-bottom: 20px; }
+    .rev-stat p { font-size: 13px; color: var(--text-secondary); line-height: 1.8; }
+
+    /* ════════════════════════════════════
+       FAQ
+    ════════════════════════════════════ */
+    .faq-list { display: flex; flex-direction: column; }
+    .faq-item { border-bottom: 1px solid var(--border); }
+    .faq-q {
+      width: 100%; padding: 18px 0; background: none; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      font-family: 'Noto Sans KR', inherit;
+      font-size: 14px; font-weight: 500; color: var(--text-primary); text-align: left;
+    }
+    .faq-icon {
+      flex-shrink: 0; font-size: 18px; color: var(--text-tertiary);
+      line-height: 1; transition: transform .2s;
+    }
+    .faq-item.open .faq-icon { transform: rotate(45deg); }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height .3s ease; }
+    .faq-item.open .faq-a { max-height: 300px; }
+    .faq-a-body {
+      padding: 0 0 20px;
+      font-size: 13px; font-weight: 400; color: var(--text-secondary); line-height: 1.85;
+    }
+
+    /* ════════════════════════════════════
+       CLOSING
+    ════════════════════════════════════ */
+    #closing { border-top: 1px solid var(--border); }
+    .closing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+    #closing h2 {
+      font-size: 32px; font-weight: 400; letter-spacing: -.5px;
+      line-height: 1.3; color: var(--text-primary); margin-bottom: 12px;
+    }
+    #closing .desc { font-size: 14px; color: var(--text-secondary); line-height: 1.8; }
+    .closing-items { display: flex; flex-direction: column; gap: 0; }
+    .closing-item {
+      display: flex; align-items: flex-start; gap: 16px;
+      padding: 16px 0; border-bottom: 1px solid var(--border);
+    }
+    .closing-item:last-child { border-bottom: none; }
+    .closing-item-head { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 2px; }
+    .closing-item-body { font-size: 12px; color: var(--text-tertiary); }
+    .closing-dot {
+      flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent); margin-top: 6px;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 720px) {
+      .page { padding: 48px 24px; }
+      .who-grid, .ai-grid, .sc-grid, .plan-grid, .rev-grid, .closing-grid { grid-template-columns: 1fr; }
+      h1 { font-size: 36px; }
+      .sec-title { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <section id="hero">
+    <p class="hero-label">DIBO — Service Overview v0.2</p>
+    <h1>백오피스, 이제<br>직접 만들지<br><em>않아도 됩니다.</em></h1>
+    <p class="hero-sub">관리자 페이지는 이제 직접 만들지 않아도 됩니다.<br>구독 즉시 대시보드가 자동 생성되고, 백엔드·DB 서버 비용도 구독료에 포함됩니다.</p>
+    <div class="hero-tags">
+      <span class="hero-tag">메인 — 순수 개발 프로젝트</span>
+      <span class="hero-tag">서브 — 아임웹 등 웹빌더</span>
+      <span class="hero-tag">첫 달 무료</span>
+      <span class="hero-tag">구독 즉시 대시보드 생성</span>
+      <span class="hero-tag">서버 구매 불필요</span>
+      <span class="hero-tag">코드 수정 없이 운영</span>
+    </div>
+  </section>
+
+  <!-- WHO -->
+  <section class="section">
+    <div class="sec-head">
+      <p class="label">대상</p>
+      <h2 class="sec-title">누구를 위한 서비스인가</h2>
+      <p class="sec-desc">매 프로젝트마다 반복되는 같은 고민을 구조적으로 해결합니다.</p>
+    </div>
+    <div class="who-grid">
+      <div class="who-card main-card">
+        <p class="who-card-name">메인 대상 — 외주개발사</p>
+        <h3>순수 개발 프로젝트</h3>
+        <p class="who-quote">납품하고 나서도 "버튼 색깔 바꿔주세요", "텍스트 수정해주세요" 연락이 계속 옵니다. 매 프로젝트마다 관리자 페이지를 새로 만들고, 끝나면 또 다음 프로젝트.</p>
+        <ul class="who-list">
+          <li>납품 이후 반복되는 수정 요청을 구조적으로 차단하고 싶다</li>
+          <li>매 프로젝트마다 관리자 페이지를 새로 만드는 데 시간을 쓰고 있다</li>
+          <li>유지보수 계약으로 지속 수익을 만들고 싶다</li>
+        </ul>
+      </div>
+      <div class="who-card">
+        <p class="who-card-name">서브 대상 — 웹빌더 프리랜서</p>
+        <h3>아임웹 등 웹빌더 프로젝트</h3>
+        <p class="who-quote">아임웹으로 멋진 페이지를 만들었는데, 클라이언트가 "예약 데이터를 어떻게 확인하나요?"라고 물으면 할 말이 없었던 경험, 있으신가요?</p>
+        <ul class="who-list">
+          <li>코드 위젯으로 고급 UI를 구현하지만 데이터 관리가 불가능하다</li>
+          <li>클라이언트가 예약·문의·이벤트 데이터를 직접 확인하고 싶어한다</li>
+          <li>백엔드 개발 없이 운영 가능한 구조가 필요하다</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- VALUES -->
+  <section class="section">
+    <div class="sec-head">
+      <p class="label">핵심 가치</p>
+      <h2 class="sec-title">기존 방식과 무엇이 다른가</h2>
+    </div>
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th>항목</th>
+          <th>기존 방식</th>
+          <th>디보 사용 후</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>관리자 페이지</td>
+          <td>별도 개발 필요</td>
+          <td>구독 즉시 대시보드 자동 생성</td>
+        </tr>
+        <tr>
+          <td>수정 요청 대응</td>
+          <td>클라이언트 요청 → 코드 수정 반복</td>
+          <td>클라이언트가 관리 화면에서 직접 수정</td>
+        </tr>
+        <tr>
+          <td>프로젝트 구조</td>
+          <td>프로젝트마다 백엔드 새로 설계</td>
+          <td>프론트만 만들고 디보에 연결</td>
+        </tr>
+        <tr>
+          <td>납품 후 관계</td>
+          <td>납품 후 관계 단절</td>
+          <td>구독 기반 지속 운영 관계 유지</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- AI ERA -->
+  <section class="section">
+    <div class="sec-head">
+      <p class="label">바이브 코딩 + 디보</p>
+      <h2 class="sec-title">AI로 프론트를 만들면 남는 숙제</h2>
+      <p class="sec-desc">AI 코딩 툴로 프론트를 빠르게 만드는 시대. 완성 후엔 항상 같은 문제가 남습니다.</p>
+    </div>
+    <div class="ai-grid">
+      <div>
+        <div class="ai-problems">
+          <div class="ai-problem">데이터는 어디에 저장하나?</div>
+          <div class="ai-problem">관리자 페이지는 누가 만드나?</div>
+          <div class="ai-problem">서버는 따로 구매해야 하나?</div>
+        </div>
+      </div>
+      <div class="ai-answer">
+        <h3>디보는 이 세 가지를 한 번에 해결합니다</h3>
+        <div class="ai-roles">
+          <div class="ai-role">
+            <span class="ai-role-key">프론트엔드 제작</span>
+            <span class="ai-role-val">AI 코딩 툴<small>Cursor, Bolt, v0 등</small></span>
+          </div>
+          <div class="ai-role">
+            <span class="ai-role-key">데이터 저장 · 서버 인프라</span>
+            <span class="ai-role-val">디보 제공<small>별도 구매·설정 불필요</small></span>
+          </div>
+          <div class="ai-role">
+            <span class="ai-role-key">관리자 대시보드</span>
+            <span class="ai-role-val">구독 즉시 자동 생성</span>
+          </div>
+        </div>
+        <div class="ai-callout">바이브 코딩으로 프론트를 만들고, 디보 API만 연동하면 — 완성입니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COST -->
+  <section class="section">
+    <div class="sec-head">
+      <p class="label">비용 비교</p>
+      <h2 class="sec-title">자체 개발 vs 디보</h2>
+      <p class="sec-desc">관리자 페이지를 직접 개발할 때와 디보를 도입했을 때의 현실적인 차이입니다.</p>
+    </div>
+    <div class="cost-stat">
+      <span class="num">117,600원</span>
+      <span class="unit">STARTER 연간 (9,800원 × 12개월)</span>
+    </div>
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th>항목</th>
+          <th>자체 개발</th>
+          <th>디보 도입</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>백오피스 개발</td>
+          <td>100만원 내외</td>
+          <td>구독 즉시 자동 생성</td>
+        </tr>
+        <tr>
+          <td>호스팅비</td>
+          <td>연 50만원 내외</td>
+          <td>구독료에 포함</td>
+        </tr>
+        <tr>
+          <td>기능 수정·유지보수</td>
+          <td>건당 협력 개발사 비용 발생</td>
+          <td>관리자 설정으로 직접 처리</td>
+        </tr>
+        <tr>
+          <td>연간 총비용</td>
+          <td>수백만원 이상</td>
+          <td>117,600원</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- CLIENT PERSPECTIVE -->
+  <section class="section">
+    <div class="sec-head">
+      <p class="label">클라이언트 관점</p>
+      <h2 class="sec-title">클라이언트에게 이렇게 설명하세요</h2>
+      <p class="sec-desc">개발사가 클라이언트를 설득할 때 활용할 수 있는 포인트입니다.</p>
+    </div>
+    <div class="who-grid">
+      <div class="who-card">
+        <p class="who-card-name">Point 01</p>
+        <h3>유지보수 비용이 줄어듭니다</h3>
+        <p class="who-quote">기존에는 홈페이지 내용 하나 바꾸려면 개발사에 연락하고 비용을 지불해야 했습니다. "텍스트 바꿔주세요", "이미지 교체해주세요" — 이제 직접 하실 수 있습니다.</p>
+        <ul class="who-list">
+          <li>관리자 페이지에서 텍스트·이미지 직접 수정</li>
+          <li>배너 교체, 마감 설정, 잔여 수량 관리</li>
+          <li>FAQ, 이벤트, 공지·게시글 직접 운영</li>
+        </ul>
+      </div>
+      <div class="who-card">
+        <p class="who-card-name">Point 02</p>
+        <h3>비용이 저렴하고 유연합니다</h3>
+        <p class="who-quote">관리자 페이지를 별도로 개발하면 100만원 이상이 드는데, 디보는 연간 11만원대입니다.</p>
+        <ul class="who-list">
+          <li>월 9,800원으로 관리자 페이지 기능 전체 이용</li>
+          <li>약정 없음 — 필요할 때 구독, 언제든 해지 가능</li>
+          <li>첫 달 무료 체험 (STARTER 플랜)</li>
+          <li>코드 지식 없이 운영 가능</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW -->
+  <section class="section">
+    <div class="sec-head">
+      <p class="label">이용 흐름</p>
+      <h2 class="sec-title">세 단계로 구성됩니다</h2>
+    </div>
+    <div class="flow-list">
+      <div class="flow-item">
+        <span class="flow-step">Step 01</span>
+        <div class="flow-body">
+          <h3>프론트엔드 코드 준비</h3>
+          <p>di-bo.me에서 원하는 UI 익스텐션을 선택해 코드를 무료로 복사하거나, 직접 작성한 프론트 코드에 디보 API를 연동합니다.</p>
+          <div class="flow-tags">
+            <span class="flow-tag main-tag">메인 — React / Vue / 일반 HTML</span>
+            <span class="flow-tag">서브 — 아임웹 코드 위젯</span>
+            <span class="flow-tag">익스텐션 코드 무료 제공</span>
+          </div>
+        </div>
+      </div>
+      <div class="flow-item">
+        <span class="flow-step">Step 02</span>
+        <div class="flow-body">
+          <h3>클라이언트 회원가입 및 구독</h3>
+          <p>클라이언트가 디보에 직접 회원가입하고 본인 카드로 구독 결제합니다. 프리랜서·개발사는 클라이언트 계정으로 접속해 관리 사이트 생성·연동·설정을 대신 진행합니다.</p>
+          <div class="flow-tags">
+            <span class="flow-tag">등록 즉시 대시보드 자동 생성</span>
+            <span class="flow-tag">구독 사이트 내 익스텐션 무제한 연동</span>
+          </div>
+        </div>
+      </div>
+      <div class="flow-item">
+        <span class="flow-step">Step 03</span>
+        <div class="flow-body">
+          <h3>관리자 페이지에서 운영</h3>
+          <p>클라이언트가 관리자 페이지에서 데이터를 확인하고 콘텐츠를 수정합니다. 코드 지식 없이 운영 가능합니다.</p>
+          <div class="flow-tags">
+            <span class="flow-tag">제출 데이터 실시간 확인</span>
+            <span class="flow-tag">콘텐츠 직접 수정</span>
+            <span class="flow-tag">코드 수정 없음</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCENARIOS -->
+  <section class="section">
+    <div class="sec-head">
+      <p class="label">납품 시나리오</p>
+      <h2 class="sec-title">실제 현장에서의 활용 예시</h2>
+    </div>
+    <div class="sc-grid">
+      <div class="sc-card main-card">
+        <span class="sc-tag">메인 시나리오 — 외주개발사</span>
+        <h3>순수 개발 프로젝트</h3>
+        <p class="sc-situation">스타트업에서 입력폼·FAQ·타이머가 포함된 랜딩페이지 외주 의뢰</p>
+        <ul class="sc-steps">
+          <li><span class="n">1</span><span>커스텀 디자인으로 프론트 개발 또는 익스텐션 코드 활용</span></li>
+          <li><span class="n">2</span><span>디보 API 연동으로 관리 기능 연결</span></li>
+          <li><span class="n">3</span><span>클라이언트가 디보 회원가입 후 구독 결제</span></li>
+          <li><span class="n">4</span><span>개발사가 클라이언트 계정으로 전체 세팅 진행</span></li>
+          <li><span class="n">5</span><span>운영 시작 후 수정 요청은 클라이언트가 직접 처리</span></li>
+        </ul>
+        <div class="sc-result">
+          납품 후 반복 수정 요청을 차단하고 운영 책임을 클라이언트에 이전합니다.
+          <strong>"납품 후에도 클라이언트가 직접 운영·수정할 수 있는 구조로 설계합니다"</strong>
+        </div>
+      </div>
+      <div class="sc-card">
+        <span class="sc-tag">서브 시나리오 — 웹빌더 프리랜서</span>
+        <h3>아임웹 프로젝트</h3>
+        <p class="sc-situation">뷰티 클리닉 고객이 예약 폼과 이벤트 팝업 제작을 의뢰</p>
+        <ul class="sc-steps">
+          <li><span class="n">1</span><span>디보에서 예약폼·선착순 이벤트 익스텐션 코드 복사</span></li>
+          <li><span class="n">2</span><span>아임웹 코드 위젯에 붙여넣기</span></li>
+          <li><span class="n">3</span><span>클라이언트가 디보 회원가입 후 STARTER 구독</span></li>
+          <li><span class="n">4</span><span>프리랜서가 관리 사이트 생성 및 연동·설정 진행</span></li>
+          <li><span class="n">5</span><span>클라이언트가 관리자 페이지에서 직접 운영</span></li>
+        </ul>
+        <div class="sc-result">
+          클라이언트가 코드 없이 예약 현황·이벤트 마감을 직접 관리합니다.
+          <strong>"별도 관리 프로그램 없이 바로 운영 가능한 구조로 납품해드립니다"</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FIT PROJECTS -->
+  <section class="section">
+    <div class="sec-head">
+      <p class="label">적용 범위</p>
+      <h2 class="sec-title">어떤 프로젝트에 적합한가요</h2>
+      <p class="sec-desc">순수 개발 프로젝트가 메인이며, 아임웹 등 웹빌더 프로젝트도 API 연동으로 적용 가능합니다.</p>
+    </div>
+    <div class="who-grid">
+      <div class="who-card main-card">
+        <p class="who-card-name">메인 — 순수 개발 프로젝트</p>
+        <h3>직접 코딩하는 모든 프로젝트</h3>
+        <ul class="who-list">
+          <li>브랜드 홈페이지, 랜딩 페이지, 이벤트 페이지</li>
+          <li>예약 / 문의 / 이벤트 기능이 포함된 사이트</li>
+          <li>쇼핑몰을 제외한 순수 개발 프로젝트</li>
+        </ul>
+        <p class="tier-label main">메인 연동 방법</p>
+        <ul class="who-list">
+          <li><strong>익스텐션 사용</strong> — 배너·게시글 프론트 코드를 가져와 사이트에 붙이고 연동</li>
+          <li><strong>직접 개발 + API 연동</strong> — 프론트만 직접 개발하고 디보 API와 연결 (백엔드 개발 불필요)</li>
+        </ul>
+      </div>
+      <div class="who-card">
+        <p class="who-card-name">서브 — 웹빌더 프로젝트</p>
+        <h3>아임웹 등 웹빌더 기반 프로젝트</h3>
+        <ul class="who-list">
+          <li>아임웹, 식스샵 등 웹빌더로 제작한 사이트</li>
+          <li>코드 위젯을 활용해 기능을 추가하는 프로젝트</li>
+        </ul>
+        <p class="tier-label sub">서브 연동 방법</p>
+        <ul class="who-list">
+          <li><strong>API 연동</strong> — 웹빌더 내 커스텀 코드 영역에 디보 API를 연결하면 끝</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="section">
+    <div class="sec-head">
+      <p class="label">요금제</p>
+      <h2 class="sec-title">요금제 안내</h2>
+      <p class="sec-desc">월 단위 구독 · 약정 없음 · 언제든 해지 가능 · 부가세 10% 별도</p>
+    </div>
+    <div class="plan-grid">
+      <div class="plan-card">
+        <p class="plan-name">Starter</p>
+        <div class="plan-price"><sup>₩</sup>9,800</div>
+        <p class="plan-period">/ 월</p>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>Starter 등급 익스텐션 무제한 연동</li>
+          <li>관리자 대시보드 자동 생성</li>
+          <li>사이트 단위 구독 적용</li>
+        </ul>
+        <span class="free-note">첫 달 무료 체험</span>
+      </div>
+      <div class="plan-card featured">
+        <div class="plan-best">Popular</div>
+        <p class="plan-name">Standard</p>
+        <div class="plan-price"><sup>₩</sup>18,900</div>
+        <p class="plan-period">/ 월</p>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>Starter + Standard 등급 무제한 연동</li>
+          <li>관리자 대시보드 자동 생성</li>
+          <li>사이트 단위 구독 적용</li>
+        </ul>
+      </div>
+      <div class="plan-card">
+        <p class="plan-name">Premium</p>
+        <div class="plan-price"><sup>₩</sup>28,900</div>
+        <p class="plan-period">/ 월</p>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>전체 등급 익스텐션 무제한 연동</li>
+          <li>관리자 대시보드 자동 생성</li>
+          <li>사이트 단위 구독 적용</li>
+        </ul>
+      </div>
+    </div>
+    <p class="plan-note">
+      구독은 사이트 단위로 적용됩니다. 구독한 사이트 내에서 익스텐션 무제한 연동 가능.<br>
+      다른 사이트에도 관리 기능을 사용하려면 해당 사이트를 별도로 구독해야 합니다.
+    </p>
+  </section>
+
+  <!-- REVENUE -->
+  <section class="section">
+    <div class="sec-head">
+      <p class="label">수익 구조</p>
+      <h2 class="sec-title">지속 수익 구조 설계</h2>
+      <p class="sec-desc">일회성 납품을 넘어 클라이언트와의 지속적인 운영 지원 관계를 만들 수 있습니다.</p>
+    </div>
+    <div class="rev-grid">
+      <table class="rev-table">
+        <thead>
+          <tr><th>청구 항목</th><th>주체</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>프론트 제작비</strong><small>UI 개발 또는 익스텐션 코드 적용</small></td>
+            <td>프리랜서 → 클라이언트</td>
+          </tr>
+          <tr>
+            <td><strong>디보 연동 세팅비</strong><small>관리 사이트 생성, 연결, 초기 설정</small></td>
+            <td>프리랜서 → 클라이언트</td>
+          </tr>
+          <tr>
+            <td><strong>월 유지보수비</strong><small>운영 지원, 추가 세팅, 기능 확장</small></td>
+            <td>프리랜서 → 클라이언트</td>
+          </tr>
+          <tr>
+            <td><strong>디보 구독료</strong><small>관리 기능 이용료</small></td>
+            <td>클라이언트 → 디보</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="rev-stat">
+        <h3>월 고정 수익 예시</h3>
+        <div class="big">30–50만원</div>
+        <p class="sub">클라이언트 3곳 기준 월 예상 수익</p>
+        <p>디보 구독료는 클라이언트가 직접 납부하므로, 프리랜서·개발사는 추가 인프라 비용 없이 세팅·운영 지원 역량만으로 수익을 만들 수 있습니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section">
+    <div class="sec-head">
+      <p class="label">FAQ</p>
+      <h2 class="sec-title">자주 묻는 질문</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-q">아임웹에서 바로 쓸 수 있나요?<span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-body">네. 아임웹 코드 위젯에 복사한 코드를 붙여넣으면 바로 적용됩니다. 관리 기능 연동 시 디보 구독이 필요합니다.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">클라이언트가 직접 사용할 수 있나요?<span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-body">네. 관리자 페이지는 코드 지식 없이도 사용 가능하도록 설계되어 있습니다. 엑셀이나 구글 폼 수준으로 운영할 수 있습니다.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">구독 하나로 여러 사이트에 적용할 수 있나요?<span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-body">구독은 사이트 단위로 적용됩니다. 구독한 사이트 내에서는 익스텐션을 무제한 연동할 수 있지만, 다른 사이트에도 관리 기능을 사용하려면 해당 사이트를 별도로 구독해야 합니다.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">직접 만든 코드도 연동할 수 있나요?<span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-body">네. 직접 작성한 프론트엔드 코드도 디보 API와 연동할 수 있습니다. 디보가 제공하는 API 호출 구조를 따르면 커스텀 UI에서도 동일하게 관리 기능을 사용할 수 있습니다.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">무료 코드를 상업적으로 사용할 수 있나요?<span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-body">무료 제공 코드는 비상업적 용도에 한해 허용되며, 상업적 이용은 사전 서면 동의가 필요합니다. 출처 표기(di-bo.me)는 필수입니다.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLOSING -->
+  <section class="section" id="closing">
+    <div class="closing-grid">
+      <div>
+        <p class="label">시작하기</p>
+        <h2>리스크 없이<br>경험할 수 있습니다</h2>
+        <p class="desc">코드 복사부터 관리자 페이지 확인까지,<br>비용 없이 먼저 경험해보세요.</p>
+      </div>
+      <div class="closing-items">
+        <div class="closing-item">
+          <div class="closing-dot"></div>
+          <div>
+            <p class="closing-item-head">프론트 코드 무료 제공</p>
+            <p class="closing-item-body">구독 없이 코드만 사용 가능</p>
+          </div>
+        </div>
+        <div class="closing-item">
+          <div class="closing-dot"></div>
+          <div>
+            <p class="closing-item-head">첫 달 무료 체험</p>
+            <p class="closing-item-body">STARTER 기준 1개월 무료</p>
+          </div>
+        </div>
+        <div class="closing-item">
+          <div class="closing-dot"></div>
+          <div>
+            <p class="closing-item-head">무료 연동 지원 이벤트</p>
+            <p class="closing-item-body">처음 사용하는 분 대상 1회 무료 연동 지원</p>
+          </div>
+        </div>
+        <div class="closing-item">
+          <div class="closing-dot"></div>
+          <div>
+            <p class="closing-item-head">약정 없음</p>
+            <p class="closing-item-body">월 단위 구독 · 언제든 해지 가능</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  document.querySelectorAll('.faq-q').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item');
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,4 +1,42 @@
 ﻿<!DOCTYPE html>
+<!--
+  ================================================================
+  ✦ 디보(dibo) 익스텐션 | 실시간 가격 계산기 폼 – 자동차 딜러·제조·커스텀 주문업
+  ================================================================
+
+  【페이지 개요】
+  모델 선택 + 옵션 토글만으로 예상 견적을 실시간으로 합산해 보여주는 폼입니다.
+  '견적 요청' 버튼 클릭 시 연락처 입력 영역이 슬라이드다운으로 펼쳐집니다.
+  다크 테마(#111 배경)에 블루 포인트 컬러를 사용하며, 자동차 딜러·인테리어·
+  가구 등 선택형 견적이 필요한 모든 업종에 적용 가능합니다.
+
+  【SEO 키워드】
+  자동차 실시간 견적, 차량 옵션 계산기, 구매 견적 폼,
+  딜러 상담 신청, 모델 옵션 가격 비교
+
+  【사용 전 필수 설정】
+  1. 모델 카드 수정
+     → .dibo-f07-model-card 의 data-base(기본가), data-name, 표시 텍스트 수정
+
+  2. 옵션 항목 수정
+     → .dibo-f07-opt 의 data-price(추가금액), .dibo-f07-opt-name 텍스트 수정
+
+  3. 합계 표시 형식 수정
+     → fmt() 함수 내 가격 단위·계산 방식 변경
+
+  4. 테마 컬러 수정
+     → CSS에서 #3a86ff (블루) 값을 브랜드 컬러로 일괄 변경
+
+  5. 폼 제출 처리 연동  ★ [수정 필수]
+     → diboF07Submit click 핸들러 내부에 실제 API 엔드포인트 연동 코드 추가
+
+  【UX 흐름】
+  ① 모델 선택 → 합계 실시간 업데이트
+  ② 옵션 토글 → 합계 실시간 업데이트
+  ③ [이 구성으로 견적 요청] 버튼 클릭 → 연락처 영역 슬라이드다운
+  ④ 이름·연락처·동의 완료 → 제출 → 완료 화면 전환
+  ================================================================
+-->
 <html lang="ko">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -581,6 +619,7 @@
 
   submitEl.addEventListener('click', function () {
     if (this.disabled) return;
+    postEditData();
     document.getElementById('diboF07ThanksCard').innerHTML =
       '🚗 ' + selModelName + '<br>💰 견적: ' + fmt(calcTotal()) + '<br>👤 ' + nameEl.value;
     document.querySelector('.dibo-f07-section').closest('.dibo-f07-wrap').querySelectorAll(
@@ -589,6 +628,39 @@
     document.querySelector('.dibo-f07-header').style.display = 'none';
     document.getElementById('diboF07Thanks').style.display = 'flex';
   });
+
+  /* ── Edit API 연동 ── */
+  var form_id = null;
+
+  (async function () {
+    try {
+      var res = await axios.get('https://api.di-bo.me/edit-set?config_id=copy_config_id', {
+        headers: { 'access-token': diboLoginManager.access_token }
+      });
+      form_id = res.data[0]?.id || null;
+    } catch (e) {}
+  })();
+
+  function postEditData() {
+    if (!form_id) return;
+    var opts = Array.from(document.getElementById('diboF07Opts').querySelectorAll('.dibo-f07-opt.on'))
+      .map(function (el) { return el.querySelector('.dibo-f07-opt-name').textContent; }).join(', ');
+    var fd = new FormData();
+    fd.append('req_body', JSON.stringify({ config_id: 'copy_config_id' }));
+    fd.append('column_01', selModelName);
+    fd.append('column_02', fmt(calcTotal()));
+    fd.append('column_03', opts);
+    fd.append('column_04', nameEl.value);
+    fd.append('column_05', telEl.value);
+    fd.append('column_06', '동의');
+    fd.append('column_07', '');
+    fd.append('column_08', '');
+    fd.append('column_09', '');
+    fd.append('column_10', '');
+    axios.post('https://api.di-bo.me/edit-set/' + form_id + '/rows', fd, {
+      headers: { 'access-token': diboLoginManager?.access_token }
+    }).catch(function (e) { console.error('입력폼 데이터 생성 실패:', e); });
+  }
 })();
 </script>
 </body>
